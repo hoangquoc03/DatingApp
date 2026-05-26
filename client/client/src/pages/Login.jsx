@@ -1,8 +1,10 @@
 import { useGoogleLogin } from "@react-oauth/google";
-import axios from "axios";
+// 🔹 ĐÃ SỬA: Sử dụng instance api cấu hình sẵn HTTPS thay vì import axios thô
+import api from "../services/api"; 
 import { Eye, EyeOff, Heart, Lock, Mail, Sparkles } from "lucide-react";
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
+
 export default function App() {
   const [showPassword, setShowPassword] = useState(false);
   const [rememberMe, setRememberMe] = useState(false);
@@ -45,35 +47,35 @@ export default function App() {
 
     return newErrors;
   };
+
+  // Luồng Đăng nhập Google qua ID/Access Token
   const loginGoogle = useGoogleLogin({
     onSuccess: async (tokenResponse) => {
       try {
         console.log(tokenResponse);
 
-        const response = await axios.post(
-          "http://localhost:5267/api/Auth/google-login",
-          {
-            accessToken: tokenResponse.access_token,
-          },
-        );
+        // 🔹 ĐÃ SỬA: Chuyển sang instance api để ăn khớp cấu hình CORS Backend
+        const response = await api.post("/Auth/google-login", {
+          accessToken: tokenResponse.access_token,
+        });
 
         const { token, user } = response.data;
 
+        // Lưu trữ thông tin đăng nhập Google nội bộ
         localStorage.setItem("token", token);
         localStorage.setItem("user", JSON.stringify(user));
 
         navigate("/dashboard");
       } catch (err) {
-        console.log(err);
+        console.error("Lỗi Google Login:", err);
       }
     },
-
     onError: () => {
       console.log("Google Login Failed");
     },
   });
 
-  // submit login
+  // submit login thường
   const handleSubmit = async (e) => {
     e.preventDefault();
 
@@ -88,16 +90,16 @@ export default function App() {
       setLoading(true);
       setErrors({});
 
+      // Chuẩn hóa dữ liệu đầu vào trước khi đẩy qua API bảo mật
       const payload = {
-        email: form.email.trim(),
+        email: form.email.trim().toLowerCase(), // Đồng bộ chữ thường tránh lệch DB
         password: form.password,
       };
 
-      const { data } = await axios.post(
-        "http://localhost:5267/api/Auth/login",
-        payload,
-      );
+      // 🔹 ĐÃ SỬA: Gọi qua api instance hướng thẳng vào cổng HTTPS https://localhost:7150/api
+      const { data } = await api.post("/Auth/login", payload);
 
+      // Phân bổ bộ nhớ dựa trên lựa chọn "Ghi nhớ đăng nhập"
       const storage = rememberMe ? localStorage : sessionStorage;
 
       storage.setItem("token", data.token);
@@ -105,19 +107,21 @@ export default function App() {
 
       navigate("/dashboard");
     } catch (err) {
+      console.error("Lỗi Đăng Nhập:", err);
       if (err.response?.status === 401) {
         setErrors({
-          general: "Email hoặc mật khẩu không đúng",
+          general: "Email hoặc mật khẩu không chính xác",
         });
       } else {
         setErrors({
-          general: "Không thể kết nối máy chủ",
+          general: "Không thể kết nối tới máy chủ. Vui lòng kiểm tra lại Backend!",
         });
       }
     } finally {
       setLoading(false);
     }
   };
+
   return (
     <div className="min-h-screen w-full relative overflow-hidden">
       {/* Gradient Background */}
@@ -246,16 +250,16 @@ export default function App() {
                           onChange={handleChange}
                           placeholder="yourname@example.com"
                           className={`w-full pl-12 pr-4 py-4 bg-white/80 border-2 rounded-2xl outline-none transition-all duration-300
-            ${
-              errors.email
-                ? "border-red-500"
-                : "border-gray-200 focus:border-[#FF5C9A]"
-            }`}
+                            ${
+                              errors.email
+                                ? "border-red-500 focus:ring-4 focus:ring-red-500/10"
+                                : "border-gray-200 focus:border-[#FF5C9A] focus:ring-4 focus:ring-[#FF5C9A]/10"
+                            }`}
                         />
-                        {errors.email && (
-                          <p className="text-sm text-red-500">{errors.email}</p>
-                        )}
                       </div>
+                      {errors.email && (
+                        <p className="text-sm text-red-500 pl-1">{errors.email}</p>
+                      )}
                     </div>
 
                     {/* Password Input */}
@@ -275,18 +279,17 @@ export default function App() {
                           value={form.password}
                           onChange={handleChange}
                           placeholder="••••••••"
-                          autoComplete="current-password"
                           className={`w-full pl-12 pr-12 py-4 bg-white/80 border-2 rounded-2xl outline-none transition-all duration-300
                           ${
                             errors.password
-                              ? "border-red-500"
-                              : "border-gray-200 focus:border-[#FF5C9A]"
+                              ? "border-red-500 focus:ring-4 focus:ring-red-500/10"
+                              : "border-gray-200 focus:border-[#FF5C9A] focus:ring-4 focus:ring-[#FF5C9A]/10"
                           }`}
                         />
                         <button
                           type="button"
                           onClick={() => setShowPassword(!showPassword)}
-                          className="absolute right-4 top-1/2 -translate-y-1/2 text-[#6B7280] hover:text-[#FF5C9A]"
+                          className="absolute right-4 top-1/2 -translate-y-1/2 text-[#6B7280] hover:text-[#FF5C9A] transition-colors"
                         >
                           {showPassword ? (
                             <EyeOff className="w-5 h-5" />
@@ -296,7 +299,7 @@ export default function App() {
                         </button>
                       </div>
                       {errors.password && (
-                        <p className="text-sm text-red-500">
+                        <p className="text-sm text-red-500 pl-1">
                           {errors.password}
                         </p>
                       )}
@@ -322,8 +325,10 @@ export default function App() {
                         Quên mật khẩu?
                       </button>
                     </div>
+
+                    {/* Hiển thị thông báo lỗi hệ thống từ Backend */}
                     {errors.general && (
-                      <div className="text-sm text-red-500 bg-red-50 border border-red-200 px-4 py-3 rounded-xl">
+                      <div className="text-sm text-red-500 bg-red-50 border border-red-200 px-4 py-3 rounded-xl animate-pulse">
                         {errors.general}
                       </div>
                     )}

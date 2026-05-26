@@ -1,4 +1,4 @@
-using Microsoft.AspNetCore.Authorization;
+﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using DatingApp.Data;
 using DatingApp.DTOs;
@@ -10,7 +10,7 @@ namespace DatingApp.Controllers
 {
     [ApiController]
     [Route("api/[controller]")]
-    [Authorize] // T?t c? endpoints �?u c?n JWT
+    [Authorize] 
     public class UserController : ControllerBase
     {
         private readonly AppDbContext _context;
@@ -22,7 +22,6 @@ namespace DatingApp.Controllers
             _cloudinary = cloudinary;
         }
 
-        // GET api/user/profile - l?y profile c?a m?nh
         [HttpGet("profile")]
         public async Task<IActionResult> GetProfile()
         {
@@ -51,7 +50,7 @@ namespace DatingApp.Controllers
             return Ok(user);
         }
 
-        // PUT api/user/profile - c?p nh?t th�ng tin c� b?n
+
         [HttpPut("profile")]
         public async Task<IActionResult> UpdateProfile([FromBody] UpdateProfileDto dto)
         {
@@ -61,11 +60,11 @@ namespace DatingApp.Controllers
             var user = await _context.Users.FindAsync(userId);
             if (user == null) return NotFound();
 
-            // Ch? c?p nh?t nh?ng field ��?c g?i l�n (kh�ng null)
+
             if (!string.IsNullOrWhiteSpace(dto.FullName))
                 user.FullName = dto.FullName.Trim();
 
-            if (dto.Bio != null) // Cho ph�p set bio r?ng
+            if (dto.Bio != null) 
                 user.Bio = dto.Bio.Trim();
 
             if (!string.IsNullOrWhiteSpace(dto.Location))
@@ -86,7 +85,6 @@ namespace DatingApp.Controllers
             });
         }
 
-        // POST api/user/avatar - upload ?nh �?i di?n
         [HttpPost("avatar")]
         public async Task<IActionResult> UploadAvatar(IFormFile file)
         {
@@ -99,7 +97,7 @@ namespace DatingApp.Controllers
             string newAvatarUrl;
             try
             {
-                // X�a ?nh c? tr�n Cloudinary (n?u c�)
+ 
                 var oldPublicId = CloudinaryService.ExtractPublicId(user.AvatarUrl);
                 if (!string.IsNullOrEmpty(oldPublicId))
                     await _cloudinary.DeleteImageAsync(oldPublicId);
@@ -122,29 +120,31 @@ namespace DatingApp.Controllers
             return Ok(new { avatarUrl = newAvatarUrl });
         }
 
-        // GET api/user/discover?page=1&pageSize=10 - kh�m ph� ng�?i d�ng m?i
+        [Authorize]
         [HttpGet("discover")]
         public async Task<IActionResult> Discover([FromQuery] int page = 1, [FromQuery] int pageSize = 10)
         {
             var userId = GetUserId();
             if (userId == null) return Unauthorized();
 
-            // Gi?i h?n pageSize t?i �a 50
+            // Giới hạn số lượng bản ghi trên một trang để bảo vệ tài nguyên hệ thống
             pageSize = Math.Clamp(pageSize, 1, 50);
             page = Math.Max(1, page);
 
-            // L?y danh s�ch �? swipe
+            // Lấy danh sách ID của những người dùng hiện tại đã tương tác (swipe)
             var swipedIds = await _context.Swipes
-                .Where(x => x.FromUserId == userId)
+                .Where(x => x.FromUserId == userId.Value)
                 .Select(x => x.ToUserId)
                 .ToListAsync();
 
+            // Sử dụng câu lệnh truy vấn ăn Index Primary Key (Guid so sánh trực tiếp với Guid)
             var query = _context.Users
-                .Where(x => x.Id != userId && !swipedIds.Contains(x.Id))
-                .OrderBy(x => x.CreatedAt); // ?n �?nh th? t? ph�n trang
+                .Where(x => x.Id != userId.Value && !swipedIds.Contains(x.Id))
+                .OrderBy(x => x.CreatedAt);
 
             var total = await query.CountAsync();
 
+            // Thực hiện phân trang (Skip/Take) trực tiếp ở tầng Cơ sở dữ liệu PostgreSQL
             var users = await query
                 .Skip((page - 1) * pageSize)
                 .Take(pageSize)
@@ -177,7 +177,7 @@ namespace DatingApp.Controllers
             });
         }
 
-        // --- Helper ---
+
         private Guid? GetUserId()
         {
             var value = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;

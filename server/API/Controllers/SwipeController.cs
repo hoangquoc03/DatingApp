@@ -21,59 +21,55 @@ namespace DatingApp.Controllers
         }
 
         [HttpPost]
-        public async Task<IActionResult> Swipe(SwipeDto dto)
+        public async Task<IActionResult> Swipe([FromBody] SwipeDto dto)
         {
-            var userId = Guid.Parse(User.FindFirst(ClaimTypes.NameIdentifier)!.Value);
+            var myId = GetUserId();
+            if (myId == null) return Unauthorized();
 
-            if (userId == dto.ToUserId)
-                return BadRequest("Không thể swipe chính mình");
-
-            var existed = await _context.Swipes
-                .AnyAsync(s => s.FromUserId == userId && s.ToUserId == dto.ToUserId);
-
-            if (existed)
-                return BadRequest("Bạn đã swipe user này rồi");
-
+            // 1. Tạo bản ghi lượt quẹt mới
             var swipe = new Swipe
             {
-                FromUserId = userId,
+                Id = Guid.NewGuid(),
+                FromUserId = myId.Value,
                 ToUserId = dto.ToUserId,
-                IsLike = dto.IsLike
+                IsLike = dto.IsLike,
+                CreatedAt = DateTime.UtcNow
             };
-
             _context.Swipes.Add(swipe);
 
-            bool isMatch = false;
-
+            // 2. Logic so khớp tự động (Match Match)
             if (dto.IsLike)
             {
-                var likedBack = await _context.Swipes
-                    .AnyAsync(s =>
-                        s.FromUserId == dto.ToUserId &&
-                        s.ToUserId == userId &&
-                        s.IsLike);
+                // Kiểm tra xem đối phương trước đó đã từng quẹt THÍCH mình chưa
+                var partnerLikedMe = await _context.Swipes
+                    .AnyAsync(x => x.FromUserId == dto.ToUserId && x.ToUserId == myId.Value && x.IsLike);
 
-                if (likedBack)
+                if (partnerLikedMe)
                 {
-                    isMatch = true;
-
+                    // ĐÃ SỬA: Sửa từ UserOneId/UserTwoId thành User1Id/User2Id cho khớp với Entity Match.cs của bạn
                     var match = new Match
                     {
-                        User1Id = userId,
-                        User2Id = dto.ToUserId
+                        Id = Guid.NewGuid(),
+                        User1Id = myId.Value,
+                        User2Id = dto.ToUserId,
+                        CreatedAt = DateTime.UtcNow
                     };
-
                     _context.Matches.Add(match);
+
+                    await _context.SaveChangesAsync();
+                    return Ok(new { message = "Swipe success", isMatch = true });
                 }
             }
 
             await _context.SaveChangesAsync();
+            return Ok(new { message = "Swipe success", isMatch = false });
+        }
 
-            return Ok(new
-            {
-                message = isMatch ? " It's a match!" : "Swiped successfully",
-                isMatch
-            });
+        // 🔹 ĐÃ BỔ SUNG: Hàm Helper GetUserId để giải quyết lỗi "does not exist in the current context"
+        private Guid? GetUserId()
+        {
+            var value = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            return Guid.TryParse(value, out var id) ? id : null;
         }
     }
 }
