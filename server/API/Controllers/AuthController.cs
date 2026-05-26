@@ -108,6 +108,7 @@ namespace DatingApp.Controllers
         [HttpPost("google-login")]
         public async Task<IActionResult> GoogleLogin(GoogleLoginDto dto)
         {
+
             var payload = await GoogleJsonWebSignature.ValidateAsync(dto.Credential);
 
             var user = await _context.Users

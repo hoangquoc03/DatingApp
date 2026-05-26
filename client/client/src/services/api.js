@@ -1,7 +1,8 @@
-import axios from "axios";
+﻿import axios from "axios";
 
 const api = axios.create({
-  baseURL: "http://localhost:5267/api",
+  // Sửa từ 5267 thành 7150 (Cổng HTTPS của Backend)
+  baseURL: "https://localhost:7150/api", 
 });
 
 api.interceptors.request.use((config) => {
