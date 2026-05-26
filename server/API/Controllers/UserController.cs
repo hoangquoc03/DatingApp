@@ -10,7 +10,7 @@ namespace DatingApp.Controllers
 {
     [ApiController]
     [Route("api/[controller]")]
-    [Authorize] // T?t c? endpoints ð?u c?n JWT
+    [Authorize] 
     public class UserController : ControllerBase
     {
         private readonly AppDbContext _context;
@@ -22,7 +22,6 @@ namespace DatingApp.Controllers
             _cloudinary = cloudinary;
         }
 
-        // GET api/user/profile - l?y profile c?a m?nh
         [HttpGet("profile")]
         public async Task<IActionResult> GetProfile()
         {
@@ -51,7 +50,7 @@ namespace DatingApp.Controllers
             return Ok(user);
         }
 
-        // PUT api/user/profile - c?p nh?t thông tin cõ b?n
+
         [HttpPut("profile")]
         public async Task<IActionResult> UpdateProfile([FromBody] UpdateProfileDto dto)
         {
@@ -61,11 +60,11 @@ namespace DatingApp.Controllers
             var user = await _context.Users.FindAsync(userId);
             if (user == null) return NotFound();
 
-            // Ch? c?p nh?t nh?ng field ðý?c g?i lên (không null)
+
             if (!string.IsNullOrWhiteSpace(dto.FullName))
                 user.FullName = dto.FullName.Trim();
 
-            if (dto.Bio != null) // Cho phép set bio r?ng
+            if (dto.Bio != null) 
                 user.Bio = dto.Bio.Trim();
 
             if (!string.IsNullOrWhiteSpace(dto.Location))
@@ -86,7 +85,6 @@ namespace DatingApp.Controllers
             });
         }
 
-        // POST api/user/avatar - upload ?nh ð?i di?n
         [HttpPost("avatar")]
         public async Task<IActionResult> UploadAvatar(IFormFile file)
         {
@@ -99,7 +97,7 @@ namespace DatingApp.Controllers
             string newAvatarUrl;
             try
             {
-                // Xóa ?nh c? trên Cloudinary (n?u có)
+ 
                 var oldPublicId = CloudinaryService.ExtractPublicId(user.AvatarUrl);
                 if (!string.IsNullOrEmpty(oldPublicId))
                     await _cloudinary.DeleteImageAsync(oldPublicId);
@@ -122,18 +120,17 @@ namespace DatingApp.Controllers
             return Ok(new { avatarUrl = newAvatarUrl });
         }
 
-        // GET api/user/discover?page=1&pageSize=10 - khám phá ngý?i dùng m?i
         [HttpGet("discover")]
         public async Task<IActionResult> Discover([FromQuery] int page = 1, [FromQuery] int pageSize = 10)
         {
             var userId = GetUserId();
             if (userId == null) return Unauthorized();
 
-            // Gi?i h?n pageSize t?i ða 50
+
             pageSize = Math.Clamp(pageSize, 1, 50);
             page = Math.Max(1, page);
 
-            // L?y danh sách ð? swipe
+
             var swipedIds = await _context.Swipes
                 .Where(x => x.FromUserId == userId)
                 .Select(x => x.ToUserId)
@@ -141,7 +138,7 @@ namespace DatingApp.Controllers
 
             var query = _context.Users
                 .Where(x => x.Id != userId && !swipedIds.Contains(x.Id))
-                .OrderBy(x => x.CreatedAt); // ?n ð?nh th? t? phân trang
+                .OrderBy(x => x.CreatedAt); 
 
             var total = await query.CountAsync();
 
@@ -177,7 +174,7 @@ namespace DatingApp.Controllers
             });
         }
 
-        // --- Helper ---
+
         private Guid? GetUserId()
         {
             var value = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
