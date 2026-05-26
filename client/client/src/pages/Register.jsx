@@ -1,4 +1,4 @@
-import axios from "axios";
+import api from "../services/api";
 import {
   CalendarDays,
   Eye,
@@ -138,10 +138,7 @@ export default function App() {
 
       console.log("📤 Dữ liệu gửi lên API:", payload);
 
-      const response = await axios.post(
-        "http://localhost:5267/api/Auth/register",
-        payload,
-      );
+      const response = await api.post("/Auth/register", payload);
 
       console.log("✅ Response thành công:", response.data);
 

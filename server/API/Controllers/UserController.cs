@@ -1,4 +1,4 @@
-using Microsoft.AspNetCore.Authorization;
+﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using DatingApp.Data;
 using DatingApp.DTOs;
@@ -120,28 +120,31 @@ namespace DatingApp.Controllers
             return Ok(new { avatarUrl = newAvatarUrl });
         }
 
+        [Authorize]
         [HttpGet("discover")]
         public async Task<IActionResult> Discover([FromQuery] int page = 1, [FromQuery] int pageSize = 10)
         {
             var userId = GetUserId();
             if (userId == null) return Unauthorized();
 
-
+            // Giới hạn số lượng bản ghi trên một trang để bảo vệ tài nguyên hệ thống
             pageSize = Math.Clamp(pageSize, 1, 50);
             page = Math.Max(1, page);
 
-
+            // Lấy danh sách ID của những người dùng hiện tại đã tương tác (swipe)
             var swipedIds = await _context.Swipes
-                .Where(x => x.FromUserId == userId)
+                .Where(x => x.FromUserId == userId.Value)
                 .Select(x => x.ToUserId)
                 .ToListAsync();
 
+            // Sử dụng câu lệnh truy vấn ăn Index Primary Key (Guid so sánh trực tiếp với Guid)
             var query = _context.Users
-                .Where(x => x.Id != userId && !swipedIds.Contains(x.Id))
-                .OrderBy(x => x.CreatedAt); 
+                .Where(x => x.Id != userId.Value && !swipedIds.Contains(x.Id))
+                .OrderBy(x => x.CreatedAt);
 
             var total = await query.CountAsync();
 
+            // Thực hiện phân trang (Skip/Take) trực tiếp ở tầng Cơ sở dữ liệu PostgreSQL
             var users = await query
                 .Skip((page - 1) * pageSize)
                 .Take(pageSize)

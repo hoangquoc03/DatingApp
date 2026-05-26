@@ -7,6 +7,7 @@ using DatingApp.Helpers;
 using DatingApp.Services;
 using DatingApp.Hubs;
 
+System.AppContext.SetSwitch("Npgsql.EnableLegacyTimestampBehavior", true);
 var builder = WebApplication.CreateBuilder(args);
 
 // ── Database ──────────────────────────────────────────────────────────────────
