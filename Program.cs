@@ -14,8 +14,13 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
 
-// ── Controllers ───────────────────────────────────────────────────────────────
-builder.Services.AddControllers();
+// ── Controllers (💡 ĐÃ FIX: Ngăn chặn hoàn toàn lỗi sập Swagger do vòng lặp dữ liệu) ──
+builder.Services.AddControllers()
+    .AddJsonOptions(options =>
+    {
+        options.JsonSerializerOptions.ReferenceHandler = System.Text.Json.Serialization.ReferenceHandler.IgnoreCycles;
+        options.JsonSerializerOptions.WriteIndented = true;
+    });
 
 // ── HttpClient (dùng cho Google UserInfo API) ─────────────────────────────────
 builder.Services.AddHttpClient();
@@ -116,5 +121,14 @@ app.UseAuthentication();
 app.UseAuthorization();
 app.MapControllers();
 app.MapHub<ChatHub>("/chatHub");
+
+// 💡 KHUYÊN DÙNG: Tự động khởi chạy bộ sinh nạp dữ liệu mẫu Seeder (Nếu muốn test Swagger độc lập)
+using (var scope = app.Services.CreateScope())
+{
+    var services = scope.ServiceProvider;
+    var context = services.GetRequiredService<AppDbContext>();
+    // Nếu bạn đã tạo file DbInitializer ở các bước trước, hãy mở comment dòng này:
+    // await DbInitializer.SeedData(context);
+}
 
 app.Run();

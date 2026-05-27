@@ -1,5 +1,4 @@
 import { BrowserRouter, Routes, Route } from "react-router-dom";
-
 import Home from "./pages/Home";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
@@ -8,6 +7,7 @@ import Matches from "./pages/Matches";
 import Chat from "./pages/Chat";
 import Dashboard from "./pages/Dashboard";
 import Onboarding from "./pages/Onboarding";
+
 export default function App() {
   return (
     <BrowserRouter>

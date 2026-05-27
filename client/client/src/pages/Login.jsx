@@ -1,11 +1,10 @@
-import { useGoogleLogin } from "@react-oauth/google";
-// 🔹 ĐÃ SỬA: Sử dụng instance api cấu hình sẵn HTTPS thay vì import axios thô
-import api from "../services/api"; 
+import { GoogleLogin } from "@react-oauth/google";
+import api from "../services/api";
 import { Eye, EyeOff, Heart, Lock, Mail, Sparkles } from "lucide-react";
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 
-export default function App() {
+export default function Login() {
   const [showPassword, setShowPassword] = useState(false);
   const [rememberMe, setRememberMe] = useState(false);
   const navigate = useNavigate();
@@ -17,7 +16,7 @@ export default function App() {
   const [errors, setErrors] = useState({});
   const [loading, setLoading] = useState(false);
 
-  // change input
+  // Xử lý thay đổi dữ liệu ô nhập
   const handleChange = (e) => {
     const { id, value } = e.target;
 
@@ -33,7 +32,7 @@ export default function App() {
     }));
   };
 
-  // validate
+  // Xác thực dữ liệu form client-side
   const validateForm = () => {
     const newErrors = {};
 
@@ -48,39 +47,11 @@ export default function App() {
     return newErrors;
   };
 
-  // Luồng Đăng nhập Google qua ID/Access Token
-  const loginGoogle = useGoogleLogin({
-    onSuccess: async (tokenResponse) => {
-      try {
-        console.log(tokenResponse);
-
-        // 🔹 ĐÃ SỬA: Chuyển sang instance api để ăn khớp cấu hình CORS Backend
-        const response = await api.post("/Auth/google-login", {
-          accessToken: tokenResponse.access_token,
-        });
-
-        const { token, user } = response.data;
-
-        // Lưu trữ thông tin đăng nhập Google nội bộ
-        localStorage.setItem("token", token);
-        localStorage.setItem("user", JSON.stringify(user));
-
-        navigate("/dashboard");
-      } catch (err) {
-        console.error("Lỗi Google Login:", err);
-      }
-    },
-    onError: () => {
-      console.log("Google Login Failed");
-    },
-  });
-
-  // submit login thường
+  // Xử lý gửi form đăng nhập thông thường
   const handleSubmit = async (e) => {
     e.preventDefault();
 
     const validationErrors = validateForm();
-
     if (Object.keys(validationErrors).length) {
       setErrors(validationErrors);
       return;
@@ -90,16 +61,12 @@ export default function App() {
       setLoading(true);
       setErrors({});
 
-      // Chuẩn hóa dữ liệu đầu vào trước khi đẩy qua API bảo mật
       const payload = {
-        email: form.email.trim().toLowerCase(), // Đồng bộ chữ thường tránh lệch DB
+        email: form.email.trim().toLowerCase(),
         password: form.password,
       };
 
-      // 🔹 ĐÃ SỬA: Gọi qua api instance hướng thẳng vào cổng HTTPS https://localhost:7150/api
       const { data } = await api.post("/Auth/login", payload);
-
-      // Phân bổ bộ nhớ dựa trên lựa chọn "Ghi nhớ đăng nhập"
       const storage = rememberMe ? localStorage : sessionStorage;
 
       storage.setItem("token", data.token);
@@ -124,9 +91,8 @@ export default function App() {
 
   return (
     <div className="min-h-screen w-full relative overflow-hidden">
-      {/* Gradient Background */}
+      {/* Khối nền Gradient chuyển màu chuyển động */}
       <div className="absolute inset-0 bg-gradient-to-br from-pink-50 via-purple-50 to-pink-100">
-        {/* Glow effects */}
         <div className="absolute top-0 left-1/4 w-96 h-96 bg-[#FF5C9A]/20 rounded-full blur-[120px] animate-pulse" />
         <div
           className="absolute bottom-0 right-1/4 w-96 h-96 bg-[#C8B6FF]/30 rounded-full blur-[120px] animate-pulse"
@@ -134,14 +100,13 @@ export default function App() {
         />
       </div>
 
-      {/* Main Content */}
+      {/* Nội dung giao diện chính */}
       <div className="relative min-h-screen flex items-center justify-center px-4 py-12">
         <div className="w-full max-w-7xl mx-auto">
           <div className="grid lg:grid-cols-2 gap-12 items-center">
-            {/* Left Column - Visual Branding */}
+            {/* Cột trái - Thương hiệu & Thống kê ứng dụng */}
             <div className="hidden lg:flex flex-col justify-center space-y-8">
               <div className="space-y-6">
-                {/* Logo */}
                 <div className="flex items-center gap-3">
                   <div className="relative">
                     <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-[#FF5C9A] to-[#C8B6FF] flex items-center justify-center shadow-lg shadow-pink-500/30">
@@ -154,18 +119,15 @@ export default function App() {
                   </span>
                 </div>
 
-                {/* Main Heading */}
                 <div className="space-y-4">
                   <h1 className="text-5xl font-bold text-[#1F2937] leading-tight">
                     Nơi những kết nối đẹp bắt đầu
                   </h1>
                   <p className="text-xl text-[#6B7280] leading-relaxed">
-                    Gặp đúng người phù hợp trong không gian an toàn, tinh tế và
-                    chân thành.
+                    Gặp đúng người phù hợp trong không gian an toàn, tinh tế và chân thành.
                   </p>
                 </div>
 
-                {/* Floating Stats Cards */}
                 <div className="space-y-4 pt-8">
                   <div className="bg-white/60 backdrop-blur-lg rounded-2xl p-6 shadow-xl border border-white/50 transform hover:scale-105 transition-transform duration-300">
                     <div className="flex items-center gap-4">
@@ -173,12 +135,8 @@ export default function App() {
                         <Sparkles className="w-7 h-7 text-white" />
                       </div>
                       <div>
-                        <p className="text-sm text-[#6B7280]">
-                          Kết nối mới hôm nay
-                        </p>
-                        <p className="text-2xl font-bold text-[#1F2937]">
-                          2,547
-                        </p>
+                        <p className="text-sm text-[#6B7280]">Kết nối mới hôm nay</p>
+                        <p className="text-2xl font-bold text-[#1F2937]">2,547</p>
                       </div>
                     </div>
                   </div>
@@ -189,12 +147,8 @@ export default function App() {
                         <Heart className="w-7 h-7 text-white fill-white" />
                       </div>
                       <div>
-                        <p className="text-sm text-[#6B7280]">
-                          Cặp đôi thành công
-                        </p>
-                        <p className="text-2xl font-bold text-[#1F2937]">
-                          15,234
-                        </p>
+                        <p className="text-sm text-[#6B7280]">Cặp đôi thành công</p>
+                        <p className="text-2xl font-bold text-[#1F2937]">15,234</p>
                       </div>
                     </div>
                   </div>
@@ -202,11 +156,11 @@ export default function App() {
               </div>
             </div>
 
-            {/* Right Column - Login Card */}
+            {/* Cột phải - Thẻ Đăng nhập */}
             <div className="flex items-center justify-center">
               <div className="w-full max-w-md">
                 <div className="bg-white/70 backdrop-blur-xl rounded-[32px] shadow-2xl border border-white/60 p-10 space-y-8">
-                  {/* Mobile Logo */}
+                  {/* Logo hiển thị trên giao diện Mobile */}
                   <div className="lg:hidden flex items-center justify-center gap-3 mb-6">
                     <div className="relative">
                       <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-[#FF5C9A] to-[#C8B6FF] flex items-center justify-center shadow-lg shadow-pink-500/30">
@@ -218,30 +172,19 @@ export default function App() {
                     </span>
                   </div>
 
-                  {/* Header */}
                   <div className="text-center space-y-2">
-                    <h2 className="text-3xl font-bold text-[#1F2937]">
-                      Chào mừng trở lại
-                    </h2>
-                    <p className="text-[#6B7280]">
-                      Đăng nhập để tiếp tục hành trình kết nối của bạn
-                    </p>
+                    <h2 className="text-3xl font-bold text-[#1F2937]">Chào mừng trở lại</h2>
+                    <p className="text-[#6B7280]">Đăng nhập để tiếp tục hành trình kết nối của bạn</p>
                   </div>
 
-                  {/* Login Form */}
+                  {/* Form thu thập dữ liệu đăng nhập thường */}
                   <form className="space-y-6" onSubmit={handleSubmit}>
-                    {/* Email Input */}
                     <div className="space-y-2">
-                      <label
-                        htmlFor="email"
-                        className="text-sm text-[#1F2937] font-medium"
-                      >
+                      <label htmlFor="email" className="text-sm text-[#1F2937] font-medium">
                         Email
                       </label>
-
                       <div className="relative group">
                         <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-[#6B7280]" />
-
                         <input
                           id="email"
                           type="email"
@@ -257,17 +200,11 @@ export default function App() {
                             }`}
                         />
                       </div>
-                      {errors.email && (
-                        <p className="text-sm text-red-500 pl-1">{errors.email}</p>
-                      )}
+                      {errors.email && <p className="text-sm text-red-500 pl-1">{errors.email}</p>}
                     </div>
 
-                    {/* Password Input */}
                     <div className="space-y-2">
-                      <label
-                        htmlFor="password"
-                        className="text-sm text-[#1F2937] font-medium"
-                      >
+                      <label htmlFor="password" className="text-sm text-[#1F2937] font-medium">
                         Mật khẩu
                       </label>
                       <div className="relative group">
@@ -291,21 +228,12 @@ export default function App() {
                           onClick={() => setShowPassword(!showPassword)}
                           className="absolute right-4 top-1/2 -translate-y-1/2 text-[#6B7280] hover:text-[#FF5C9A] transition-colors"
                         >
-                          {showPassword ? (
-                            <EyeOff className="w-5 h-5" />
-                          ) : (
-                            <Eye className="w-5 h-5" />
-                          )}
+                          {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
                         </button>
                       </div>
-                      {errors.password && (
-                        <p className="text-sm text-red-500 pl-1">
-                          {errors.password}
-                        </p>
-                      )}
+                      {errors.password && <p className="text-sm text-red-500 pl-1">{errors.password}</p>}
                     </div>
 
-                    {/* Remember Me & Forgot Password */}
                     <div className="flex items-center justify-between">
                       <label className="flex items-center gap-2 cursor-pointer group">
                         <input
@@ -318,22 +246,17 @@ export default function App() {
                           Ghi nhớ đăng nhập
                         </span>
                       </label>
-                      <button
-                        type="button"
-                        className="text-sm font-medium text-[#FF5C9A] hover:text-[#C8B6FF] transition-colors"
-                      >
+                      <button type="button" className="text-sm font-medium text-[#FF5C9A] hover:text-[#C8B6FF] transition-colors">
                         Quên mật khẩu?
                       </button>
                     </div>
 
-                    {/* Hiển thị thông báo lỗi hệ thống từ Backend */}
                     {errors.general && (
                       <div className="text-sm text-red-500 bg-red-50 border border-red-200 px-4 py-3 rounded-xl animate-pulse">
                         {errors.general}
                       </div>
                     )}
 
-                    {/* Login Button */}
                     <button
                       type="submit"
                       disabled={loading}
@@ -353,86 +276,84 @@ export default function App() {
                     </button>
                   </form>
 
-                  {/* Divider */}
+                  {/* Thanh ngăn cách giữa các hình thức đăng nhập */}
                   <div className="relative">
                     <div className="absolute inset-0 flex items-center">
                       <div className="w-full border-t border-gray-300" />
                     </div>
                     <div className="relative flex justify-center text-sm">
-                      <span className="px-4 bg-white/70 text-[#6B7280]">
-                        Hoặc tiếp tục với
-                      </span>
+                      <span className="px-4 bg-white/70 text-[#6B7280]">Hoặc tiếp tục với</span>
                     </div>
                   </div>
 
-                  {/* Social Login */}
-                  <div className="grid grid-cols-2 gap-4">
-                    <button
-                      type="button"
-                      onClick={() => loginGoogle()}
-                      className="py-3 px-4 bg-white border-2 border-gray-200 rounded-xl hover:border-[#FF5C9A] hover:shadow-md transition-all duration-300 flex items-center justify-center gap-2 font-medium text-[#1F2937]"
-                    >
-                      <svg className="w-5 h-5" viewBox="0 0 24 24">
-                        <path
-                          fill="#4285F4"
-                          d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
-                        />
-                        <path
-                          fill="#34A853"
-                          d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"
-                        />
-                        <path
-                          fill="#FBBC05"
-                          d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"
-                        />
-                        <path
-                          fill="#EA4335"
-                          d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"
-                        />
-                      </svg>
-                      <span className="text-sm">Google</span>
-                    </button>
+                  {/* Khối xử lý Đăng nhập mạng xã hội (Tích hợp luồng Google Credential mới) */}
+                  <div className="flex flex-col items-center justify-center gap-4 w-full pt-2">
+                    <div className="flex justify-center w-full transform hover:scale-[1.01] transition-transform">
+                      <GoogleLogin
+                        onSuccess={async (credentialResponse) => {
+                          try {
+                            setLoading(true);
+                            setErrors({});
+
+                            const response = await api.post("/Auth/google-login", {
+                              credential: credentialResponse.credential,
+                            });
+
+                            const { token, user } = response.data;
+                            const storage = rememberMe ? localStorage : sessionStorage;
+
+                            storage.setItem("token", token);
+                            storage.setItem("user", JSON.stringify(user));
+
+                            navigate("/dashboard");
+                          } catch (err) {
+                            console.error("Đăng nhập Google thất bại:", err);
+                            setErrors({
+                              general: "Xác thực Google thành công nhưng Server từ chối kết nối hoặc tạo User thất bại.",
+                            });
+                          } finally {
+                            setLoading(false);
+                          }
+                        }}
+                        onError={() => {
+                          console.log("Google Sign-In Failed");
+                          setErrors({ general: "Yêu cầu đăng nhập qua tài khoản Google bị hủy bỏ." });
+                        }}
+                        useOneTap
+                        theme="filled_blue"
+                        shape="circle"
+                        locale="vi"
+                      />
+                    </div>
 
                     <button
                       type="button"
-                      className="py-3 px-4 bg-white border-2 border-gray-200 rounded-xl hover:border-[#C8B6FF] hover:shadow-md transition-all duration-300 flex items-center justify-center gap-2 font-medium text-[#1F2937]"
+                      className="w-full py-3 px-4 bg-white border-2 border-gray-200 rounded-2xl hover:border-[#C8B6FF] hover:shadow-sm transition-all duration-300 flex items-center justify-center gap-2 font-medium text-[#1F2937]"
                     >
-                      <svg
-                        className="w-5 h-5"
-                        viewBox="0 0 24 24"
-                        fill="#1877F2"
-                      >
+                      <svg className="w-5 h-5" viewBox="0 0 24 24" fill="#1877F2">
                         <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z" />
                       </svg>
-                      <span className="text-sm">Facebook</span>
+                      <span className="text-sm">Tiếp tục với Facebook</span>
                     </button>
                   </div>
 
-                  {/* Footer */}
+                  {/* Chân trang điều hướng biểu mẫu */}
                   <div className="text-center space-y-4 pt-4">
                     <p className="text-sm text-[#6B7280]">
                       Chưa có tài khoản?{" "}
-                      <Link
-                        to="/register"
-                        className="font-medium text-[#FF5C9A] hover:text-[#C8B6FF] transition-colors"
-                      >
+                      <Link to="/register" className="font-medium text-[#FF5C9A] hover:text-[#C8B6FF] transition-colors">
                         Đăng ký miễn phí
                       </Link>
                     </p>
 
-                    {/* Trust Badges */}
                     <div className="pt-4 space-y-2 border-t border-gray-200">
                       <div className="flex items-center justify-center gap-2 text-xs text-[#6B7280]">
                         <Lock className="w-4 h-4" />
-                        <span>
-                          Thông tin của bạn luôn được bảo mật tuyệt đối
-                        </span>
+                        <span>Thông tin của bạn luôn được bảo mật tuyệt đối</span>
                       </div>
                       <div className="flex items-center justify-center gap-2 text-xs text-[#6B7280]">
                         <Heart className="w-4 h-4 fill-current" />
-                        <span>
-                          Hơn 1.000.000 người đã bắt đầu kết nối tại Aura Dating
-                        </span>
+                        <span>Hơn 1.000.000 người đã bắt đầu kết nối tại Aura Dating</span>
                       </div>
                     </div>
                   </div>
