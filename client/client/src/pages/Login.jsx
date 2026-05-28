@@ -69,7 +69,10 @@ export default function Login() {
       const { data } = await api.post("/Auth/login", payload);
       const storage = rememberMe ? localStorage : sessionStorage;
 
-      storage.setItem("token", data.token);
+      storage.setItem("token", data.accessToken || data.token);
+      if (data.refreshToken) {
+        storage.setItem("refreshToken", data.refreshToken);
+      }
       storage.setItem("user", JSON.stringify(data.user));
 
       navigate("/dashboard");
@@ -246,9 +249,12 @@ export default function Login() {
                           Ghi nhớ đăng nhập
                         </span>
                       </label>
-                      <button type="button" className="text-sm font-medium text-[#FF5C9A] hover:text-[#C8B6FF] transition-colors">
+                      <Link
+                        to="/forgot-password"
+                        className="text-sm font-medium text-[#FF5C9A] hover:text-[#C8B6FF] transition-colors"
+                      >
                         Quên mật khẩu?
-                      </button>
+                      </Link>
                     </div>
 
                     {errors.general && (
@@ -299,10 +305,13 @@ export default function Login() {
                               credential: credentialResponse.credential,
                             });
 
-                            const { token, user } = response.data;
+                            const { token, accessToken, refreshToken, user } = response.data;
                             const storage = rememberMe ? localStorage : sessionStorage;
 
-                            storage.setItem("token", token);
+                            storage.setItem("token", accessToken || token);
+                            if (refreshToken) {
+                              storage.setItem("refreshToken", refreshToken);
+                            }
                             storage.setItem("user", JSON.stringify(user));
 
                             navigate("/dashboard");
