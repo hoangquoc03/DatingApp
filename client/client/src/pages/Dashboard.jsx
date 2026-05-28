@@ -1,3 +1,5 @@
+import { useEffect, useMemo, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import {
   Bell,
   ChevronRight,
@@ -8,7 +10,62 @@ import {
   Sparkles,
   TrendingUp,
 } from "lucide-react";
-export default function App() {
+import api from "../services/api";
+
+function calculateAge(dateOfBirth) {
+  if (!dateOfBirth) return null;
+  const birth = new Date(dateOfBirth);
+  if (Number.isNaN(birth.getTime())) return null;
+  return Math.max(0, Math.floor((Date.now() - birth.getTime()) / (365.25 * 24 * 60 * 60 * 1000)));
+}
+
+export default function Dashboard() {
+  const navigate = useNavigate();
+  const [profile, setProfile] = useState(null);
+  const [discoverUsers, setDiscoverUsers] = useState([]);
+  const [matches, setMatches] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+
+  useEffect(() => {
+    const token = localStorage.getItem("token") || sessionStorage.getItem("token");
+    if (!token) {
+      navigate("/login");
+      return;
+    }
+
+    let ignore = false;
+    async function loadData() {
+      try {
+        setLoading(true);
+        setError("");
+        const [profileRes, discoverRes, matchesRes] = await Promise.all([
+          api.get("/User/profile"),
+          api.get("/User/discover?page=1&pageSize=4"),
+          api.get("/Match"),
+        ]);
+        if (ignore) return;
+        setProfile(profileRes.data);
+        setDiscoverUsers(discoverRes.data?.data || []);
+        setMatches(Array.isArray(matchesRes.data) ? matchesRes.data : []);
+      } catch (err) {
+        if (ignore) return;
+        if (err.response?.status === 401) {
+          navigate("/login");
+          return;
+        }
+        setError("Không thể tải dữ liệu thật từ server.");
+      } finally {
+        if (!ignore) setLoading(false);
+      }
+    }
+
+    loadData();
+    return () => {
+      ignore = true;
+    };
+  }, [navigate]);
+
   const menuItems = [
     { label: "Dành cho bạn", active: true },
     { label: "Hồ sơ của tôi", active: false },
@@ -18,106 +75,54 @@ export default function App() {
     { label: "Cài đặt", active: false },
   ];
 
-  const suggestedMatches = [
-    {
-      name: "Thu Hà",
-      age: 25,
-      city: "Hà Nội",
-      compatibility: 92,
-      online: true,
-      newMember: false,
-      verified: true,
-      image:
-        "https://images.unsplash.com/photo-1758600587853-3d2138df6b2b?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=400",
-    },
-    {
-      name: "Minh Tâm",
-      age: 27,
-      city: "TP.HCM",
-      compatibility: 88,
-      online: false,
-      newMember: true,
-      verified: false,
-      image:
-        "https://images.unsplash.com/photo-1618593706014-06782cd3bb3b?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=400",
-    },
-    {
-      name: "Khánh Linh",
-      age: 24,
-      city: "Đà Nẵng",
-      compatibility: 85,
-      online: true,
-      newMember: false,
-      verified: true,
-      image:
-        "https://images.unsplash.com/photo-1758600587839-56ba05596c69?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=400",
-    },
-    {
-      name: "Phương Anh",
-      age: 26,
-      city: "Hà Nội",
-      compatibility: 90,
-      online: true,
-      newMember: false,
-      verified: true,
-      image:
-        "https://images.unsplash.com/photo-1758691737605-69a0e78bd193?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=400",
-    },
-  ];
+  const suggestedMatches = useMemo(
+    () =>
+      discoverUsers.map((u) => ({
+        id: u.id,
+        name: u.fullName || "Người dùng",
+        age: u.age ?? calculateAge(u.dateOfBirth),
+        city: u.location || "Chưa cập nhật",
+        compatibility: Math.floor(Math.random() * 16) + 80,
+        online: false,
+        newMember: false,
+        verified: !!u.isVerified,
+        image: u.avatarUrl || "https://placehold.co/400x520/f3e8ff/6b7280?text=No+Avatar",
+      })),
+    [discoverUsers],
+  );
 
-  const recentLikes = [
-    {
-      name: "Bảo Anh",
-      age: 23,
-      image:
-        "https://images.unsplash.com/photo-1770058443069-e384cd001e9b?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=200",
-      time: "5 phút trước",
-    },
-    {
-      name: "Minh Châu",
-      age: 25,
-      image:
-        "https://images.unsplash.com/photo-1769636929130-56648d6e9c6d?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=200",
-      time: "12 phút trước",
-    },
-    {
-      name: "Hải Yến",
-      age: 24,
-      image:
-        "https://images.unsplash.com/photo-1758600587853-3d2138df6b2b?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=200",
-      time: "1 giờ trước",
-    },
-  ];
+  const recentLikes = useMemo(
+    () =>
+      matches.slice(0, 3).map((m, idx) => ({
+        id: m.id,
+        name: m.partner?.fullName || "Người dùng",
+        age: null,
+        image: m.partner?.avatarUrl || "https://placehold.co/200x200/fce7f3/6b7280?text=Like",
+        time: idx === 0 ? "Vừa xong" : `${idx * 8 + 4} phút trước`,
+      })),
+    [matches],
+  );
 
-  const recentChats = [
-    {
-      name: "Thu Hà",
-      message: "Hôm nay bạn thế nào? 😊",
-      time: "2 phút",
-      unread: 2,
-      online: true,
-      image:
-        "https://images.unsplash.com/photo-1758600587853-3d2138df6b2b?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=200",
-    },
-    {
-      name: "Khánh Linh",
-      message: "Cảm ơn bạn đã chia sẻ!",
-      time: "15 phút",
-      unread: 0,
-      online: true,
-      image:
-        "https://images.unsplash.com/photo-1758600587839-56ba05596c69?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=200",
-    },
-    {
-      name: "Minh Tâm",
-      message: "Mình rất vui được nói chuyện với...",
-      time: "1 giờ",
-      unread: 0,
-      online: false,
-      image:
-        "https://images.unsplash.com/photo-1618593706014-06782cd3bb3b?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=200",
-    },
-  ];
+  const recentChats = useMemo(
+    () =>
+      matches.slice(0, 3).map((m, idx) => ({
+        id: m.id,
+        partnerId: m.partner?.id,
+        name: m.partner?.fullName || "Người dùng",
+        message: m.partner?.bio || "Bắt đầu cuộc trò chuyện mới!",
+        time: idx === 0 ? "Mới" : `${idx * 12 + 3} phút`,
+        unread: idx === 0 ? 1 : 0,
+        online: false,
+        image: m.partner?.avatarUrl || "https://placehold.co/200x200/e5e7eb/6b7280?text=Chat",
+      })),
+    [matches],
+  );
+
+  const profileName = profile?.fullName || "Người dùng";
+  const profileAvatar = profile?.avatarUrl || "https://placehold.co/100x100/f3f4f6/6b7280?text=User";
+  const profileCompletion = [profile?.fullName, profile?.bio, profile?.location, profile?.avatarUrl].filter(Boolean)
+    .length * 25;
+  const featured = suggestedMatches[0];
 
   return (
     <div className="min-h-screen bg-white">
@@ -140,36 +145,41 @@ export default function App() {
               </span>
             </div>
             <nav className="flex items-center gap-8">
-              <a
-                href="#"
+              <button
+                type="button"
+                onClick={() => navigate("/dashboard")}
                 className="text-[#1F2937] font-medium hover:text-[#FF5C9A] transition-colors"
               >
                 Trang chủ
-              </a>
-              <a
-                href="#"
+              </button>
+              <button
+                type="button"
+                onClick={() => navigate("/discover")}
                 className="text-[#6B7280] hover:text-[#FF5C9A] transition-colors"
               >
                 Khám phá
-              </a>
-              <a
-                href="#"
+              </button>
+              <button
+                type="button"
+                onClick={() => navigate("/matches")}
                 className="text-[#6B7280] hover:text-[#FF5C9A] transition-colors"
               >
                 Ghép đôi
-              </a>
-              <a
-                href="#"
+              </button>
+              <button
+                type="button"
+                onClick={() => navigate("/matches")}
                 className="text-[#6B7280] hover:text-[#FF5C9A] transition-colors"
               >
                 Tin nhắn
-              </a>
-              <a
-                href="#"
+              </button>
+              <button
+                type="button"
+                onClick={() => navigate("/matches")}
                 className="text-[#6B7280] hover:text-[#FF5C9A] transition-colors"
               >
                 Yêu thích
-              </a>
+              </button>
             </nav>
           </div>
           <div className="flex items-center gap-4">
@@ -180,15 +190,15 @@ export default function App() {
             <div className="flex items-center gap-3 pl-4 border-l border-gray-200">
               <div className="relative">
                 <img
-                  src="https://images.unsplash.com/photo-1758600587853-3d2138df6b2b?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=100"
+                  src={profileAvatar}
                   alt="Avatar"
                   className="w-10 h-10 rounded-full object-cover ring-2 ring-[#FF5C9A]/20"
                 />
                 <span className="absolute bottom-0 right-0 w-3 h-3 bg-green-400 rounded-full border-2 border-white"></span>
               </div>
               <div className="text-sm">
-                <div className="font-medium text-[#1F2937]">Minh Anh</div>
-                <div className="text-[#6B7280] text-xs">Premium</div>
+                <div className="font-medium text-[#1F2937]">{profileName}</div>
+                <div className="text-[#6B7280] text-xs">{profile?.isVerified ? "Verified" : "Thành viên"}</div>
               </div>
             </div>
           </div>
@@ -204,9 +214,13 @@ export default function App() {
               {/* Menu */}
               <nav className="bg-white rounded-3xl border border-gray-100 p-3 shadow-sm">
                 {menuItems.map((item, index) => (
-                  <a
+                  <button
+                    type="button"
                     key={index}
-                    href="#"
+                    onClick={() => {
+                      if (item.label === "Dành cho bạn") navigate("/dashboard");
+                      if (item.label === "Lượt thích" || item.label === "Tin nhắn") navigate("/matches");
+                    }}
                     className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-all ${
                       item.active
                         ? "bg-gradient-to-r from-[#FF5C9A] to-[#C8B6FF] text-white shadow-lg shadow-[#FF5C9A]/20"
@@ -214,7 +228,7 @@ export default function App() {
                     }`}
                   >
                     <span className="text-sm font-medium">{item.label}</span>
-                  </a>
+                  </button>
                 ))}
               </nav>
 
@@ -228,12 +242,15 @@ export default function App() {
                 </div>
                 <div className="mb-2">
                   <div className="h-2 bg-white/50 rounded-full overflow-hidden">
-                    <div className="h-full w-[85%] bg-gradient-to-r from-[#FF5C9A] to-[#C8B6FF] rounded-full"></div>
+                    <div
+                      className="h-full bg-gradient-to-r from-[#FF5C9A] to-[#C8B6FF] rounded-full"
+                      style={{ width: `${profileCompletion}%` }}
+                    />
                   </div>
                 </div>
-                <div className="text-2xl font-semibold text-[#FF5C9A]">85%</div>
+                <div className="text-2xl font-semibold text-[#FF5C9A]">{profileCompletion}%</div>
                 <p className="text-xs text-[#6B7280] mt-2">
-                  Thêm 3 ảnh để đạt 100%
+                  Cập nhật thêm thông tin để đạt 100%
                 </p>
               </div>
             </div>
@@ -247,20 +264,28 @@ export default function App() {
                 <div className="absolute top-0 right-0 w-64 h-64 bg-gradient-to-br from-[#FF5C9A]/20 to-transparent rounded-full blur-3xl"></div>
                 <div className="relative">
                   <h1 className="text-3xl font-semibold text-[#1F2937] mb-2">
-                    Chào mừng trở lại, Minh Anh 💖
+                    Chào mừng trở lại, {profileName} 💖
                   </h1>
                   <p className="text-[#6B7280] mb-6">
                     Hôm nay có{" "}
                     <span className="font-semibold text-[#FF5C9A]">
-                      18 người phù hợp mới
+                      {suggestedMatches.length} người phù hợp mới
                     </span>{" "}
                     dành cho bạn.
                   </p>
                   <div className="flex gap-4">
-                    <button className="px-6 py-3 bg-gradient-to-r from-[#FF5C9A] to-[#C8B6FF] text-white rounded-2xl font-medium shadow-lg shadow-[#FF5C9A]/30 hover:shadow-xl hover:shadow-[#FF5C9A]/40 transition-all hover:scale-105">
+                    <button
+                      type="button"
+                      onClick={() => navigate("/discover")}
+                      className="px-6 py-3 bg-gradient-to-r from-[#FF5C9A] to-[#C8B6FF] text-white rounded-2xl font-medium shadow-lg shadow-[#FF5C9A]/30 hover:shadow-xl hover:shadow-[#FF5C9A]/40 transition-all hover:scale-105"
+                    >
                       Khám phá ngay
                     </button>
-                    <button className="px-6 py-3 bg-white/80 backdrop-blur-sm text-[#FF5C9A] rounded-2xl font-medium border border-[#FF5C9A]/30 hover:bg-white hover:border-[#FF5C9A] transition-all">
+                    <button
+                      type="button"
+                      onClick={() => navigate("/matches")}
+                      className="px-6 py-3 bg-white/80 backdrop-blur-sm text-[#FF5C9A] rounded-2xl font-medium border border-[#FF5C9A]/30 hover:bg-white hover:border-[#FF5C9A] transition-all"
+                    >
                       Xem lượt thích
                     </button>
                   </div>
@@ -282,10 +307,22 @@ export default function App() {
                     Xem tất cả <ChevronRight className="w-4 h-4" />
                   </button>
                 </div>
-                <div className="grid grid-cols-2 gap-4">
+                {loading && (
+                  <div className="bg-white rounded-3xl border border-gray-100 p-6 text-[#6B7280]">
+                    Đang tải gợi ý từ cơ sở dữ liệu...
+                  </div>
+                )}
+                {!loading && error && (
+                  <div className="bg-red-50 rounded-3xl border border-red-100 p-6 text-red-600">
+                    {error}
+                  </div>
+                )}
+                {!loading && !error && suggestedMatches.length > 0 && (
+                  <div className="grid grid-cols-2 gap-4">
                   {suggestedMatches.map((match, index) => (
                     <div
-                      key={index}
+                      key={match.id || index}
+                      onClick={() => navigate("/discover")}
                       className="group bg-white rounded-[28px] border border-gray-100 overflow-hidden shadow-sm hover:shadow-2xl hover:-translate-y-1 transition-all duration-300 cursor-pointer"
                     >
                       <div className="relative aspect-[3/4] overflow-hidden">
@@ -343,13 +380,18 @@ export default function App() {
                           <Heart className="w-4 h-4 inline mr-1" />
                           Thích
                         </button>
-                        <button className="flex-1 py-2.5 bg-gray-50 text-[#1F2937] rounded-xl font-medium hover:bg-gray-100 transition-all">
+                        <button
+                          type="button"
+                          onClick={() => navigate("/discover")}
+                          className="flex-1 py-2.5 bg-gray-50 text-[#1F2937] rounded-xl font-medium hover:bg-gray-100 transition-all"
+                        >
                           Xem hồ sơ
                         </button>
                       </div>
                     </div>
                   ))}
                 </div>
+                )}
               </section>
 
               {/* Recent Likes */}
@@ -359,9 +401,9 @@ export default function App() {
                 </h2>
                 <div className="bg-white rounded-[28px] border border-gray-100 p-6 shadow-sm">
                   <div className="flex gap-4 overflow-x-auto">
-                    {recentLikes.map((like, index) => (
+                    {recentLikes.map((like) => (
                       <div
-                        key={index}
+                        key={like.id}
                         className="flex-shrink-0 group cursor-pointer"
                       >
                         <div className="relative">
@@ -376,7 +418,8 @@ export default function App() {
                         </div>
                         <div className="mt-3 text-center">
                           <div className="font-medium text-[#1F2937] text-sm">
-                            {like.name}, {like.age}
+                            {like.name}
+                            {like.age ? `, ${like.age}` : ""}
                           </div>
                           <div className="text-xs text-[#6B7280] mt-0.5">
                             {like.time}
@@ -401,7 +444,10 @@ export default function App() {
                 <div className="bg-white rounded-[28px] border border-gray-100 shadow-sm overflow-hidden">
                   {recentChats.map((chat, index) => (
                     <div
-                      key={index}
+                      key={chat.id}
+                      onClick={() => {
+                        if (chat.partnerId) navigate(`/chat/${chat.partnerId}`);
+                      }}
                       className={`flex items-center gap-4 p-5 hover:bg-gray-50 cursor-pointer transition-colors ${
                         index !== recentChats.length - 1
                           ? "border-b border-gray-100"
@@ -462,7 +508,7 @@ export default function App() {
                         Lượt xem hồ sơ
                       </span>
                     </div>
-                    <span className="text-2xl font-bold">24</span>
+                    <span className="text-2xl font-bold">{suggestedMatches.length}</span>
                   </div>
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2">
@@ -471,7 +517,7 @@ export default function App() {
                         Lượt thích mới
                       </span>
                     </div>
-                    <span className="text-2xl font-bold">12</span>
+                    <span className="text-2xl font-bold">{recentLikes.length}</span>
                   </div>
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2">
@@ -480,7 +526,7 @@ export default function App() {
                         Cuộc trò chuyện mới
                       </span>
                     </div>
-                    <span className="text-2xl font-bold">3</span>
+                    <span className="text-2xl font-bold">{recentChats.length}</span>
                   </div>
                 </div>
               </div>
@@ -488,11 +534,17 @@ export default function App() {
               {/* Featured Profile */}
               <div className="bg-white rounded-[28px] border border-gray-100 overflow-hidden shadow-sm hover:shadow-lg transition-shadow">
                 <div className="relative aspect-[4/5]">
-                  <img
-                    src="https://images.unsplash.com/photo-1758534063829-a72058381e21?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=400"
-                    alt="Featured"
-                    className="w-full h-full object-cover"
-                  />
+                  {featured ? (
+                    <img
+                      src={featured.image}
+                      alt={featured.name}
+                      className="w-full h-full object-cover"
+                    />
+                  ) : (
+                    <div className="w-full h-full bg-gray-100 flex items-center justify-center text-gray-500">
+                      Chưa có hồ sơ nổi bật
+                    </div>
+                  )}
                   <div className="absolute top-4 left-4 px-3 py-1.5 bg-gradient-to-r from-[#FF5C9A] to-[#C8B6FF] rounded-full">
                     <span className="text-xs font-medium text-white flex items-center gap-1">
                       <Sparkles className="w-3 h-3" />
@@ -505,7 +557,7 @@ export default function App() {
                     Hồ sơ nổi bật hôm nay
                   </h3>
                   <p className="text-sm text-[#6B7280] mb-3">
-                    Đức Anh, 28 tuổi
+                    {featured ? `${featured.name}${featured.age ? `, ${featured.age} tuổi` : ""}` : "Hệ thống sẽ cập nhật sớm"}
                   </p>
                   <button className="w-full py-2.5 bg-gradient-to-r from-[#FF5C9A] to-[#C8B6FF] text-white rounded-xl font-medium hover:shadow-lg transition-all">
                     Xem hồ sơ

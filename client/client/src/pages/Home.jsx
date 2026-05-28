@@ -64,11 +64,18 @@ export default function App() {
               </a>
             </nav>
 
-            <Link to="/register">
-              <button className="cursor-pointer bg-gradient-to-r from-[#FF5C9A] to-[#C8B6FF] text-white px-6 py-3 rounded-full">
-                Đăng ký miễn phí
-              </button>
-            </Link>
+            <div className="flex items-center gap-3">
+              <Link to="/login">
+                <button className="cursor-pointer bg-white text-[#FF5C9A] px-6 py-3 rounded-full border border-[#FF5C9A]/30 hover:border-[#FF5C9A] transition-colors">
+                  Đăng nhập
+                </button>
+              </Link>
+              <Link to="/register">
+                <button className="cursor-pointer bg-gradient-to-r from-[#FF5C9A] to-[#C8B6FF] text-white px-6 py-3 rounded-full">
+                  Đăng ký miễn phí
+                </button>
+              </Link>
+            </div>
           </div>
         </div>
       </header>

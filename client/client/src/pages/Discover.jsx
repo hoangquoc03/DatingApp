@@ -2,21 +2,7 @@
 import { useNavigate } from "react-router-dom";
 import { Heart, X, Star, MapPin, Info, Loader2, RefreshCw } from "lucide-react";
 import TinderCard from "react-tinder-card";
-import axios from "axios";
-
-const API = "http://localhost:5267";
-
-function getToken() {
-  return localStorage.getItem("token") || sessionStorage.getItem("token");
-}
-function getMe() {
-  try {
-    const raw = localStorage.getItem("user") || sessionStorage.getItem("user");
-    return raw ? JSON.parse(raw) : null;
-  } catch {
-    return null;
-  }
-}
+import api from "../services/api";
 
 // Màu gradient ngẫu nhiên cho avatar placeholder
 const GRADIENTS = [
@@ -29,12 +15,13 @@ const GRADIENTS = [
 
 export default function Discover() {
   const navigate = useNavigate();
-  const me = getMe();
-  const token = getToken();
 
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [page, setPage] = useState(1);
+  const [hasNextPage, setHasNextPage] = useState(true);
+  const pageSize = 12;
 
   // Index card đang hiện trên cùng (users[currentIndex])
   const [currentIndex, setCurrentIndex] = useState(0);
@@ -45,30 +32,33 @@ export default function Discover() {
   const cardRefs = useRef([]);
 
   useEffect(() => {
-    if (!token || !me) { navigate("/login"); return; }
-    fetchUsers();
-  }, []);
+    const token = localStorage.getItem("token") || sessionStorage.getItem("token");
+    if (!token) {
+      navigate("/login");
+      return;
+    }
+    fetchUsers(1, true);
+  }, [navigate]);
 
-  // ── Fetch danh sách user chưa swipe ────────────────────────────────────────
-  // Backend cần có endpoint này — xem note cuối file
-  async function fetchUsers() {
+  async function fetchUsers(nextPage, reset = false) {
     try {
       setLoading(true);
       setError("");
-      const { data } = await axios.get(`${API}/api/users/discover`, {
-        headers: { Authorization: `Bearer ${token}` },
+      const { data } = await api.get(`/User/discover?page=${nextPage}&pageSize=${pageSize}`);
+      const incoming = data?.data || [];
+      const pagination = data?.pagination;
+
+      setUsers((prev) => {
+        const merged = reset ? incoming : [...prev, ...incoming];
+        cardRefs.current = merged.map(() => null);
+        return merged;
       });
-      setUsers(data);
-      setCurrentIndex(0);
-      cardRefs.current = data.map(() => null);
+      if (reset) setCurrentIndex(0);
+      setPage(nextPage);
+      setHasNextPage(Boolean(pagination?.hasNext));
     } catch (err) {
       if (err.response?.status === 401) {
         navigate("/login");
-      } else if (err.response?.status === 404) {
-        // Endpoint chưa có → dùng mock để demo UI
-        setUsers(MOCK_USERS);
-        setCurrentIndex(0);
-        cardRefs.current = MOCK_USERS.map(() => null);
       } else {
         setError("Không thể tải danh sách người dùng");
       }
@@ -80,11 +70,7 @@ export default function Discover() {
   // ── Gửi swipe lên API ────────────────────────────────────────────────────
   async function sendSwipe(toUserId, isLike) {
     try {
-      const { data } = await axios.post(
-        `${API}/api/swipe`,
-        { toUserId, isLike },
-        { headers: { Authorization: `Bearer ${token}` } }
-      );
+      const { data } = await api.post("/Swipe", { toUserId, isLike });
       if (data.isMatch) {
         const matchedUser = users.find((u) => u.id === toUserId);
         if (matchedUser) setMatchPopup(matchedUser);
@@ -103,13 +89,12 @@ export default function Discover() {
       setLastAction(isSuperLike ? "superlike" : isLike ? "like" : "dislike");
       setCurrentIndex((prev) => prev + 1);
 
-      // Không gọi API cho mock users
-      if (!user.isMock) sendSwipe(user.id, isLike);
+      sendSwipe(user.id, isLike);
 
       // Reset animation feedback sau 1.5s
       setTimeout(() => setLastAction(null), 1500);
     },
-    [users]
+    [users],
   );
 
   // ── Trigger swipe từ action buttons ──────────────────────────────────────
@@ -122,7 +107,12 @@ export default function Discover() {
   );
 
   const remaining = users.length - currentIndex;
-  const topUser = remaining > 0 ? users[currentIndex] : null;
+
+  useEffect(() => {
+    if (!loading && !error && remaining <= 2 && hasNextPage) {
+      fetchUsers(page + 1);
+    }
+  }, [remaining, hasNextPage, loading, error, page]);
 
   // ── RENDER ────────────────────────────────────────────────────────────────
   return (
@@ -182,7 +172,7 @@ export default function Discover() {
           <div className="text-center space-y-4">
             <p className="text-red-500">{error}</p>
             <button
-              onClick={fetchUsers}
+              onClick={() => fetchUsers(1, true)}
               className="flex items-center gap-2 px-5 py-2.5 bg-gradient-to-r from-[#FF5C9A] to-[#C8B6FF] text-white rounded-xl mx-auto"
             >
               <RefreshCw className="w-4 h-4" /> Thử lại
@@ -197,10 +187,10 @@ export default function Discover() {
             </div>
             <div>
               <h2 className="text-2xl font-bold text-[#1F2937]">Đã hết người rồi!</h2>
-              <p className="text-[#6B7280] mt-2">Quay lại sau để gặp thêm người mới</p>
+              <p className="text-[#6B7280] mt-2">Bạn đã swipe hết danh sách hiện có</p>
             </div>
             <button
-              onClick={fetchUsers}
+              onClick={() => fetchUsers(1, true)}
               className="flex items-center gap-2 px-8 py-3 bg-gradient-to-r from-[#FF5C9A] to-[#C8B6FF] text-white rounded-2xl font-medium shadow-lg shadow-pink-500/30"
             >
               <RefreshCw className="w-4 h-4" /> Tải lại
@@ -339,7 +329,7 @@ export default function Discover() {
 // ─── SwipeCard ────────────────────────────────────────────────────────────────
 function SwipeCard({ user, style }) {
   const [showInfo, setShowInfo] = useState(false);
-  const initials = user.fullName?.split(" ").map(w => w[0]).join("").slice(0, 2).toUpperCase();
+  const initials = user.fullName?.split(" ").map((w) => w[0]).join("").slice(0, 2).toUpperCase();
   const gradient = GRADIENTS[Math.abs(user.fullName?.charCodeAt(0) || 0) % GRADIENTS.length];
   const age = user.dateOfBirth
     ? Math.floor((Date.now() - new Date(user.dateOfBirth)) / (365.25 * 24 * 3600 * 1000))
@@ -370,7 +360,10 @@ function SwipeCard({ user, style }) {
 
         {/* Info toggle */}
         <button
-          onClick={(e) => { e.stopPropagation(); setShowInfo(v => !v); }}
+          onClick={(e) => {
+            e.stopPropagation();
+            setShowInfo((v) => !v);
+          }}
           className="absolute top-4 right-4 w-9 h-9 bg-white/20 backdrop-blur-sm rounded-full flex items-center justify-center hover:bg-white/30 transition-colors"
         >
           <Info className="w-4 h-4 text-white" />
@@ -392,23 +385,11 @@ function SwipeCard({ user, style }) {
 
       {/* Bio / info panel */}
       <div className="h-[25%] px-5 py-4 flex flex-col justify-between">
-        {showInfo && user.bio ? (
-          <p className="text-sm text-[#6B7280] line-clamp-3 leading-relaxed">{user.bio}</p>
-        ) : (
-          <div className="flex gap-2 flex-wrap">
-            {(user.interests || []).slice(0, 4).map((tag, i) => (
-              <span
-                key={i}
-                className="px-3 py-1 bg-pink-50 text-[#FF5C9A] rounded-full text-xs font-medium"
-              >
-                {tag}
-              </span>
-            ))}
-            {!user.bio && (!user.interests || user.interests.length === 0) && (
-              <p className="text-sm text-[#9CA3AF]">Vuốt để khám phá thêm ✨</p>
-            )}
-          </div>
-        )}
+        {showInfo || user.bio ? (
+          <p className="text-sm text-[#6B7280] line-clamp-3 leading-relaxed">
+            {user.bio || "Vuốt để khám phá thêm ✨"}
+          </p>
+        ) : <p className="text-sm text-[#9CA3AF]">Vuốt để khám phá thêm ✨</p>}
         <p className="text-xs text-[#9CA3AF] text-center">
           Vuốt phải 💚 để thích · Vuốt trái 👋 để bỏ qua
         </p>
@@ -434,35 +415,3 @@ function ActionBtn({ onClick, icon, color, bg, size, label }) {
     </button>
   );
 }
-
-// ─── MOCK DATA (dùng khi API chưa có endpoint /api/users/discover) ──────────
-const MOCK_USERS = [
-  { id: "mock-1", fullName: "Linh Nguyễn", location: "Hà Nội", bio: "Yêu thích du lịch và cà phê ☕", interests: ["Du lịch", "Cà phê", "Đọc sách"], isMock: true },
-  { id: "mock-2", fullName: "Minh Tuấn", location: "TP.HCM", bio: "Đam mê âm nhạc và thể thao", interests: ["Âm nhạc", "Gym", "Game"], isMock: true },
-  { id: "mock-3", fullName: "Thu Hà", location: "Đà Nẵng", bio: "Nghệ sĩ tự do, thích phim ảnh 🎬", interests: ["Nghệ thuật", "Phim", "Yoga"], isMock: true },
-  { id: "mock-4", fullName: "Quốc Anh", location: "Hà Nội", bio: "Lập trình viên ban ngày, đầu bếp ban đêm 🍳", interests: ["Nấu ăn", "Công nghệ", "Thú cưng"], isMock: true },
-  { id: "mock-5", fullName: "Phương Linh", location: "Cần Thơ", bio: "Sống chậm, cảm nhận nhiều hơn 🌿", interests: ["Thiền", "Sách", "Thiên nhiên"], isMock: true },
-];
-
-/*
- * ─── NOTE: Backend cần thêm endpoint ─────────────────────────────────────────
- *
- * GET /api/users/discover
- * - Trả về danh sách user chưa được swipe bởi currentUser
- * - Filter: khác gender (theo InterestedIn), khác chính mình
- * - Ví dụ query cơ bản:
- *
- * var swiped = await _context.Swipes
- *     .Where(s => s.FromUserId == myId)
- *     .Select(s => s.ToUserId)
- *     .ToListAsync();
- *
- * var users = await _context.Users
- *     .Where(u => u.Id != myId && !swiped.Contains(u.Id))
- *     .Select(u => new { u.Id, u.FullName, u.AvatarUrl, u.Location,
- *                         u.Bio, u.DateOfBirth, u.Gender })
- *     .Take(20)
- *     .ToListAsync();
- *
- * return Ok(users);
- */
