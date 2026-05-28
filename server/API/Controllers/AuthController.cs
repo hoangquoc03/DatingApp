@@ -3,9 +3,12 @@ using DatingApp.DTo.cs;
 using DatingApp.DTOs;
 using DatingApp.Helpers;
 using DatingApp.Models;
+using DatingApp.Services;
 using Google.Apis.Auth;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using System.Security.Cryptography;
+using System.Text;
 
 namespace DatingApp.Controllers
 {
@@ -15,11 +18,19 @@ namespace DatingApp.Controllers
     {
         private readonly AppDbContext _context;
         private readonly JwtService _jwt;
+        private readonly EmailService _emailService;
+        private readonly IConfiguration _config;
 
-        public AuthController(AppDbContext context, JwtService jwt)
+        public AuthController(
+            AppDbContext context,
+            JwtService jwt,
+            EmailService emailService,
+            IConfiguration config)
         {
             _context = context;
             _jwt = jwt;
+            _emailService = emailService;
+            _config = config;
         }
 
         // ── REGISTER ──────────────────────────────────────────────────────────────────
@@ -89,10 +100,15 @@ namespace DatingApp.Controllers
                 return Unauthorized("Invalid email or password");
 
             var token = _jwt.GenerateToken(user.Id, user.Email);
+            var refreshToken = GenerateRefreshToken();
+            SaveRefreshToken(user, refreshToken);
+            await _context.SaveChangesAsync();
 
             return Ok(new
             {
                 token,
+                accessToken = token,
+                refreshToken,
                 user = new
                 {
                     user.Id,
@@ -150,12 +166,137 @@ namespace DatingApp.Controllers
             }
 
             var token = _jwt.GenerateToken(user.Id, user.Email);
+            var refreshToken = GenerateRefreshToken();
+            SaveRefreshToken(user, refreshToken);
+            await _context.SaveChangesAsync();
 
             return Ok(new
             {
                 token,
+                accessToken = token,
+                refreshToken,
                 user = new { user.Id, user.Email, user.FullName, user.AvatarUrl }
             });
+        }
+
+        [HttpPost("refresh")]
+        public async Task<IActionResult> Refresh([FromBody] RefreshTokenDto dto)
+        {
+            if (string.IsNullOrWhiteSpace(dto.RefreshToken))
+                return BadRequest("Refresh token is required.");
+
+            var tokenHash = HashToken(dto.RefreshToken);
+            var user = await _context.Users.FirstOrDefaultAsync(x =>
+                x.RefreshTokenHash == tokenHash &&
+                x.RefreshTokenExpiresAt.HasValue &&
+                x.RefreshTokenExpiresAt > DateTime.UtcNow);
+
+            if (user == null)
+                return Unauthorized("Invalid or expired refresh token.");
+
+            var accessToken = _jwt.GenerateToken(user.Id, user.Email);
+            var nextRefreshToken = GenerateRefreshToken();
+            SaveRefreshToken(user, nextRefreshToken);
+            await _context.SaveChangesAsync();
+
+            return Ok(new
+            {
+                token = accessToken,
+                accessToken,
+                refreshToken = nextRefreshToken
+            });
+        }
+
+        [HttpPost("logout")]
+        public async Task<IActionResult> Logout([FromBody] RefreshTokenDto dto)
+        {
+            if (string.IsNullOrWhiteSpace(dto.RefreshToken))
+                return Ok(new { message = "Logged out" });
+
+            var tokenHash = HashToken(dto.RefreshToken);
+            var user = await _context.Users.FirstOrDefaultAsync(x => x.RefreshTokenHash == tokenHash);
+            if (user != null)
+            {
+                user.RefreshTokenHash = null;
+                user.RefreshTokenExpiresAt = null;
+                await _context.SaveChangesAsync();
+            }
+
+            return Ok(new { message = "Logged out" });
+        }
+
+        [HttpPost("forgot-password")]
+        public async Task<IActionResult> ForgotPassword([FromBody] ForgotPasswordDto dto)
+        {
+            if (!ModelState.IsValid)
+                return BadRequest(ModelState);
+
+            var email = dto.Email.Trim().ToLower();
+            var user = await _context.Users.FirstOrDefaultAsync(x => x.Email == email);
+            if (user != null)
+            {
+                var rawToken = GenerateResetToken();
+                user.PasswordResetTokenHash = HashToken(rawToken);
+                user.PasswordResetTokenExpiresAt = DateTime.UtcNow.AddMinutes(15);
+                await _context.SaveChangesAsync();
+
+                var frontendBaseUrl = _config["Frontend:BaseUrl"] ?? "http://localhost:5173";
+                var resetLink = $"{frontendBaseUrl}/reset-password?token={Uri.EscapeDataString(rawToken)}";
+                await _emailService.SendPasswordResetAsync(user.Email, resetLink);
+            }
+
+            return Ok(new
+            {
+                message = "If that email exists, a password reset link has been sent."
+            });
+        }
+
+        [HttpPost("reset-password")]
+        public async Task<IActionResult> ResetPassword([FromBody] ResetPasswordDto dto)
+        {
+            if (!ModelState.IsValid)
+                return BadRequest(ModelState);
+
+            var tokenHash = HashToken(dto.Token);
+            var user = await _context.Users.FirstOrDefaultAsync(x =>
+                x.PasswordResetTokenHash == tokenHash &&
+                x.PasswordResetTokenExpiresAt.HasValue &&
+                x.PasswordResetTokenExpiresAt > DateTime.UtcNow);
+
+            if (user == null)
+                return BadRequest("Token không hợp lệ hoặc đã hết hạn.");
+
+            user.PasswordHash = BCrypt.Net.BCrypt.HashPassword(dto.NewPassword);
+            user.PasswordResetTokenHash = null;
+            user.PasswordResetTokenExpiresAt = null;
+            user.RefreshTokenHash = null;
+            user.RefreshTokenExpiresAt = null;
+            user.UpdatedAt = DateTime.UtcNow;
+            await _context.SaveChangesAsync();
+
+            return Ok(new { message = "Đặt lại mật khẩu thành công." });
+        }
+
+        private static string GenerateRefreshToken()
+        {
+            return Convert.ToBase64String(RandomNumberGenerator.GetBytes(64));
+        }
+
+        private static string GenerateResetToken()
+        {
+            return Convert.ToBase64String(RandomNumberGenerator.GetBytes(48));
+        }
+
+        private static string HashToken(string token)
+        {
+            var bytes = SHA256.HashData(Encoding.UTF8.GetBytes(token));
+            return Convert.ToHexString(bytes);
+        }
+
+        private static void SaveRefreshToken(User user, string refreshToken)
+        {
+            user.RefreshTokenHash = HashToken(refreshToken);
+            user.RefreshTokenExpiresAt = DateTime.UtcNow.AddDays(30);
         }
     }
 

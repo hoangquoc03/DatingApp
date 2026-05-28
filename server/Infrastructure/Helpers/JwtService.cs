@@ -31,7 +31,7 @@ namespace DatingApp.Helpers
             var token = new JwtSecurityToken(
                 issuer: _config["Jwt:Issuer"],
                 claims: claims,
-                expires: DateTime.UtcNow.AddDays(7),
+                expires: DateTime.UtcNow.AddMinutes(30),
                 signingCredentials: creds
             );
 

@@ -59,6 +59,7 @@ builder.Services
 
 // ── Cloudinary ────────────────────────────────────────────────────────────────
 builder.Services.AddSingleton<CloudinaryService>();
+builder.Services.AddScoped<EmailService>();
 
 // ── CORS ──────────────────────────────────────────────────────────────────────
 builder.Services.AddCors(options =>

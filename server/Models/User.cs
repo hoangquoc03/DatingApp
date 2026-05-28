@@ -35,6 +35,12 @@ namespace DatingApp.Models
 
         public UserStatus Status { get; set; }
 
+        public string? RefreshTokenHash { get; set; }
+        public DateTime? RefreshTokenExpiresAt { get; set; }
+
+        public string? PasswordResetTokenHash { get; set; }
+        public DateTime? PasswordResetTokenExpiresAt { get; set; }
+
         public ICollection<Swipe> SwipesSent { get; set; }
         public ICollection<Swipe> SwipesReceived { get; set; }
     }
