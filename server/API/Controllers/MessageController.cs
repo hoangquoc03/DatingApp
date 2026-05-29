@@ -32,6 +32,24 @@ namespace DatingApp.Controllers
             var senderId =
                 Guid.Parse(User.FindFirst(ClaimTypes.NameIdentifier)!.Value);
 
+            // 🔹 FIX: Chặn nhắn tin cho chính mình
+            if (dto.ReceiverId == senderId)
+                return BadRequest(new { message = "Không thể nhắn tin cho chính mình" });
+
+            // 🔹 FIX: Kiểm tra người nhận có tồn tại không
+            var receiverExists = await _context.Users
+                .AnyAsync(u => u.Id == dto.ReceiverId);
+            if (!receiverExists)
+                return NotFound(new { message = "Người nhận không tồn tại" });
+
+            // 🔹 FIX: Kiểm tra hai người đã match chưa — chỉ cho nhắn tin khi đã match
+            var isMatched = await _context.Matches
+                .AnyAsync(m =>
+                    (m.User1Id == senderId && m.User2Id == dto.ReceiverId) ||
+                    (m.User1Id == dto.ReceiverId && m.User2Id == senderId));
+            if (!isMatched)
+                return BadRequest(new { message = "Bạn chưa match với người này. Hãy match trước khi nhắn tin!" });
+
             var message = new Message
             {
                 Id = Guid.NewGuid(),
@@ -57,6 +75,14 @@ namespace DatingApp.Controllers
             var myId =
                 Guid.Parse(User.FindFirst(ClaimTypes.NameIdentifier)!.Value);
 
+            // 🔹 FIX: Kiểm tra match trước khi cho xem lịch sử chat
+            var isMatched = await _context.Matches
+                .AnyAsync(m =>
+                    (m.User1Id == myId && m.User2Id == userId) ||
+                    (m.User1Id == userId && m.User2Id == myId));
+            if (!isMatched)
+                return BadRequest(new { message = "Bạn chưa match với người này" });
+
             var messages = await _context.Messages
                 .Where(x =>
                     (x.SenderId == myId && x.ReceiverId == userId) ||
@@ -66,6 +92,7 @@ namespace DatingApp.Controllers
 
             return Ok(messages);
         }
+
         [HttpPut("seen/{userId}")]
         public async Task<IActionResult> Seen(Guid userId)
         {

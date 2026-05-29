@@ -1,22 +1,7 @@
-﻿import { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Heart, MessageCircle, MapPin, Search, Sparkles } from "lucide-react";
-import axios from "axios";
-
-const API = "http://localhost:5267";
-
-function getToken() {
-  return localStorage.getItem("token") || sessionStorage.getItem("token");
-}
-
-function getMe() {
-  try {
-    const raw = localStorage.getItem("user") || sessionStorage.getItem("user");
-    return raw ? JSON.parse(raw) : null;
-  } catch {
-    return null;
-  }
-}
+import api from "../services/api";
 
 export default function Matches() {
   const navigate = useNavigate();
@@ -27,23 +12,16 @@ export default function Matches() {
   const [newMatchId, setNewMatchId] = useState(null); // animate khi vừa match
 
   useEffect(() => {
-    const token = getToken();
-    if (!token) { navigate("/login"); return; }
-
     // Kiểm tra xem có match mới từ state navigation không
-    // (SwipeController trả về isMatch: true)
     const state = window.history.state?.usr;
     if (state?.newMatchUserId) setNewMatchId(state.newMatchUserId);
-
-    fetchMatches(token);
+    fetchMatches();
   }, []);
 
-  async function fetchMatches(token) {
+  async function fetchMatches() {
     try {
       setLoading(true);
-      const { data } = await axios.get(`${API}/api/matches`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
+      const { data } = await api.get("/Match");
       setMatches(data);
     } catch (err) {
       if (err.response?.status === 401) navigate("/login");
@@ -54,7 +32,7 @@ export default function Matches() {
   }
 
   const filtered = matches.filter((m) =>
-    m.fullName?.toLowerCase().includes(search.toLowerCase())
+    m.partner?.fullName?.toLowerCase().includes(search.toLowerCase())
   );
 
   return (
@@ -110,7 +88,7 @@ export default function Matches() {
           <div className="text-center py-16">
             <p className="text-red-500 mb-4">{error}</p>
             <button
-              onClick={() => fetchMatches(getToken())}
+              onClick={() => fetchMatches()}
               className="px-6 py-2 bg-gradient-to-r from-[#FF5C9A] to-[#C8B6FF] text-white rounded-xl"
             >
               Thử lại
@@ -151,8 +129,10 @@ export default function Matches() {
               <MatchCard
                 key={match.id}
                 match={match}
-                isNew={match.id === newMatchId}
-                onClick={() => navigate(`/chat/${match.id}`)}
+                isNew={match.partner?.id === newMatchId}
+                onClick={() => {
+                  if (match.partner?.id) navigate(`/chat/${match.partner.id}`);
+                }}
               />
             ))}
           </div>
@@ -170,7 +150,8 @@ export default function Matches() {
 }
 
 function MatchCard({ match, isNew, onClick }) {
-  const initials = match.fullName
+  const partner = match.partner || {};
+  const initials = partner.fullName
     ?.split(" ")
     .map((w) => w[0])
     .join("")
@@ -192,10 +173,10 @@ function MatchCard({ match, isNew, onClick }) {
     >
       {/* Avatar */}
       <div className="aspect-[3/4] relative overflow-hidden bg-gradient-to-br from-pink-100 to-purple-100">
-        {match.avatarUrl ? (
+        {partner.avatarUrl ? (
           <img
-            src={match.avatarUrl}
-            alt={match.fullName}
+            src={partner.avatarUrl}
+            alt={partner.fullName}
             className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
           />
         ) : (
@@ -222,11 +203,11 @@ function MatchCard({ match, isNew, onClick }) {
 
       {/* Info */}
       <div className="p-3">
-        <p className="font-semibold text-[#1F2937] text-sm truncate">{match.fullName}</p>
-        {match.location && (
+        <p className="font-semibold text-[#1F2937] text-sm truncate">{partner.fullName}</p>
+        {partner.bio && (
           <p className="text-xs text-[#9CA3AF] flex items-center gap-1 mt-0.5 truncate">
             <MapPin className="w-3 h-3 flex-shrink-0" />
-            {match.location}
+            {partner.bio}
           </p>
         )}
       </div>

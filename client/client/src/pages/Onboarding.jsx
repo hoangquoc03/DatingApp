@@ -1,10 +1,15 @@
 import { AnimatePresence, motion } from "framer-motion";
 import { ChevronLeft, ChevronRight, Heart, Sparkles } from "lucide-react";
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
+import api from "../services/api";
+import { useAuth } from "../contexts/AuthContext";
 
 const TOTAL_STEPS = 6;
 
-export default function App() {
+export default function Onboarding() {
+  const navigate = useNavigate();
+  const { updateUser } = useAuth();
   const [currentStep, setCurrentStep] = useState(0);
   const [isLoading, setIsLoading] = useState(false);
   const [formData, setFormData] = useState({
@@ -20,13 +25,20 @@ export default function App() {
     setFormData((prev) => ({ ...prev, [key]: value }));
   };
 
-  const handleNext = () => {
+  const handleNext = async () => {
     if (currentStep === TOTAL_STEPS) {
       setIsLoading(true);
-      setTimeout(() => {
-        // Redirect to dashboard sau khi loading
-        console.log("Survey completed!", formData);
-      }, 3000);
+      try {
+        const { data } = await api.put("/User/onboarding", formData);
+        updateUser(data); // Cập nhật auth context
+        setTimeout(() => {
+          navigate("/dashboard");
+        }, 2000); // 2s loading giả cho cảm giác AI phân tích
+      } catch (err) {
+        console.error("Onboarding failed:", err);
+        setIsLoading(false);
+        // Có thể thêm báo lỗi nếu cần
+      }
     } else {
       setCurrentStep((prev) => prev + 1);
     }

@@ -1,11 +1,26 @@
 using Microsoft.AspNetCore.SignalR;
+using System.Collections.Concurrent;
 using System.Security.Claims;
 
 namespace DatingApp.Hubs
 {
     public class ChatHub : Hub
     {
-        public static HashSet<string> OnlineUsers = new();
+        // Thread-safe: dùng ConcurrentDictionary thay vì HashSet
+        // Key = userId, Value = số lượng connection đang active (hỗ trợ nhiều tab/thiết bị)
+        private static readonly ConcurrentDictionary<string, int> OnlineUserConnections = new();
+
+        /// <summary>
+        /// Kiểm tra user có đang online không
+        /// </summary>
+        public static bool IsUserOnline(string userId)
+            => OnlineUserConnections.ContainsKey(userId);
+
+        /// <summary>
+        /// Lấy danh sách tất cả user đang online
+        /// </summary>
+        public static IEnumerable<string> GetOnlineUsers()
+            => OnlineUserConnections.Keys;
 
         public override async Task OnConnectedAsync()
         {
@@ -14,17 +29,26 @@ namespace DatingApp.Hubs
 
             if (userId != null)
             {
-                OnlineUsers.Add(userId);
+                // Tăng connection count (hỗ trợ user mở nhiều tab)
+                var isNewlyOnline = OnlineUserConnections.AddOrUpdate(
+                    userId,
+                    addValue: 1,
+                    updateValueFactory: (_, count) => count + 1
+                ) == 1;
 
                 await Groups.AddToGroupAsync(
                     Context.ConnectionId,
                     userId
                 );
 
-                await Clients.All.SendAsync(
-                    "UserOnline",
-                    userId
-                );
+                // Chỉ broadcast "online" khi user vừa lên mạng (connection đầu tiên)
+                if (isNewlyOnline)
+                {
+                    await Clients.All.SendAsync(
+                        "UserOnline",
+                        userId
+                    );
+                }
             }
 
             await base.OnConnectedAsync();
@@ -37,16 +61,39 @@ namespace DatingApp.Hubs
 
             if (userId != null)
             {
-                OnlineUsers.Remove(userId);
+                var isNowOffline = false;
 
-                await Clients.All.SendAsync(
-                    "UserOffline",
-                    userId
+                OnlineUserConnections.AddOrUpdate(
+                    userId,
+                    addValue: 0,
+                    updateValueFactory: (key, count) =>
+                    {
+                        var newCount = count - 1;
+                        if (newCount <= 0)
+                        {
+                            isNowOffline = true;
+                            // Trả về 0, sẽ remove bên dưới
+                            return 0;
+                        }
+                        return newCount;
+                    }
                 );
+
+                // Xóa khỏi dictionary nếu không còn connection nào
+                if (isNowOffline)
+                {
+                    OnlineUserConnections.TryRemove(userId, out _);
+
+                    await Clients.All.SendAsync(
+                        "UserOffline",
+                        userId
+                    );
+                }
             }
 
             await base.OnDisconnectedAsync(ex);
         }
+
         public async Task Typing(string receiverId)
         {
             var senderId = Context.User?

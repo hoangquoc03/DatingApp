@@ -27,6 +27,15 @@ namespace DatingApp.Models
 
         public string Location { get; set; }
 
+        // Onboarding fields
+        public string? LookingFor { get; set; }
+        public List<string>? Interests { get; set; } = new List<string>();
+        public string? Lifestyle { get; set; }
+        public List<string>? Values { get; set; } = new List<string>();
+        public int? MaxDistance { get; set; }
+        public string? Vibe { get; set; }
+        public bool IsOnboarded { get; set; } = false;
+
         public bool IsVerified { get; set; } = false;
 
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;

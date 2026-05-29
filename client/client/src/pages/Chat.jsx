@@ -1,4 +1,4 @@
-﻿import { useEffect, useRef, useState, useCallback } from "react";
+import { useEffect, useRef, useState, useCallback } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import {
   ArrowLeft,
@@ -10,10 +10,11 @@ import {
   CheckCheck,
   Loader2,
 } from "lucide-react";
-import axios from "axios";
+import api from "../services/api";
 import * as signalR from "@microsoft/signalr";
 
-const API = "http://localhost:5267";
+// SignalR cần URL gốc (không có /api), lấy từ baseURL của api instance
+const SIGNALR_BASE = api.defaults.baseURL.replace(/\/api\/?$/, "");
 
 function getToken() {
   return localStorage.getItem("token") || sessionStorage.getItem("token");
@@ -52,9 +53,8 @@ export default function Chat() {
   const typingTimer = useRef(null);
   const inputRef = useRef(null);
 
-  // ── Guard ─────────────────────────────────────────────────────────────────
+  // ── Guard + Init ─────────────────────────────────────────────────────────
   useEffect(() => {
-    if (!token || !me) { navigate("/login"); return; }
     fetchMatches();
     connectHub();
     return () => hubRef.current?.stop();
@@ -84,9 +84,7 @@ export default function Chat() {
   async function fetchMatches() {
     try {
       setMatchesLoading(true);
-      const { data } = await axios.get(`${API}/api/matches`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
+      const { data } = await api.get("/Match");
       setMatches(data);
       if (paramId && !activeChatId) setActiveChatId(paramId);
     } catch (err) {
@@ -100,9 +98,7 @@ export default function Chat() {
   async function fetchMessages(userId) {
     try {
       setMsgLoading(true);
-      const { data } = await axios.get(`${API}/api/messages/${userId}`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
+      const { data } = await api.get(`/Messages/${userId}`);
       setMessages(data);
     } catch (err) {
       console.error("fetchMessages:", err);
@@ -114,16 +110,14 @@ export default function Chat() {
   // ─── Mark seen ────────────────────────────────────────────────────────────
   async function markSeen(userId) {
     try {
-      await axios.put(`${API}/api/messages/seen/${userId}`, {}, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
+      await api.put(`/Messages/seen/${userId}`);
     } catch {}
   }
 
   // ─── SignalR ──────────────────────────────────────────────────────────────
   function connectHub() {
     const connection = new signalR.HubConnectionBuilder()
-      .withUrl(`${API}/chatHub?access_token=${token}`)
+      .withUrl(`${SIGNALR_BASE}/chatHub?access_token=${token}`)
       .withAutomaticReconnect()
       .build();
 
@@ -189,11 +183,10 @@ export default function Chat() {
 
     try {
       setSending(true);
-      const { data: saved } = await axios.post(
-        `${API}/api/messages`,
-        { receiverId: activeChatId, content },
-        { headers: { Authorization: `Bearer ${token}` } }
-      );
+      const { data: saved } = await api.post("/Messages", {
+        receiverId: activeChatId,
+        content,
+      });
       // Thay thế optimistic bằng bản thật
       setMessages((prev) =>
         prev.map((m) => (m.id === optimistic.id ? saved : m))

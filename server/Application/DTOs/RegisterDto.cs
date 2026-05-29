@@ -1,6 +1,6 @@
 using DatingApp.Enums;
 
-namespace DatingApp.DTo.cs
+namespace DatingApp.DTOs
 {
     public class RegisterDto
 {

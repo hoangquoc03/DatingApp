@@ -1,20 +1,19 @@
 import { GoogleLogin } from "@react-oauth/google";
-import api from "../services/api";
 import { Eye, EyeOff, Heart, Lock, Mail, Sparkles } from "lucide-react";
 import { useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
+import { useAuth } from "../contexts/AuthContext";
 
 export default function Login() {
+  const { login, loginGoogle, loading } = useAuth();
+  const location = useLocation();
+  // Nếu user bị redirect từ trang khác, sau login quay lại trang đó
+  const from = location.state?.from?.pathname || "/dashboard";
+
   const [showPassword, setShowPassword] = useState(false);
   const [rememberMe, setRememberMe] = useState(false);
-  const navigate = useNavigate();
-  const [form, setForm] = useState({
-    email: "",
-    password: "",
-  });
-
+  const [form, setForm] = useState({ email: "", password: "" });
   const [errors, setErrors] = useState({});
-  const [loading, setLoading] = useState(false);
 
   // Xử lý thay đổi dữ liệu ô nhập
   const handleChange = (e) => {
@@ -50,46 +49,21 @@ export default function Login() {
   // Xử lý gửi form đăng nhập thông thường
   const handleSubmit = async (e) => {
     e.preventDefault();
-
     const validationErrors = validateForm();
     if (Object.keys(validationErrors).length) {
       setErrors(validationErrors);
       return;
     }
-
-    try {
-      setLoading(true);
-      setErrors({});
-
-      const payload = {
-        email: form.email.trim().toLowerCase(),
-        password: form.password,
-      };
-
-      const { data } = await api.post("/Auth/login", payload);
-      const storage = rememberMe ? localStorage : sessionStorage;
-
-      storage.setItem("token", data.accessToken || data.token);
-      if (data.refreshToken) {
-        storage.setItem("refreshToken", data.refreshToken);
-      }
-      storage.setItem("user", JSON.stringify(data.user));
-
-      navigate("/dashboard");
-    } catch (err) {
-      console.error("Lỗi Đăng Nhập:", err);
-      if (err.response?.status === 401) {
-        setErrors({
-          general: "Email hoặc mật khẩu không chính xác",
-        });
-      } else {
-        setErrors({
-          general: "Không thể kết nối tới máy chủ. Vui lòng kiểm tra lại Backend!",
-        });
-      }
-    } finally {
-      setLoading(false);
+    setErrors({});
+    const result = await login(
+      form.email.trim().toLowerCase(),
+      form.password,
+      rememberMe,
+    );
+    if (!result.success) {
+      setErrors({ general: result.message });
     }
+    // Nếu thành công: AuthContext tự navigate đến trang phù hợp
   };
 
   return (
@@ -297,35 +271,16 @@ export default function Login() {
                     <div className="flex justify-center w-full transform hover:scale-[1.01] transition-transform">
                       <GoogleLogin
                         onSuccess={async (credentialResponse) => {
-                          try {
-                            setLoading(true);
-                            setErrors({});
-
-                            const response = await api.post("/Auth/google-login", {
-                              credential: credentialResponse.credential,
-                            });
-
-                            const { token, accessToken, refreshToken, user } = response.data;
-                            const storage = rememberMe ? localStorage : sessionStorage;
-
-                            storage.setItem("token", accessToken || token);
-                            if (refreshToken) {
-                              storage.setItem("refreshToken", refreshToken);
-                            }
-                            storage.setItem("user", JSON.stringify(user));
-
-                            navigate("/dashboard");
-                          } catch (err) {
-                            console.error("Đăng nhập Google thất bại:", err);
-                            setErrors({
-                              general: "Xác thực Google thành công nhưng Server từ chối kết nối hoặc tạo User thất bại.",
-                            });
-                          } finally {
-                            setLoading(false);
+                          setErrors({});
+                          const result = await loginGoogle(
+                            credentialResponse.credential,
+                            rememberMe,
+                          );
+                          if (!result.success) {
+                            setErrors({ general: result.message });
                           }
                         }}
                         onError={() => {
-                          console.log("Google Sign-In Failed");
                           setErrors({ general: "Yêu cầu đăng nhập qua tài khoản Google bị hủy bỏ." });
                         }}
                         useOneTap
