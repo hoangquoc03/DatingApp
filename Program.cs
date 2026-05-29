@@ -60,6 +60,9 @@ builder.Services
 // ── Cloudinary ────────────────────────────────────────────────────────────────
 builder.Services.AddSingleton<CloudinaryService>();
 builder.Services.AddScoped<EmailService>();
+builder.Services.AddScoped<AuthService>();
+builder.Services.AddScoped<UserService>();
+builder.Services.AddScoped<SwipeService>();
 
 // ── CORS ──────────────────────────────────────────────────────────────────────
 builder.Services.AddCors(options =>

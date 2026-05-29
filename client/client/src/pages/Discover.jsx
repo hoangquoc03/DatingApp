@@ -1,4 +1,4 @@
-﻿import { useEffect, useState, useRef, useCallback } from "react";
+import { useEffect, useState, useRef, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { Heart, X, Star, MapPin, Info, Loader2, RefreshCw } from "lucide-react";
 import TinderCard from "react-tinder-card";
@@ -32,13 +32,8 @@ export default function Discover() {
   const cardRefs = useRef([]);
 
   useEffect(() => {
-    const token = localStorage.getItem("token") || sessionStorage.getItem("token");
-    if (!token) {
-      navigate("/login");
-      return;
-    }
     fetchUsers(1, true);
-  }, [navigate]);
+  }, []);
 
   async function fetchUsers(nextPage, reset = false) {
     try {

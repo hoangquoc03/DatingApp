@@ -1,11 +1,7 @@
-﻿import { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Heart, MessageCircle, MapPin, Search, Sparkles } from "lucide-react";
 import api from "../services/api";
-
-function getToken() {
-  return localStorage.getItem("token") || sessionStorage.getItem("token");
-}
 
 export default function Matches() {
   const navigate = useNavigate();
@@ -16,14 +12,9 @@ export default function Matches() {
   const [newMatchId, setNewMatchId] = useState(null); // animate khi vừa match
 
   useEffect(() => {
-    const token = getToken();
-    if (!token) { navigate("/login"); return; }
-
     // Kiểm tra xem có match mới từ state navigation không
-    // (SwipeController trả về isMatch: true)
     const state = window.history.state?.usr;
     if (state?.newMatchUserId) setNewMatchId(state.newMatchUserId);
-
     fetchMatches();
   }, []);
 

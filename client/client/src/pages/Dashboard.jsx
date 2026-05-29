@@ -5,12 +5,14 @@ import {
   ChevronRight,
   Eye,
   Heart,
+  LogOut,
   MapPin,
   MessageCircle,
   Sparkles,
   TrendingUp,
 } from "lucide-react";
 import api from "../services/api";
+import { useAuth } from "../contexts/AuthContext";
 
 function calculateAge(dateOfBirth) {
   if (!dateOfBirth) return null;
@@ -21,6 +23,7 @@ function calculateAge(dateOfBirth) {
 
 export default function Dashboard() {
   const navigate = useNavigate();
+  const { logout } = useAuth();
   const [profile, setProfile] = useState(null);
   const [discoverUsers, setDiscoverUsers] = useState([]);
   const [matches, setMatches] = useState([]);
@@ -28,12 +31,6 @@ export default function Dashboard() {
   const [error, setError] = useState("");
 
   useEffect(() => {
-    const token = localStorage.getItem("token") || sessionStorage.getItem("token");
-    if (!token) {
-      navigate("/login");
-      return;
-    }
-
     let ignore = false;
     async function loadData() {
       try {
@@ -54,7 +51,7 @@ export default function Dashboard() {
           navigate("/login");
           return;
         }
-        setError("Không thể tải dữ liệu thật từ server.");
+        setError("Không thể tải dữ liệu từ server. Vui lòng thử lại!");
       } finally {
         if (!ignore) setLoading(false);
       }
@@ -201,6 +198,15 @@ export default function Dashboard() {
                 <div className="text-[#6B7280] text-xs">{profile?.isVerified ? "Verified" : "Thành viên"}</div>
               </div>
             </div>
+            {/* Nút Đăng xuất */}
+            <button
+              onClick={logout}
+              title="Đăng xuất"
+              className="flex items-center gap-1.5 px-3 py-2 text-sm text-[#6B7280] hover:text-red-500 hover:bg-red-50 rounded-xl transition-all"
+            >
+              <LogOut className="w-4 h-4" />
+              <span className="hidden sm:block">Thoát</span>
+            </button>
           </div>
         </div>
       </header>
