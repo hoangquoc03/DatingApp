@@ -10,9 +10,11 @@ import {
   MessageCircle,
   Sparkles,
   TrendingUp,
+  X
 } from "lucide-react";
 import api from "../services/api";
 import { useAuth } from "../contexts/AuthContext";
+import * as signalR from "@microsoft/signalr";
 
 function calculateAge(dateOfBirth) {
   if (!dateOfBirth) return null;
@@ -30,21 +32,30 @@ export default function Dashboard() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
+  // Notifications
+  const [notifications, setNotifications] = useState([]);
+  const [unreadCount, setUnreadCount] = useState(0);
+  const [showNotifDropdown, setShowNotifDropdown] = useState(false);
+  const [toastNotif, setToastNotif] = useState(null);
+
   useEffect(() => {
     let ignore = false;
     async function loadData() {
       try {
         setLoading(true);
         setError("");
-        const [profileRes, discoverRes, matchesRes] = await Promise.all([
+        const [profileRes, discoverRes, matchesRes, notifRes] = await Promise.all([
           api.get("/User/profile"),
           api.get("/User/discover?page=1&pageSize=4"),
           api.get("/Match"),
+          api.get("/Notification"),
         ]);
         if (ignore) return;
         setProfile(profileRes.data);
         setDiscoverUsers(discoverRes.data?.data || []);
         setMatches(Array.isArray(matchesRes.data) ? matchesRes.data : []);
+        setNotifications(notifRes.data?.notifications || []);
+        setUnreadCount(notifRes.data?.unreadCount || 0);
       } catch (err) {
         if (ignore) return;
         if (err.response?.status === 401) {
@@ -58,18 +69,59 @@ export default function Dashboard() {
     }
 
     loadData();
+
+    // SignalR cho Notifications
+    const token = localStorage.getItem("token");
+    const connection = new signalR.HubConnectionBuilder()
+      .withUrl(`http://localhost:5032/chatHub?access_token=${token}`)
+      .withAutomaticReconnect()
+      .build();
+
+    connection.start().catch((err) => console.error("SignalR Connection Error: ", err));
+
+    connection.on("ReceiveNotification", (notif) => {
+      setNotifications((prev) => [notif, ...prev]);
+      setUnreadCount((prev) => prev + 1);
+      
+      // Hiển thị toast realtime
+      setToastNotif(notif);
+      setTimeout(() => setToastNotif(null), 5000);
+    });
+
     return () => {
       ignore = true;
+      connection.stop();
     };
   }, [navigate]);
 
+  // Đánh dấu đã đọc
+  const markAsRead = async (id) => {
+    try {
+      await api.put(`/Notification/${id}/read`);
+      setNotifications(prev => prev.map(n => n.id === id ? { ...n, isRead: true } : n));
+      setUnreadCount(prev => Math.max(0, prev - 1));
+    } catch (e) {
+      console.error(e);
+    }
+  };
+
+  const markAllAsRead = async () => {
+    try {
+      await api.put(`/Notification/read-all`);
+      setNotifications(prev => prev.map(n => ({ ...n, isRead: true })));
+      setUnreadCount(0);
+    } catch (e) {
+      console.error(e);
+    }
+  };
+
   const menuItems = [
-    { label: "Dành cho bạn", active: true },
-    { label: "Hồ sơ của tôi", active: false },
-    { label: "Lượt thích", active: false },
-    { label: "Tương hợp cao", active: false },
-    { label: "Tin nhắn", active: false },
-    { label: "Cài đặt", active: false },
+    { label: "Dành cho bạn", active: true, onClick: null },
+    { label: "Hồ sơ của tôi", active: false, onClick: () => navigate("/profile") },
+    { label: "Lượt thích", active: false, onClick: null },
+    { label: "Tương hợp cao", active: false, onClick: null },
+    { label: "Tin nhắn", active: false, onClick: () => navigate("/chat") },
+    { label: "Cài đặt", active: false, onClick: null },
   ];
 
   const suggestedMatches = useMemo(
@@ -180,10 +232,64 @@ export default function Dashboard() {
             </nav>
           </div>
           <div className="flex items-center gap-4">
-            <button className="relative p-2.5 hover:bg-gray-50 rounded-xl transition-colors">
-              <Bell className="w-5 h-5 text-[#6B7280]" />
-              <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-[#FF5C9A] rounded-full"></span>
-            </button>
+            
+            {/* ── Notification Bell ── */}
+            <div className="relative">
+              <button 
+                onClick={() => setShowNotifDropdown(!showNotifDropdown)}
+                className="relative p-2.5 hover:bg-gray-50 rounded-xl transition-colors"
+              >
+                <Bell className="w-5 h-5 text-[#6B7280]" />
+                {unreadCount > 0 && (
+                  <span className="absolute top-1.5 right-1.5 w-4 h-4 bg-[#FF5C9A] text-white text-[10px] font-bold flex items-center justify-center rounded-full border-2 border-white">
+                    {unreadCount}
+                  </span>
+                )}
+              </button>
+
+              {showNotifDropdown && (
+                <div className="absolute top-full right-0 mt-2 w-80 bg-white rounded-2xl shadow-xl border border-gray-100 z-50 overflow-hidden">
+                  <div className="p-4 border-b border-gray-100 flex items-center justify-between bg-gray-50/50">
+                    <h3 className="font-bold text-[#1F2937]">Thông báo</h3>
+                    {unreadCount > 0 && (
+                      <button onClick={markAllAsRead} className="text-xs text-[#FF5C9A] font-medium hover:underline">
+                        Đánh dấu đã đọc tất cả
+                      </button>
+                    )}
+                  </div>
+                  <div className="max-h-96 overflow-y-auto">
+                    {notifications.length === 0 ? (
+                      <div className="p-8 text-center text-[#9CA3AF] text-sm">
+                        Chưa có thông báo nào.
+                      </div>
+                    ) : (
+                      notifications.map(notif => (
+                        <div 
+                          key={notif.id} 
+                          onClick={() => !notif.isRead && markAsRead(notif.id)}
+                          className={`p-4 border-b border-gray-50 hover:bg-gray-50 transition-colors cursor-pointer flex gap-3 ${!notif.isRead ? 'bg-pink-50/30' : ''}`}
+                        >
+                          <div className="w-10 h-10 rounded-full bg-gradient-to-br from-[#FF5C9A]/20 to-[#C8B6FF]/20 flex items-center justify-center flex-shrink-0">
+                            {notif.type === 'NewMatch' ? '🎉' : '🔔'}
+                          </div>
+                          <div>
+                            <p className={`text-sm ${!notif.isRead ? 'font-semibold text-[#1F2937]' : 'text-[#6B7280]'}`}>
+                              {notif.content}
+                            </p>
+                            <span className="text-xs text-[#9CA3AF] mt-1 block">
+                              {new Date(notif.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                            </span>
+                          </div>
+                          {!notif.isRead && (
+                            <div className="w-2 h-2 rounded-full bg-[#FF5C9A] mt-2 ml-auto flex-shrink-0" />
+                          )}
+                        </div>
+                      ))
+                    )}
+                  </div>
+                </div>
+              )}
+            </div>
             <div className="flex items-center gap-3 pl-4 border-l border-gray-200">
               <div className="relative">
                 <img
@@ -223,10 +329,7 @@ export default function Dashboard() {
                   <button
                     type="button"
                     key={index}
-                    onClick={() => {
-                      if (item.label === "Dành cho bạn") navigate("/dashboard");
-                      if (item.label === "Lượt thích" || item.label === "Tin nhắn") navigate("/matches");
-                    }}
+                    onClick={() => item.onClick?.()}
                     className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-all ${
                       item.active
                         ? "bg-gradient-to-r from-[#FF5C9A] to-[#C8B6FF] text-white shadow-lg shadow-[#FF5C9A]/20"
@@ -595,6 +698,28 @@ export default function Dashboard() {
           </aside>
         </div>
       </div>
+      {/* ── Realtime Toast Notification ── */}
+      {toastNotif && (
+        <div className="fixed bottom-6 right-6 z-[100] bg-white rounded-2xl shadow-2xl border border-gray-100 p-4 flex items-center gap-4 animate-[slideIn_0.3s_ease-out]">
+          <div className="w-12 h-12 rounded-full bg-gradient-to-br from-[#FF5C9A]/20 to-[#C8B6FF]/20 flex items-center justify-center text-xl shadow-inner">
+            {toastNotif.type === 'NewMatch' ? '🎉' : '🔔'}
+          </div>
+          <div>
+            <h4 className="font-bold text-[#1F2937] text-sm">Thông báo mới</h4>
+            <p className="text-[#6B7280] text-sm">{toastNotif.content}</p>
+          </div>
+          <button onClick={() => setToastNotif(null)} className="ml-2 text-gray-400 hover:text-gray-600">
+            <X className="w-4 h-4" />
+          </button>
+        </div>
+      )}
+
+      <style>{`
+        @keyframes slideIn {
+          from { transform: translateX(100%); opacity: 0; }
+          to { transform: translateX(0); opacity: 1; }
+        }
+      `}</style>
     </div>
   );
 }

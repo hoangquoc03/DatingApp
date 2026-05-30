@@ -5,6 +5,7 @@ using DatingApp.Data;
 using DatingApp.Models;
 using DatingApp.DTOs;
 using DatingApp.Hubs;
+using DatingApp.Services;
 using Microsoft.AspNetCore.SignalR;
 using System.Security.Claims;
 
@@ -17,69 +18,124 @@ namespace DatingApp.Controllers
     {
         private readonly AppDbContext _context;
         private readonly IHubContext<ChatHub> _hub;
+        private readonly CloudinaryService _cloudinary;
 
         public MessagesController(
             AppDbContext context,
-            IHubContext<ChatHub> hub)
+            IHubContext<ChatHub> hub,
+            CloudinaryService cloudinary)
         {
             _context = context;
             _hub = hub;
+            _cloudinary = cloudinary;
         }
 
+        // ── Gửi tin nhắn văn bản ─────────────────────────────────────────────
         [HttpPost]
-        public async Task<IActionResult> Send(SendMessageDto dto)
+        public async Task<IActionResult> Send([FromBody] SendMessageDto dto)
         {
-            var senderId =
-                Guid.Parse(User.FindFirst(ClaimTypes.NameIdentifier)!.Value);
+            var senderId = GetUserId();
+            if (senderId == null) return Unauthorized();
 
-            // 🔹 FIX: Chặn nhắn tin cho chính mình
             if (dto.ReceiverId == senderId)
                 return BadRequest(new { message = "Không thể nhắn tin cho chính mình" });
 
-            // 🔹 FIX: Kiểm tra người nhận có tồn tại không
-            var receiverExists = await _context.Users
-                .AnyAsync(u => u.Id == dto.ReceiverId);
+            var receiverExists = await _context.Users.AnyAsync(u => u.Id == dto.ReceiverId);
             if (!receiverExists)
                 return NotFound(new { message = "Người nhận không tồn tại" });
 
-            // 🔹 FIX: Kiểm tra hai người đã match chưa — chỉ cho nhắn tin khi đã match
-            var isMatched = await _context.Matches
-                .AnyAsync(m =>
-                    (m.User1Id == senderId && m.User2Id == dto.ReceiverId) ||
-                    (m.User1Id == dto.ReceiverId && m.User2Id == senderId));
+            var isMatched = await CheckMatch(senderId.Value, dto.ReceiverId);
             if (!isMatched)
                 return BadRequest(new { message = "Bạn chưa match với người này. Hãy match trước khi nhắn tin!" });
 
             var message = new Message
             {
                 Id = Guid.NewGuid(),
-                SenderId = senderId,
+                SenderId = senderId.Value,
                 ReceiverId = dto.ReceiverId,
-                Content = dto.Content,
+                Content = dto.Content?.Trim() ?? "",
                 SentAt = DateTime.UtcNow
             };
 
             _context.Messages.Add(message);
             await _context.SaveChangesAsync();
 
+            // Broadcast realtime cho người nhận
+            var msgPayload = BuildMessagePayload(message);
             await _hub.Clients
                 .Group(dto.ReceiverId.ToString())
-                .SendAsync("ReceiveMessage", message);
+                .SendAsync("ReceiveMessage", msgPayload);
 
-            return Ok(message);
+            return Ok(msgPayload);
         }
 
+        // ── Gửi tin nhắn ảnh ─────────────────────────────────────────────────
+        [HttpPost("image")]
+        public async Task<IActionResult> SendImage([FromForm] Guid receiverId, IFormFile file)
+        {
+            var senderId = GetUserId();
+            if (senderId == null) return Unauthorized();
+
+            if (receiverId == senderId)
+                return BadRequest(new { message = "Không thể nhắn tin cho chính mình" });
+
+            var receiverExists = await _context.Users.AnyAsync(u => u.Id == receiverId);
+            if (!receiverExists)
+                return NotFound(new { message = "Người nhận không tồn tại" });
+
+            var isMatched = await CheckMatch(senderId.Value, receiverId);
+            if (!isMatched)
+                return BadRequest(new { message = "Bạn chưa match với người này" });
+
+            // Upload ảnh lên Cloudinary
+            string imageUrl;
+            try
+            {
+                var folderName = senderId.Value.CompareTo(receiverId) < 0 
+                    ? $"{senderId.Value}_{receiverId}" 
+                    : $"{receiverId}_{senderId.Value}";
+
+                var uploadResult = await _cloudinary.UploadImageAsync(file, $"chat_images/{folderName}");
+                imageUrl = uploadResult.Url;
+            }
+            catch (ArgumentException ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { message = $"Upload thất bại: {ex.Message}" });
+            }
+
+            var message = new Message
+            {
+                Id = Guid.NewGuid(),
+                SenderId = senderId.Value,
+                ReceiverId = receiverId,
+                Content = "",      // Tin nhắn ảnh không có text
+                ImageUrl = imageUrl,
+                SentAt = DateTime.UtcNow
+            };
+
+            _context.Messages.Add(message);
+            await _context.SaveChangesAsync();
+
+            var msgPayload = BuildMessagePayload(message);
+            await _hub.Clients
+                .Group(receiverId.ToString())
+                .SendAsync("ReceiveMessage", msgPayload);
+
+            return Ok(msgPayload);
+        }
+
+        // ── Lấy lịch sử chat ─────────────────────────────────────────────────
         [HttpGet("{userId}")]
         public async Task<IActionResult> GetChat(Guid userId)
         {
-            var myId =
-                Guid.Parse(User.FindFirst(ClaimTypes.NameIdentifier)!.Value);
+            var myId = GetUserId();
+            if (myId == null) return Unauthorized();
 
-            // 🔹 FIX: Kiểm tra match trước khi cho xem lịch sử chat
-            var isMatched = await _context.Matches
-                .AnyAsync(m =>
-                    (m.User1Id == myId && m.User2Id == userId) ||
-                    (m.User1Id == userId && m.User2Id == myId));
+            var isMatched = await CheckMatch(myId.Value, userId);
             if (!isMatched)
                 return BadRequest(new { message = "Bạn chưa match với người này" });
 
@@ -88,17 +144,28 @@ namespace DatingApp.Controllers
                     (x.SenderId == myId && x.ReceiverId == userId) ||
                     (x.SenderId == userId && x.ReceiverId == myId))
                 .OrderBy(x => x.SentAt)
+                .Select(x => new
+                {
+                    x.Id,
+                    x.SenderId,
+                    x.ReceiverId,
+                    x.Content,
+                    x.ImageUrl,
+                    x.IsSeen,
+                    x.SeenAt,
+                    x.SentAt
+                })
                 .ToListAsync();
 
             return Ok(messages);
         }
 
+        // ── Đánh dấu đã đọc + Broadcast realtime ─────────────────────────────
         [HttpPut("seen/{userId}")]
         public async Task<IActionResult> Seen(Guid userId)
         {
-            var myId = Guid.Parse(
-                User.FindFirst(ClaimTypes.NameIdentifier)!.Value
-            );
+            var myId = GetUserId();
+            if (myId == null) return Unauthorized();
 
             var messages = await _context.Messages
                 .Where(x =>
@@ -107,16 +174,54 @@ namespace DatingApp.Controllers
                     !x.IsSeen)
                 .ToListAsync();
 
-            foreach (var msg in messages)
+            if (messages.Count > 0)
             {
-                msg.IsSeen = true;
-                msg.SeenAt = DateTime.UtcNow;
+                var now = DateTime.UtcNow;
+                foreach (var msg in messages)
+                {
+                    msg.IsSeen = true;
+                    msg.SeenAt = now;
+                }
+                await _context.SaveChangesAsync();
+
+                // ✅ Broadcast realtime cho người gửi biết tin nhắn đã được đọc
+                await _hub.Clients
+                    .Group(userId.ToString())
+                    .SendAsync("MessagesSeen", new
+                    {
+                        byUserId = myId.Value.ToString(),
+                        seenAt = now
+                    });
             }
 
-            await _context.SaveChangesAsync();
-
-            return Ok();
+            return Ok(new { seenCount = messages.Count });
         }
-    }
 
+        // ── Helpers ───────────────────────────────────────────────────────────
+        private Guid? GetUserId()
+        {
+            var value = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            return Guid.TryParse(value, out var id) ? id : null;
+        }
+
+        private async Task<bool> CheckMatch(Guid userId1, Guid userId2)
+        {
+            return await _context.Matches
+                .AnyAsync(m =>
+                    (m.User1Id == userId1 && m.User2Id == userId2) ||
+                    (m.User1Id == userId2 && m.User2Id == userId1));
+        }
+
+        private static object BuildMessagePayload(Message msg) => new
+        {
+            msg.Id,
+            senderId = msg.SenderId,
+            receiverId = msg.ReceiverId,
+            msg.Content,
+            msg.ImageUrl,
+            msg.IsSeen,
+            msg.SeenAt,
+            msg.SentAt
+        };
+    }
 }

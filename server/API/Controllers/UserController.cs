@@ -58,13 +58,51 @@ namespace DatingApp.Controllers
             return result.Success ? Ok(result.Data) : StatusCode(result.StatusCode, new { message = result.Message });
         }
 
-        [HttpGet("discover")]
-        public async Task<IActionResult> Discover([FromQuery] int page = 1, [FromQuery] int pageSize = 10)
+        // ─── PHOTO GALLERY ────────────────────────────────────────────────────────
+
+        [HttpPost("photos")]
+        public async Task<IActionResult> AddPhoto(IFormFile file)
         {
             var userId = GetUserId();
             if (userId == null) return Unauthorized();
 
-            var result = await _userService.DiscoverAsync(userId.Value, page, pageSize);
+            var result = await _userService.AddPhotoAsync(userId.Value, file);
+            return result.Success ? Ok(result.Data) : StatusCode(result.StatusCode, new { message = result.Message });
+        }
+
+        [HttpDelete("photos/{photoId}")]
+        public async Task<IActionResult> DeletePhoto(int photoId)
+        {
+            var userId = GetUserId();
+            if (userId == null) return Unauthorized();
+
+            var result = await _userService.DeletePhotoAsync(userId.Value, photoId);
+            return result.Success ? Ok(new { message = result.Message }) : StatusCode(result.StatusCode, new { message = result.Message });
+        }
+
+        [HttpPut("photos/{photoId}/setMain")]
+        public async Task<IActionResult> SetMainPhoto(int photoId)
+        {
+            var userId = GetUserId();
+            if (userId == null) return Unauthorized();
+
+            var result = await _userService.SetMainPhotoAsync(userId.Value, photoId);
+            return result.Success ? Ok(new { message = result.Message }) : StatusCode(result.StatusCode, new { message = result.Message });
+        }
+
+        [HttpGet("discover")]
+        public async Task<IActionResult> Discover(
+            [FromQuery] int page = 1,
+            [FromQuery] int pageSize = 10,
+            [FromQuery] int? ageMin = null,
+            [FromQuery] int? ageMax = null,
+            [FromQuery] string? gender = null,
+            [FromQuery] int? maxDistance = null)
+        {
+            var userId = GetUserId();
+            if (userId == null) return Unauthorized();
+
+            var result = await _userService.DiscoverAsync(userId.Value, page, pageSize, ageMin, ageMax, gender, maxDistance);
             return result.Success ? Ok(result.Data) : StatusCode(result.StatusCode, new { message = result.Message });
         }
 

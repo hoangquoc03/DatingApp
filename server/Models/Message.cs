@@ -11,6 +11,7 @@ namespace DatingApp.Models
         public User Receiver { get; set; }
 
         public string Content { get; set; }
+        public string? ImageUrl { get; set; }  // null = tin nhắn text thuần
         public bool IsSeen { get; set; } = false;
         public DateTime? SeenAt { get; set; }
         public DateTime SentAt { get; set; } = DateTime.UtcNow;

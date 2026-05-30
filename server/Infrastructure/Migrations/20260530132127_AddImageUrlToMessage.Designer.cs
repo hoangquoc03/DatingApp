@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using DatingApp.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
@@ -12,9 +13,11 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace DatingApp.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260530132127_AddImageUrlToMessage")]
+    partial class AddImageUrlToMessage
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -87,69 +90,6 @@ namespace DatingApp.Migrations
                     b.ToTable("Messages");
                 });
 
-            modelBuilder.Entity("DatingApp.Models.Notification", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("integer");
-
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
-
-                    b.Property<string>("Content")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("timestamp without time zone");
-
-                    b.Property<bool>("IsRead")
-                        .HasColumnType("boolean");
-
-                    b.Property<Guid?>("RelatedUserId")
-                        .HasColumnType("uuid");
-
-                    b.Property<string>("Type")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.Property<Guid>("UserId")
-                        .HasColumnType("uuid");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("UserId");
-
-                    b.ToTable("Notifications");
-                });
-
-            modelBuilder.Entity("DatingApp.Models.Photo", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("integer");
-
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
-
-                    b.Property<bool>("IsMain")
-                        .HasColumnType("boolean");
-
-                    b.Property<string>("PublicId")
-                        .HasColumnType("text");
-
-                    b.Property<string>("Url")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.Property<Guid>("UserId")
-                        .HasColumnType("uuid");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("UserId");
-
-                    b.ToTable("Photos");
-                });
-
             modelBuilder.Entity("DatingApp.Models.Swipe", b =>
                 {
                     b.Property<Guid>("Id")
@@ -197,12 +137,6 @@ namespace DatingApp.Migrations
                     b.Property<DateTime?>("DateOfBirth")
                         .HasColumnType("timestamp without time zone");
 
-                    b.Property<string>("Drinking")
-                        .HasColumnType("text");
-
-                    b.Property<string>("Education")
-                        .HasColumnType("text");
-
                     b.Property<string>("Email")
                         .IsRequired()
                         .HasColumnType("text");
@@ -212,9 +146,6 @@ namespace DatingApp.Migrations
                         .HasColumnType("text");
 
                     b.Property<int>("Gender")
-                        .HasColumnType("integer");
-
-                    b.Property<int?>("Height")
                         .HasColumnType("integer");
 
                     b.Property<int?>("InterestedIn")
@@ -242,12 +173,6 @@ namespace DatingApp.Migrations
                     b.Property<int?>("MaxDistance")
                         .HasColumnType("integer");
 
-                    b.Property<string>("Mbti")
-                        .HasColumnType("text");
-
-                    b.Property<string>("Occupation")
-                        .HasColumnType("text");
-
                     b.Property<string>("PasswordHash")
                         .IsRequired()
                         .HasColumnType("text");
@@ -264,9 +189,6 @@ namespace DatingApp.Migrations
                     b.Property<string>("RefreshTokenHash")
                         .HasColumnType("text");
 
-                    b.Property<string>("Smoking")
-                        .HasColumnType("text");
-
                     b.Property<int>("Status")
                         .HasColumnType("integer");
 
@@ -277,9 +199,6 @@ namespace DatingApp.Migrations
                         .HasColumnType("text[]");
 
                     b.Property<string>("Vibe")
-                        .HasColumnType("text");
-
-                    b.Property<string>("Zodiac")
                         .HasColumnType("text");
 
                     b.HasKey("Id");
@@ -325,28 +244,6 @@ namespace DatingApp.Migrations
                     b.Navigation("Sender");
                 });
 
-            modelBuilder.Entity("DatingApp.Models.Notification", b =>
-                {
-                    b.HasOne("DatingApp.Models.User", "User")
-                        .WithMany()
-                        .HasForeignKey("UserId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("User");
-                });
-
-            modelBuilder.Entity("DatingApp.Models.Photo", b =>
-                {
-                    b.HasOne("DatingApp.Models.User", "User")
-                        .WithMany("Photos")
-                        .HasForeignKey("UserId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("User");
-                });
-
             modelBuilder.Entity("DatingApp.Models.Swipe", b =>
                 {
                     b.HasOne("DatingApp.Models.User", "FromUser")
@@ -368,8 +265,6 @@ namespace DatingApp.Migrations
 
             modelBuilder.Entity("DatingApp.Models.User", b =>
                 {
-                    b.Navigation("Photos");
-
                     b.Navigation("SwipesReceived");
 
                     b.Navigation("SwipesSent");

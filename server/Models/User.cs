@@ -27,6 +27,19 @@ namespace DatingApp.Models
 
         public string Location { get; set; }
 
+        // Thông tin nâng cao
+        public int? Height { get; set; }
+        public string? Occupation { get; set; }
+        public string? Education { get; set; }
+
+        // Tính cách
+        public string? Zodiac { get; set; }
+        public string? Mbti { get; set; }
+
+        // Lối sống
+        public string? Smoking { get; set; }
+        public string? Drinking { get; set; }
+
         // Onboarding fields
         public string? LookingFor { get; set; }
         public List<string>? Interests { get; set; } = new List<string>();
@@ -49,6 +62,8 @@ namespace DatingApp.Models
 
         public string? PasswordResetTokenHash { get; set; }
         public DateTime? PasswordResetTokenExpiresAt { get; set; }
+
+        public ICollection<Photo> Photos { get; set; } = new List<Photo>();
 
         public ICollection<Swipe> SwipesSent { get; set; }
         public ICollection<Swipe> SwipesReceived { get; set; }

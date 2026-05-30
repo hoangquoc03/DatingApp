@@ -2,6 +2,8 @@ using DatingApp.Data;
 using DatingApp.DTOs;
 using DatingApp.Helpers;
 using DatingApp.Models;
+using DatingApp.Hubs;
+using Microsoft.AspNetCore.SignalR;
 using Microsoft.EntityFrameworkCore;
 
 namespace DatingApp.Services
@@ -9,10 +11,12 @@ namespace DatingApp.Services
     public class SwipeService
     {
         private readonly AppDbContext _context;
+        private readonly IHubContext<ChatHub> _hubContext;
 
-        public SwipeService(AppDbContext context)
+        public SwipeService(AppDbContext context, IHubContext<ChatHub> hubContext)
         {
             _context = context;
+            _hubContext = hubContext;
         }
 
         public async Task<ServiceResult> SwipeAsync(Guid myId, SwipeDto dto)
@@ -61,9 +65,26 @@ namespace DatingApp.Services
                             CreatedAt = DateTime.UtcNow
                         };
                         _context.Matches.Add(match);
-                    }
 
-                    await _context.SaveChangesAsync();
+                        // Tạo thông báo cho cả 2 người
+                        var notif1 = new Notification { UserId = myId, Content = "Bạn có một tương hợp mới! 🎉", Type = "NewMatch", RelatedUserId = dto.ToUserId };
+                        var notif2 = new Notification { UserId = dto.ToUserId, Content = "Bạn có một tương hợp mới! 🎉", Type = "NewMatch", RelatedUserId = myId };
+                        
+                        _context.Notifications.AddRange(notif1, notif2);
+                        await _context.SaveChangesAsync();
+
+                        // Realtime push
+                        await _hubContext.Clients.Group(myId.ToString()).SendAsync("ReceiveNotification", new {
+                            notif1.Id, notif1.Content, notif1.Type, notif1.RelatedUserId, notif1.CreatedAt, notif1.IsRead
+                        });
+                        await _hubContext.Clients.Group(dto.ToUserId.ToString()).SendAsync("ReceiveNotification", new {
+                            notif2.Id, notif2.Content, notif2.Type, notif2.RelatedUserId, notif2.CreatedAt, notif2.IsRead
+                        });
+                    }
+                    else
+                    {
+                        await _context.SaveChangesAsync();
+                    }
                     return ServiceResult.Ok(new { message = "Swipe success", isMatch = true });
                 }
             }

@@ -1,6 +1,6 @@
 import { useEffect, useState, useRef, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
-import { Heart, X, Star, MapPin, Info, Loader2, RefreshCw } from "lucide-react";
+import { Heart, X, Star, MapPin, Info, Loader2, RefreshCw, SlidersHorizontal, Check } from "lucide-react";
 import TinderCard from "react-tinder-card";
 import api from "../services/api";
 
@@ -23,23 +23,35 @@ export default function Discover() {
   const [hasNextPage, setHasNextPage] = useState(true);
   const pageSize = 12;
 
-  // Index card đang hiện trên cùng (users[currentIndex])
   const [currentIndex, setCurrentIndex] = useState(0);
-  const [lastAction, setLastAction] = useState(null); // "like" | "dislike" | "superlike"
-  const [matchPopup, setMatchPopup] = useState(null); // user vừa match
+  const [lastAction, setLastAction] = useState(null);
+  const [matchPopup, setMatchPopup] = useState(null);
 
-  // Ref để gọi swipe từ button
+  // Bộ lọc
+  const [showFilters, setShowFilters] = useState(false);
+  const [filters, setFilters] = useState({ ageMin: "", ageMax: "", gender: "" });
+  const [appliedFilters, setAppliedFilters] = useState({ ageMin: null, ageMax: null, gender: null });
+
   const cardRefs = useRef([]);
 
   useEffect(() => {
-    fetchUsers(1, true);
+    fetchUsers(1, true, appliedFilters);
   }, []);
 
-  async function fetchUsers(nextPage, reset = false) {
+  async function fetchUsers(nextPage, reset = false, activeFilters = appliedFilters) {
     try {
       setLoading(true);
       setError("");
-      const { data } = await api.get(`/User/discover?page=${nextPage}&pageSize=${pageSize}`);
+
+      const params = new URLSearchParams({
+        page: nextPage,
+        pageSize,
+        ...(activeFilters.ageMin && { ageMin: activeFilters.ageMin }),
+        ...(activeFilters.ageMax && { ageMax: activeFilters.ageMax }),
+        ...(activeFilters.gender && { gender: activeFilters.gender }),
+      });
+
+      const { data } = await api.get(`/User/discover?${params}`);
       const incoming = data?.data || [];
       const pagination = data?.pagination;
 
@@ -61,6 +73,27 @@ export default function Discover() {
       setLoading(false);
     }
   }
+
+  function applyFilters() {
+    const active = {
+      ageMin: filters.ageMin ? parseInt(filters.ageMin) : null,
+      ageMax: filters.ageMax ? parseInt(filters.ageMax) : null,
+      gender: filters.gender || null,
+    };
+    setAppliedFilters(active);
+    setShowFilters(false);
+    fetchUsers(1, true, active);
+  }
+
+  function resetFilters() {
+    const empty = { ageMin: null, ageMax: null, gender: null };
+    setFilters({ ageMin: "", ageMax: "", gender: "" });
+    setAppliedFilters(empty);
+    setShowFilters(false);
+    fetchUsers(1, true, empty);
+  }
+
+  const hasActiveFilters = appliedFilters.ageMin || appliedFilters.ageMax || appliedFilters.gender;
 
   // ── Gửi swipe lên API ────────────────────────────────────────────────────
   async function sendSwipe(toUserId, isLike) {
@@ -105,7 +138,7 @@ export default function Discover() {
 
   useEffect(() => {
     if (!loading && !error && remaining <= 2 && hasNextPage) {
-      fetchUsers(page + 1);
+      fetchUsers(page + 1, false, appliedFilters);
     }
   }, [remaining, hasNextPage, loading, error, page]);
 
@@ -127,11 +160,128 @@ export default function Discover() {
             </div>
             <span className="font-semibold text-[#1F2937]">Khám phá</span>
           </div>
-          {remaining > 0 && (
-            <span className="text-sm text-[#6B7280]">{remaining} người</span>
-          )}
+          <div className="flex items-center gap-2">
+            {remaining > 0 && (
+              <span className="text-sm text-[#6B7280]">{remaining} người</span>
+            )}
+            {/* Nút bộ lọc */}
+            <button
+              onClick={() => setShowFilters(true)}
+              className={`relative flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-sm font-medium transition-all ${
+                hasActiveFilters
+                  ? "bg-gradient-to-r from-[#FF5C9A] to-[#C8B6FF] text-white shadow-md shadow-pink-300/30"
+                  : "bg-gray-100 text-[#6B7280] hover:bg-gray-200"
+              }`}
+            >
+              <SlidersHorizontal className="w-4 h-4" />
+              <span>Lọc</span>
+              {hasActiveFilters && (
+                <span className="absolute -top-1 -right-1 w-2.5 h-2.5 bg-white rounded-full border-2 border-[#FF5C9A]" />
+              )}
+            </button>
+          </div>
         </div>
       </header>
+
+      {/* ── Filter Drawer ──────────────────────────────────────────────────── */}
+      {showFilters && (
+        <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center">
+          {/* Backdrop */}
+          <div
+            className="absolute inset-0 bg-black/40 backdrop-blur-sm"
+            onClick={() => setShowFilters(false)}
+          />
+          {/* Panel */}
+          <div className="relative w-full sm:max-w-sm bg-white rounded-t-3xl sm:rounded-3xl p-6 shadow-2xl">
+            {/* Header */}
+            <div className="flex items-center justify-between mb-6">
+              <h3 className="text-lg font-bold text-[#1F2937]">Bộ lọc tìm kiếm</h3>
+              <button
+                onClick={() => setShowFilters(false)}
+                className="w-8 h-8 bg-gray-100 rounded-full flex items-center justify-center hover:bg-gray-200 transition-colors"
+              >
+                <X className="w-4 h-4 text-[#6B7280]" />
+              </button>
+            </div>
+
+            {/* Độ tuổi */}
+            <div className="mb-5">
+              <label className="block text-sm font-semibold text-[#1F2937] mb-3">
+                Độ tuổi
+              </label>
+              <div className="flex items-center gap-3">
+                <div className="flex-1">
+                  <input
+                    type="number"
+                    min="18"
+                    max="99"
+                    placeholder="Từ"
+                    value={filters.ageMin}
+                    onChange={(e) => setFilters((f) => ({ ...f, ageMin: e.target.value }))}
+                    className="w-full px-4 py-2.5 border-2 border-gray-100 rounded-xl outline-none focus:border-[#FF5C9A] text-[#1F2937] text-sm transition-colors"
+                  />
+                </div>
+                <span className="text-[#9CA3AF] text-sm">–</span>
+                <div className="flex-1">
+                  <input
+                    type="number"
+                    min="18"
+                    max="99"
+                    placeholder="Đến"
+                    value={filters.ageMax}
+                    onChange={(e) => setFilters((f) => ({ ...f, ageMax: e.target.value }))}
+                    className="w-full px-4 py-2.5 border-2 border-gray-100 rounded-xl outline-none focus:border-[#FF5C9A] text-[#1F2937] text-sm transition-colors"
+                  />
+                </div>
+              </div>
+            </div>
+
+            {/* Giới tính */}
+            <div className="mb-7">
+              <label className="block text-sm font-semibold text-[#1F2937] mb-3">
+                Giới tính
+              </label>
+              <div className="flex gap-2">
+                {[
+                  { value: "", label: "Tất cả" },
+                  { value: "female", label: "Nữ 👩" },
+                  { value: "male", label: "Nam 👨" },
+                  { value: "other", label: "Khác 🌈" },
+                ].map((opt) => (
+                  <button
+                    key={opt.value}
+                    onClick={() => setFilters((f) => ({ ...f, gender: opt.value }))}
+                    className={`flex-1 py-2 px-2 rounded-xl text-xs font-medium border-2 transition-all ${
+                      filters.gender === opt.value
+                        ? "border-[#FF5C9A] bg-[#FF5C9A]/10 text-[#FF5C9A]"
+                        : "border-gray-100 text-[#6B7280] hover:border-gray-200"
+                    }`}
+                  >
+                    {opt.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Actions */}
+            <div className="flex gap-3">
+              <button
+                onClick={resetFilters}
+                className="flex-1 py-3 border-2 border-gray-200 rounded-2xl text-[#6B7280] text-sm font-medium hover:border-gray-300 transition-colors"
+              >
+                Xoá bộ lọc
+              </button>
+              <button
+                onClick={applyFilters}
+                className="flex-1 py-3 bg-gradient-to-r from-[#FF5C9A] to-[#C8B6FF] text-white rounded-2xl text-sm font-medium shadow-lg shadow-pink-500/30 hover:opacity-90 transition-opacity flex items-center justify-center gap-2"
+              >
+                <Check className="w-4 h-4" />
+                Áp dụng
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Action feedback banner */}
       {lastAction && (
@@ -324,22 +474,37 @@ export default function Discover() {
 // ─── SwipeCard ────────────────────────────────────────────────────────────────
 function SwipeCard({ user, style }) {
   const [showInfo, setShowInfo] = useState(false);
+  const [currentPhotoIndex, setCurrentPhotoIndex] = useState(0);
+
+  const photos = user.photos?.length > 0 ? user.photos : (user.avatarUrl ? [{ url: user.avatarUrl }] : []);
+  const currentPhoto = photos[currentPhotoIndex]?.url;
+
   const initials = user.fullName?.split(" ").map((w) => w[0]).join("").slice(0, 2).toUpperCase();
-  const gradient = GRADIENTS[Math.abs(user.fullName?.charCodeAt(0) || 0) % GRADIENTS.length];
+  const gradient = ["from-pink-200 to-purple-300", "from-rose-200 to-pink-300"][Math.abs(user.fullName?.charCodeAt(0) || 0) % 2];
   const age = user.dateOfBirth
     ? Math.floor((Date.now() - new Date(user.dateOfBirth)) / (365.25 * 24 * 3600 * 1000))
-    : null;
+    : user.age;
+
+  function nextPhoto(e) {
+    e.stopPropagation();
+    if (currentPhotoIndex < photos.length - 1) setCurrentPhotoIndex(i => i + 1);
+  }
+
+  function prevPhoto(e) {
+    e.stopPropagation();
+    if (currentPhotoIndex > 0) setCurrentPhotoIndex(i => i - 1);
+  }
 
   return (
     <div
-      className="w-full h-full rounded-3xl overflow-hidden shadow-2xl bg-white cursor-grab active:cursor-grabbing select-none"
+      className="w-full h-full rounded-3xl overflow-hidden shadow-2xl bg-white cursor-grab active:cursor-grabbing select-none relative"
       style={style}
     >
-      {/* Photo */}
-      <div className="relative h-[75%] overflow-hidden">
-        {user.avatarUrl ? (
+      {/* Photo Area */}
+      <div className="relative h-[75%] overflow-hidden bg-black">
+        {currentPhoto ? (
           <img
-            src={user.avatarUrl}
+            src={currentPhoto}
             alt={user.fullName}
             className="w-full h-full object-cover pointer-events-none"
             draggable={false}
@@ -350,8 +515,28 @@ function SwipeCard({ user, style }) {
           </div>
         )}
 
+        {/* Photo Navigation Overlays */}
+        {photos.length > 1 && (
+          <div className="absolute inset-0 flex">
+            <div className="flex-1" onClick={prevPhoto} />
+            <div className="flex-1" onClick={nextPhoto} />
+          </div>
+        )}
+
+        {/* Photo Indicators */}
+        {photos.length > 1 && (
+          <div className="absolute top-3 left-3 right-3 flex gap-1 z-10">
+            {photos.map((_, idx) => (
+              <div 
+                key={idx} 
+                className={`h-1 rounded-full flex-1 transition-all ${idx === currentPhotoIndex ? "bg-white" : "bg-white/40"}`} 
+              />
+            ))}
+          </div>
+        )}
+
         {/* Gradient overlay bottom */}
-        <div className="absolute bottom-0 left-0 right-0 h-32 bg-gradient-to-t from-black/60 to-transparent" />
+        <div className="absolute bottom-0 left-0 right-0 h-32 bg-gradient-to-t from-black/60 to-transparent pointer-events-none" />
 
         {/* Info toggle */}
         <button
@@ -359,13 +544,13 @@ function SwipeCard({ user, style }) {
             e.stopPropagation();
             setShowInfo((v) => !v);
           }}
-          className="absolute top-4 right-4 w-9 h-9 bg-white/20 backdrop-blur-sm rounded-full flex items-center justify-center hover:bg-white/30 transition-colors"
+          className="absolute top-4 right-4 w-9 h-9 z-20 bg-black/20 backdrop-blur-md rounded-full flex items-center justify-center hover:bg-black/40 transition-colors"
         >
           <Info className="w-4 h-4 text-white" />
         </button>
 
         {/* Name overlay */}
-        <div className="absolute bottom-4 left-5 right-5">
+        <div className="absolute bottom-4 left-5 right-5 pointer-events-none">
           <h2 className="text-2xl font-bold text-white">
             {user.fullName}{age ? `, ${age}` : ""}
           </h2>

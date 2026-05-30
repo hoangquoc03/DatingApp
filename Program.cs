@@ -63,6 +63,7 @@ builder.Services.AddScoped<EmailService>();
 builder.Services.AddScoped<AuthService>();
 builder.Services.AddScoped<UserService>();
 builder.Services.AddScoped<SwipeService>();
+builder.Services.AddScoped<NotificationService>();
 
 // ── CORS ──────────────────────────────────────────────────────────────────────
 builder.Services.AddCors(options =>
