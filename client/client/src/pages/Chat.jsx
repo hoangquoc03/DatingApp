@@ -3,17 +3,19 @@ import { useNavigate, useParams } from "react-router-dom";
 import {
   ArrowLeft,
   Heart,
+  Image,
   MapPin,
   MessageCircle,
   Send,
   Check,
   CheckCheck,
   Loader2,
+  X,
 } from "lucide-react";
 import api from "../services/api";
 import * as signalR from "@microsoft/signalr";
 
-// SignalR cần URL gốc (không có /api), lấy từ baseURL của api instance
+// SignalR URL gốc (bỏ /api)
 const SIGNALR_BASE = api.defaults.baseURL.replace(/\/api\/?$/, "");
 
 function getToken() {
@@ -30,17 +32,15 @@ function getMe() {
 
 // ─── MAIN COMPONENT ──────────────────────────────────────────────────────────
 export default function Chat() {
-  const { id: paramId } = useParams(); // /chat/:id  → id của người đang chat
+  const { id: paramId } = useParams();
   const navigate = useNavigate();
   const me = getMe();
   const token = getToken();
 
   const [matches, setMatches] = useState([]);
   const [matchesLoading, setMatchesLoading] = useState(true);
-
   const [activeChatId, setActiveChatId] = useState(paramId || null);
   const [activeUser, setActiveUser] = useState(null);
-
   const [messages, setMessages] = useState([]);
   const [msgLoading, setMsgLoading] = useState(false);
   const [text, setText] = useState("");
@@ -48,39 +48,44 @@ export default function Chat() {
   const [typing, setTyping] = useState(false);
   const [onlineUsers, setOnlineUsers] = useState(new Set());
 
+  // Upload ảnh
+  const [imagePreview, setImagePreview] = useState(null); // { file, url }
+  const [uploadingImage, setUploadingImage] = useState(false);
+  const fileInputRef = useRef(null);
+
   const hubRef = useRef(null);
   const bottomRef = useRef(null);
   const typingTimer = useRef(null);
   const inputRef = useRef(null);
+  const activeChatIdRef = useRef(activeChatId);
 
-  // ── Guard + Init ─────────────────────────────────────────────────────────
+  useEffect(() => { activeChatIdRef.current = activeChatId; }, [activeChatId]);
+
+  // ── Init ──────────────────────────────────────────────────────────────────
   useEffect(() => {
     fetchMatches();
     connectHub();
     return () => hubRef.current?.stop();
   }, []);
 
-  // ── Khi activeChatId thay đổi → load messages + mark seen ─────────────────
   useEffect(() => {
     if (!activeChatId) return;
-    const user = matches.find((m) => m.id === activeChatId);
-    setActiveUser(user || null);
+    const matchWrap = matches.find((m) => m.partner?.id === activeChatId);
+    setActiveUser(matchWrap?.partner || null);
     fetchMessages(activeChatId);
     markSeen(activeChatId);
     inputRef.current?.focus();
   }, [activeChatId, matches]);
 
-  // ── Scroll xuống cuối khi có message mới ──────────────────────────────────
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
 
-  // ── Update activeChatId khi URL thay đổi ──────────────────────────────────
   useEffect(() => {
     if (paramId && paramId !== activeChatId) setActiveChatId(paramId);
   }, [paramId]);
 
-  // ─── Fetch matches (sidebar) ──────────────────────────────────────────────
+  // ─── Fetch matches ────────────────────────────────────────────────────────
   async function fetchMatches() {
     try {
       setMatchesLoading(true);
@@ -123,11 +128,10 @@ export default function Chat() {
 
     connection.on("ReceiveMessage", (msg) => {
       setMessages((prev) => {
-        // Tránh duplicate nếu đây là message mình vừa gửi
         if (prev.some((m) => m.id === msg.id)) return prev;
         return [...prev, msg];
       });
-      // Nếu đang xem conversation này thì mark seen luôn
+      // Auto mark seen nếu đang xem conversation này
       if (msg.senderId === activeChatIdRef.current) {
         markSeen(msg.senderId);
       }
@@ -138,6 +142,19 @@ export default function Chat() {
         setTyping(true);
         clearTimeout(typingTimer.current);
         typingTimer.current = setTimeout(() => setTyping(false), 2500);
+      }
+    });
+
+    // ✅ Nhận sự kiện đã đọc realtime — cập nhật tick
+    connection.on("MessagesSeen", ({ byUserId, seenAt }) => {
+      if (byUserId === activeChatIdRef.current) {
+        setMessages((prev) =>
+          prev.map((m) =>
+            m.senderId === me?.id && !m.isSeen
+              ? { ...m, isSeen: true, seenAt }
+              : m
+          )
+        );
       }
     });
 
@@ -157,11 +174,7 @@ export default function Chat() {
     hubRef.current = connection;
   }
 
-  // Ref để dùng trong closure của SignalR
-  const activeChatIdRef = useRef(activeChatId);
-  useEffect(() => { activeChatIdRef.current = activeChatId; }, [activeChatId]);
-
-  // ─── Send message ─────────────────────────────────────────────────────────
+  // ─── Send text message ────────────────────────────────────────────────────
   async function sendMessage(e) {
     e?.preventDefault();
     if (!text.trim() || !activeChatId || sending) return;
@@ -169,12 +182,12 @@ export default function Chat() {
     const content = text.trim();
     setText("");
 
-    // Optimistic update
     const optimistic = {
       id: `opt-${Date.now()}`,
       senderId: me?.id,
       receiverId: activeChatId,
       content,
+      imageUrl: null,
       sentAt: new Date().toISOString(),
       isSeen: false,
       _optimistic: true,
@@ -187,17 +200,64 @@ export default function Chat() {
         receiverId: activeChatId,
         content,
       });
-      // Thay thế optimistic bằng bản thật
       setMessages((prev) =>
         prev.map((m) => (m.id === optimistic.id ? saved : m))
       );
     } catch {
-      // Rollback optimistic
       setMessages((prev) => prev.filter((m) => m.id !== optimistic.id));
       setText(content);
     } finally {
       setSending(false);
     }
+  }
+
+  // ─── Send image message ───────────────────────────────────────────────────
+  async function sendImage() {
+    if (!imagePreview || !activeChatId || uploadingImage) return;
+
+    const optimistic = {
+      id: `opt-img-${Date.now()}`,
+      senderId: me?.id,
+      receiverId: activeChatId,
+      content: "",
+      imageUrl: imagePreview.url, // preview tạm
+      sentAt: new Date().toISOString(),
+      isSeen: false,
+      _optimistic: true,
+    };
+    setMessages((prev) => [...prev, optimistic]);
+    setImagePreview(null);
+
+    try {
+      setUploadingImage(true);
+      const formData = new FormData();
+      formData.append("receiverId", activeChatId);
+      formData.append("file", imagePreview.file);
+
+      const { data: saved } = await api.post("/Messages/image", formData, {
+        headers: { "Content-Type": "multipart/form-data" },
+      });
+      setMessages((prev) =>
+        prev.map((m) => (m.id === optimistic.id ? saved : m))
+      );
+    } catch {
+      setMessages((prev) => prev.filter((m) => m.id !== optimistic.id));
+    } finally {
+      setUploadingImage(false);
+    }
+  }
+
+  // ─── Chọn ảnh ─────────────────────────────────────────────────────────────
+  function handleFileSelect(e) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (file.size > 10 * 1024 * 1024) {
+      alert("Ảnh không được vượt quá 10MB");
+      return;
+    }
+    const url = URL.createObjectURL(file);
+    setImagePreview({ file, url });
+    e.target.value = "";
   }
 
   // ─── Typing indicator ─────────────────────────────────────────────────────
@@ -215,7 +275,6 @@ export default function Chat() {
     <div className="h-screen flex bg-white overflow-hidden">
       {/* ── Sidebar: danh sách match ── */}
       <aside className="w-80 flex-shrink-0 border-r border-gray-100 flex flex-col">
-        {/* Sidebar header */}
         <div className="px-5 py-5 border-b border-gray-100">
           <div className="flex items-center justify-between mb-4">
             <button
@@ -233,7 +292,6 @@ export default function Chat() {
           <p className="text-sm text-[#6B7280] mt-0.5">{matches.length} kết nối</p>
         </div>
 
-        {/* Match list */}
         <div className="flex-1 overflow-y-auto">
           {matchesLoading ? (
             <div className="flex justify-center py-10">
@@ -253,13 +311,13 @@ export default function Chat() {
           ) : (
             matches.map((match) => (
               <MatchListItem
-                key={match.id}
-                match={match}
-                active={activeChatId === match.id}
-                online={isOnline(match.id)}
+                key={match.partner?.id}
+                user={match.partner}
+                active={activeChatId === match.partner?.id}
+                online={isOnline(match.partner?.id)}
                 onClick={() => {
-                  setActiveChatId(match.id);
-                  navigate(`/chat/${match.id}`, { replace: true });
+                  setActiveChatId(match.partner?.id);
+                  navigate(`/chat/${match.partner?.id}`, { replace: true });
                 }}
               />
             ))
@@ -324,7 +382,7 @@ export default function Chat() {
                       />
                     );
                   })}
-                  {/* Typing indicator bubble */}
+                  {/* Typing bubble */}
                   {typing && (
                     <div className="flex items-end gap-2">
                       <Avatar user={activeUser} size={28} />
@@ -346,11 +404,62 @@ export default function Chat() {
               )}
             </div>
 
+            {/* Image preview bar */}
+            {imagePreview && (
+              <div className="px-6 py-3 border-t border-gray-100 bg-gray-50 flex items-center gap-3">
+                <div className="relative">
+                  <img
+                    src={imagePreview.url}
+                    alt="preview"
+                    className="w-20 h-20 object-cover rounded-xl border border-gray-200"
+                  />
+                  <button
+                    onClick={() => setImagePreview(null)}
+                    className="absolute -top-2 -right-2 w-5 h-5 bg-gray-600 text-white rounded-full flex items-center justify-center hover:bg-red-500 transition-colors"
+                  >
+                    <X className="w-3 h-3" />
+                  </button>
+                </div>
+                <div className="flex-1">
+                  <p className="text-sm text-[#6B7280]">Sẵn sàng gửi ảnh</p>
+                  <p className="text-xs text-[#9CA3AF] mt-0.5">{imagePreview.file.name}</p>
+                </div>
+                <button
+                  onClick={sendImage}
+                  disabled={uploadingImage}
+                  className="px-4 py-2 bg-gradient-to-r from-[#FF5C9A] to-[#C8B6FF] text-white text-sm rounded-xl font-medium hover:opacity-90 transition-opacity disabled:opacity-60 flex items-center gap-2"
+                >
+                  {uploadingImage
+                    ? <Loader2 className="w-4 h-4 animate-spin" />
+                    : <Send className="w-4 h-4" />
+                  }
+                  Gửi
+                </button>
+              </div>
+            )}
+
             {/* Input */}
             <form
               onSubmit={sendMessage}
               className="px-6 py-4 border-t border-gray-100 flex items-end gap-3"
             >
+              {/* Nút chọn ảnh */}
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept="image/*"
+                className="hidden"
+                onChange={handleFileSelect}
+              />
+              <button
+                type="button"
+                onClick={() => fileInputRef.current?.click()}
+                className="flex-shrink-0 w-12 h-12 rounded-2xl bg-gray-100 hover:bg-gray-200 flex items-center justify-center transition-colors"
+                title="Gửi ảnh"
+              >
+                <Image className="w-5 h-5 text-[#6B7280]" />
+              </button>
+
               <div className="flex-1 relative">
                 <textarea
                   ref={inputRef}
@@ -387,7 +496,6 @@ export default function Chat() {
             </form>
           </>
         ) : (
-          /* Empty state khi chưa chọn conversation */
           <div className="flex-1 flex flex-col items-center justify-center gap-5 text-center px-8">
             <div className="relative">
               <div className="w-28 h-28 rounded-full bg-gradient-to-br from-[#FF5C9A]/10 to-[#C8B6FF]/10 flex items-center justify-center">
@@ -445,7 +553,8 @@ function Avatar({ user, size = 40 }) {
   );
 }
 
-function MatchListItem({ match, active, online, onClick }) {
+function MatchListItem({ user, active, online, onClick }) {
+  if (!user) return null;
   return (
     <button
       onClick={onClick}
@@ -458,19 +567,19 @@ function MatchListItem({ match, active, online, onClick }) {
       `}
     >
       <div className="relative flex-shrink-0">
-        <Avatar user={match} size={46} />
+        <Avatar user={user} size={46} />
         {online && (
           <span className="absolute bottom-0 right-0 w-3 h-3 bg-green-400 rounded-full border-2 border-white" />
         )}
       </div>
       <div className="flex-1 min-w-0">
         <p className={`font-medium text-sm truncate ${active ? "text-[#FF5C9A]" : "text-[#1F2937]"}`}>
-          {match.fullName}
+          {user.fullName}
         </p>
-        {match.location && (
+        {user.location && (
           <p className="text-xs text-[#9CA3AF] flex items-center gap-1 mt-0.5 truncate">
             <MapPin className="w-3 h-3 flex-shrink-0" />
-            {match.location}
+            {user.location}
           </p>
         )}
       </div>
@@ -486,7 +595,6 @@ function MessageBubble({ msg, isMine, showAvatar, otherUser, isLastMine }) {
 
   return (
     <div className={`flex items-end gap-2 ${isMine ? "flex-row-reverse" : ""}`}>
-      {/* Avatar của người kia */}
       {!isMine && (
         <div className="w-7 flex-shrink-0">
           {showAvatar && <Avatar user={otherUser} size={28} />}
@@ -494,20 +602,39 @@ function MessageBubble({ msg, isMine, showAvatar, otherUser, isLastMine }) {
       )}
 
       <div className={`flex flex-col gap-1 max-w-[65%] ${isMine ? "items-end" : "items-start"}`}>
-        <div
-          className={`
-            px-4 py-2.5 rounded-2xl text-sm leading-relaxed break-words
-            ${isMine
-              ? "bg-gradient-to-r from-[#FF5C9A] to-[#C8B6FF] text-white rounded-br-none"
-              : "bg-gray-100 text-[#1F2937] rounded-bl-none"
-            }
-            ${msg._optimistic ? "opacity-70" : "opacity-100"}
-          `}
-        >
-          {msg.content}
-        </div>
+        {/* Ảnh */}
+        {msg.imageUrl && (
+          <a href={msg.imageUrl} target="_blank" rel="noopener noreferrer">
+            <img
+              src={msg.imageUrl}
+              alt="ảnh"
+              className={`
+                max-w-[240px] max-h-[280px] rounded-2xl object-cover cursor-pointer
+                hover:opacity-90 transition-opacity
+                ${msg._optimistic ? "opacity-60" : "opacity-100"}
+                ${isMine ? "rounded-br-none" : "rounded-bl-none"}
+              `}
+            />
+          </a>
+        )}
 
-        {/* Time + seen status */}
+        {/* Text */}
+        {msg.content && (
+          <div
+            className={`
+              px-4 py-2.5 rounded-2xl text-sm leading-relaxed break-words
+              ${isMine
+                ? "bg-gradient-to-r from-[#FF5C9A] to-[#C8B6FF] text-white rounded-br-none"
+                : "bg-gray-100 text-[#1F2937] rounded-bl-none"
+              }
+              ${msg._optimistic ? "opacity-70" : "opacity-100"}
+            `}
+          >
+            {msg.content}
+          </div>
+        )}
+
+        {/* Time + seen tick */}
         <div className="flex items-center gap-1 px-1">
           <span className="text-[10px] text-[#9CA3AF]">{time}</span>
           {isMine && isLastMine && (

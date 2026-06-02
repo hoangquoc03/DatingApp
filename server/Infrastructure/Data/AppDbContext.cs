@@ -1,4 +1,4 @@
-﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore;
 using DatingApp.Models;
 
 namespace DatingApp.Data
@@ -14,6 +14,8 @@ namespace DatingApp.Data
         public DbSet<Swipe> Swipes { get; set; }
         public DbSet<Match> Matches { get; set; }
         public DbSet<Message> Messages { get; set; }
+        public DbSet<Photo> Photos { get; set; }
+        public DbSet<Notification> Notifications { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
