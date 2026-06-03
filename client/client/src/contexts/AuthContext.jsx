@@ -61,11 +61,12 @@ export function AuthProvider({ children }) {
     try {
       const { data } = await api.post("/Auth/login", { email, password });
       saveAuth(data, remember);
-      navigate("/dashboard");
+      navigate(data.user?.role === 1 ? "/admin" : "/dashboard");
       return { success: true };
     } catch (err) {
       const status = err.response?.status;
-      if (status === 401) return { success: false, message: "Email hoặc mật khẩu không chính xác" };
+      const dataMsg = err.response?.data;
+      if (status === 401) return { success: false, message: typeof dataMsg === 'string' ? dataMsg : "Email hoặc mật khẩu không chính xác" };
       return { success: false, message: "Không thể kết nối tới máy chủ. Vui lòng thử lại!" };
     } finally {
       setLoading(false);
@@ -78,7 +79,7 @@ export function AuthProvider({ children }) {
     try {
       const { data } = await api.post("/Auth/google-login", { credential });
       saveAuth(data, remember);
-      navigate("/dashboard");
+      navigate(data.user?.role === 1 ? "/admin" : "/dashboard");
       return { success: true };
     } catch {
       return { success: false, message: "Xác thực Google thất bại. Vui lòng thử lại!" };
@@ -103,11 +104,18 @@ export function AuthProvider({ children }) {
     }
   }, [navigate]);
 
-  // ── Cập nhật user info (sau khi edit profile) ──────────────────────────────
+  // ── Cập nhật user info (sau khi edit profile, onboarding) ───────────────
   const updateUser = useCallback((updatedUser) => {
-    const storage = getActiveStorage();
-    if (storage) storage.setItem("user", JSON.stringify(updatedUser));
-    setUser(updatedUser);
+    setUser((prev) => {
+      const merged = typeof updatedUser === "function" 
+        ? updatedUser(prev) 
+        : { ...prev, ...updatedUser };
+        
+      const storage = getActiveStorage();
+      if (storage) storage.setItem("user", JSON.stringify(merged));
+      
+      return merged;
+    });
   }, []);
 
   // ── Refresh user profile từ server ────────────────────────────────────────

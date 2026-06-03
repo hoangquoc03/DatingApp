@@ -106,6 +106,16 @@ namespace DatingApp.Controllers
             return result.Success ? Ok(result.Data) : StatusCode(result.StatusCode, new { message = result.Message });
         }
 
+        [HttpGet("stats")]
+        public async Task<IActionResult> GetDashboardStats()
+        {
+            var userId = GetUserId();
+            if (userId == null) return Unauthorized();
+
+            var result = await _userService.GetDashboardStatsAsync(userId.Value);
+            return result.Success ? Ok(result.Data) : StatusCode(result.StatusCode, new { message = result.Message });
+        }
+
         private Guid? GetUserId()
         {
             var value = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;

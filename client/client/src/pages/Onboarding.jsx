@@ -13,7 +13,7 @@ export default function Onboarding() {
   const [currentStep, setCurrentStep] = useState(0);
   const [isLoading, setIsLoading] = useState(false);
   const [formData, setFormData] = useState({
-    looking_for: "",
+    lookingFor: "",
     interests: [],
     lifestyle: "",
     values: [],
@@ -30,7 +30,7 @@ export default function Onboarding() {
       setIsLoading(true);
       try {
         const { data } = await api.put("/User/onboarding", formData);
-        updateUser(data); // Cập nhật auth context
+        updateUser((prev) => ({ ...prev, ...data })); // Merge với info cũ
         setTimeout(() => {
           navigate("/dashboard");
         }, 2000); // 2s loading giả cho cảm giác AI phân tích
@@ -105,8 +105,8 @@ export default function Onboarding() {
               {currentStep === 1 && (
                 <Step1LookingFor
                   key="step1"
-                  value={formData.looking_for}
-                  onChange={(v) => updateFormData("looking_for", v)}
+                  value={formData.lookingFor}
+                  onChange={(v) => updateFormData("lookingFor", v)}
                 />
               )}
               {currentStep === 2 && (

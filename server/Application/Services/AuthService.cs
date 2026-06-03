@@ -76,9 +76,12 @@ namespace DatingApp.Services
             var user = await _context.Users.FirstOrDefaultAsync(x => x.Email == emailClean);
 
             if (user == null || !BCrypt.Net.BCrypt.Verify(dto.Password, user.PasswordHash))
-                return ServiceResult.Unauthorized("Invalid email or password");
+                return ServiceResult.Unauthorized("Email hoặc mật khẩu không chính xác.");
 
-            var token = _jwt.GenerateToken(user.Id, user.Email);
+            if (!user.IsActive)
+                return ServiceResult.Unauthorized("Tài khoản của bạn đã bị khóa.");
+
+            var token = _jwt.GenerateToken(user.Id, user.Email, user.Role);
             var refreshToken = GenerateRefreshToken();
             SaveRefreshToken(user, refreshToken);
             await _context.SaveChangesAsync();
@@ -93,7 +96,8 @@ namespace DatingApp.Services
                     user.Id,
                     user.Email,
                     user.FullName,
-                    user.AvatarUrl
+                    user.AvatarUrl,
+                    Role = (int)user.Role
                 }
             });
         }
@@ -141,7 +145,10 @@ namespace DatingApp.Services
                 await _context.SaveChangesAsync();
             }
 
-            var token = _jwt.GenerateToken(user.Id, user.Email);
+            if (!user.IsActive)
+                return ServiceResult.Unauthorized("Tài khoản của bạn đã bị khóa.");
+
+            var token = _jwt.GenerateToken(user.Id, user.Email, user.Role);
             var refreshToken = GenerateRefreshToken();
             SaveRefreshToken(user, refreshToken);
             await _context.SaveChangesAsync();
@@ -151,7 +158,7 @@ namespace DatingApp.Services
                 token,
                 accessToken = token,
                 refreshToken,
-                user = new { user.Id, user.Email, user.FullName, user.AvatarUrl }
+                user = new { user.Id, user.Email, user.FullName, user.AvatarUrl, Role = (int)user.Role }
             });
         }
 
@@ -169,7 +176,7 @@ namespace DatingApp.Services
             if (user == null)
                 return ServiceResult.Unauthorized("Invalid or expired refresh token.");
 
-            var accessToken = _jwt.GenerateToken(user.Id, user.Email);
+            var accessToken = _jwt.GenerateToken(user.Id, user.Email, user.Role);
             var nextRefreshToken = GenerateRefreshToken();
             SaveRefreshToken(user, nextRefreshToken);
             await _context.SaveChangesAsync();

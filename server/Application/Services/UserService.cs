@@ -35,6 +35,7 @@ namespace DatingApp.Services
                     x.IsVerified,
                     x.IsOnboarded,
                     x.CreatedAt,
+                    Role = (int)x.Role,
                     // Nâng cao
                     x.Height,
                     x.Occupation,
@@ -185,6 +186,12 @@ namespace DatingApp.Services
                 .Select(x => x.ToUserId)
                 .ToListAsync();
 
+            // Lấy danh sách user bị chặn (cả 2 chiều)
+            var blockedIds = await _context.Blocks
+                .Where(b => b.BlockerId == userId || b.BlockedUserId == userId)
+                .Select(b => b.BlockerId == userId ? b.BlockedUserId : b.BlockerId)
+                .ToListAsync();
+
             // DateOfBirth cưỡng từnh tuổi
             DateTime? dobMax = ageMin.HasValue ? DateTime.UtcNow.AddYears(-ageMin.Value) : null;
             DateTime? dobMin = ageMax.HasValue ? DateTime.UtcNow.AddYears(-ageMax.Value - 1) : null;
@@ -193,6 +200,7 @@ namespace DatingApp.Services
                 .Where(x =>
                     x.Id != userId &&
                     !swipedIds.Contains(x.Id) &&
+                    !blockedIds.Contains(x.Id) &&
                     // Filter giới tính nếu có
                     (gender == null || x.Gender.ToString().ToLower() == gender.ToLower()) &&
                     // Filter tuổi nếu có
@@ -315,6 +323,38 @@ namespace DatingApp.Services
             await _context.SaveChangesAsync();
 
             return ServiceResult.Ok("Đã đổi ảnh đại diện");
+        }
+
+        public async Task<ServiceResult> GetDashboardStatsAsync(Guid userId)
+        {
+            var likesReceived = await _context.Swipes
+                .CountAsync(s => s.ToUserId == userId && s.IsLike);
+
+            var totalMatches = await _context.Matches
+                .CountAsync(m => m.User1Id == userId || m.User2Id == userId);
+
+            // Gần đây: 5 người thích gần nhất
+            var recentLikes = await _context.Swipes
+                .Include(s => s.FromUser)
+                .Where(s => s.ToUserId == userId && s.IsLike)
+                .OrderByDescending(s => s.CreatedAt)
+                .Take(5)
+                .Select(s => new
+                {
+                    s.FromUser.Id,
+                    s.FromUser.FullName,
+                    s.FromUser.AvatarUrl,
+                    s.FromUser.DateOfBirth,
+                    Time = s.CreatedAt
+                })
+                .ToListAsync();
+
+            return ServiceResult.Ok(new
+            {
+                likesReceived,
+                totalMatches,
+                recentLikes
+            });
         }
     }
 }
