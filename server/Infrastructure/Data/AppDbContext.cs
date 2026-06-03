@@ -16,6 +16,8 @@ namespace DatingApp.Data
         public DbSet<Message> Messages { get; set; }
         public DbSet<Photo> Photos { get; set; }
         public DbSet<Notification> Notifications { get; set; }
+        public DbSet<Block> Blocks { get; set; }
+        public DbSet<Report> Reports { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -80,6 +82,36 @@ namespace DatingApp.Data
             // từ giờ hệ thống chỉ vận hành và theo dõi trạng thái xem qua trường IsSeen.
             modelBuilder.Entity<Message>()
                 .Ignore(m => m.IsRead);
+
+            // ── Cấu hình bảng Block ────────────────────────────────────────────────
+            modelBuilder.Entity<Block>()
+                .HasOne(b => b.Blocker)
+                .WithMany()
+                .HasForeignKey(b => b.BlockerId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            modelBuilder.Entity<Block>()
+                .HasOne(b => b.BlockedUser)
+                .WithMany()
+                .HasForeignKey(b => b.BlockedUserId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            modelBuilder.Entity<Block>()
+                .HasIndex(b => new { b.BlockerId, b.BlockedUserId })
+                .IsUnique();
+
+            // ── Cấu hình bảng Report ───────────────────────────────────────────────
+            modelBuilder.Entity<Report>()
+                .HasOne(r => r.Reporter)
+                .WithMany()
+                .HasForeignKey(r => r.ReporterId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            modelBuilder.Entity<Report>()
+                .HasOne(r => r.ReportedUser)
+                .WithMany()
+                .HasForeignKey(r => r.ReportedUserId)
+                .OnDelete(DeleteBehavior.Restrict);
         }
     }
 }

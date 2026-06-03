@@ -25,10 +25,11 @@ function calculateAge(dateOfBirth) {
 
 export default function Dashboard() {
   const navigate = useNavigate();
-  const { logout } = useAuth();
+  const { logout, user } = useAuth();
   const [profile, setProfile] = useState(null);
   const [discoverUsers, setDiscoverUsers] = useState([]);
   const [matches, setMatches] = useState([]);
+  const [stats, setStats] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
@@ -44,11 +45,12 @@ export default function Dashboard() {
       try {
         setLoading(true);
         setError("");
-        const [profileRes, discoverRes, matchesRes, notifRes] = await Promise.all([
+        const [profileRes, discoverRes, matchesRes, notifRes, statsRes] = await Promise.all([
           api.get("/User/profile"),
           api.get("/User/discover?page=1&pageSize=4"),
           api.get("/Match"),
           api.get("/Notification"),
+          api.get("/User/stats"),
         ]);
         if (ignore) return;
         setProfile(profileRes.data);
@@ -56,6 +58,7 @@ export default function Dashboard() {
         setMatches(Array.isArray(matchesRes.data) ? matchesRes.data : []);
         setNotifications(notifRes.data?.notifications || []);
         setUnreadCount(notifRes.data?.unreadCount || 0);
+        setStats(statsRes.data);
       } catch (err) {
         if (ignore) return;
         if (err.response?.status === 401) {
@@ -120,8 +123,9 @@ export default function Dashboard() {
     { label: "Hồ sơ của tôi", active: false, onClick: () => navigate("/profile") },
     { label: "Lượt thích", active: false, onClick: null },
     { label: "Tương hợp cao", active: false, onClick: null },
-    { label: "Tin nhắn", active: false, onClick: () => navigate("/chat") },
-    { label: "Cài đặt", active: false, onClick: null },
+    { label: "Tin nhắn", active: false, onClick: () => navigate("/matches") },
+    { label: "Cài đặt", active: false, onClick: () => navigate("/settings") },
+    ...(user?.role === 1 ? [{ label: "Quản trị viên", active: false, onClick: () => navigate("/admin") }] : [])
   ];
 
   const suggestedMatches = useMemo(
@@ -141,137 +145,120 @@ export default function Dashboard() {
   );
 
   const recentLikes = useMemo(
-    () =>
-      matches.slice(0, 3).map((m, idx) => ({
-        id: m.id,
-        name: m.partner?.fullName || "Người dùng",
-        age: null,
-        image: m.partner?.avatarUrl || "https://placehold.co/200x200/fce7f3/6b7280?text=Like",
-        time: idx === 0 ? "Vừa xong" : `${idx * 8 + 4} phút trước`,
-      })),
-    [matches],
+    () => {
+      if (!stats?.recentLikes) return [];
+      return stats.recentLikes.map((like) => ({
+        id: like.id,
+        name: like.fullName || "Người dùng",
+        age: like.dateOfBirth ? calculateAge(like.dateOfBirth) : null,
+        image: like.avatarUrl || "https://upload.wikimedia.org/wikipedia/commons/8/89/Portrait_Placeholder.png",
+        time: "Vừa xong",
+      }));
+    },
+    [stats],
   );
 
   const recentChats = useMemo(
     () =>
-      matches.slice(0, 3).map((m, idx) => ({
+      matches.slice(0, 3).map((m) => ({
         id: m.id,
         partnerId: m.partner?.id,
         name: m.partner?.fullName || "Người dùng",
-        message: m.partner?.bio || "Bắt đầu cuộc trò chuyện mới!",
-        time: idx === 0 ? "Mới" : `${idx * 12 + 3} phút`,
-        unread: idx === 0 ? 1 : 0,
-        online: false,
-        image: m.partner?.avatarUrl || "https://placehold.co/200x200/e5e7eb/6b7280?text=Chat",
+        message: m.lastMessage?.content || "Bắt đầu cuộc trò chuyện mới!",
+        time: m.lastMessage?.sentAt ? "Mới" : "",
+        unread: m.unreadCount || 0,
+        online: m.partner?.isOnline || false,
+        image: m.partner?.avatarUrl || "https://upload.wikimedia.org/wikipedia/commons/8/89/Portrait_Placeholder.png",
       })),
-    [matches],
+    [matches]
   );
 
   const profileName = profile?.fullName || "Người dùng";
-  const profileAvatar = profile?.avatarUrl || "https://placehold.co/100x100/f3f4f6/6b7280?text=User";
+  const profileAvatar = profile?.avatarUrl || "https://upload.wikimedia.org/wikipedia/commons/8/89/Portrait_Placeholder.png";
   const profileCompletion = [profile?.fullName, profile?.bio, profile?.location, profile?.avatarUrl].filter(Boolean)
     .length * 25;
-  const featured = suggestedMatches[0];
 
   return (
-    <div className="min-h-screen bg-white">
+    <div className="min-h-screen bg-aura-bg font-sans">
       {/* Ambient Background */}
-      <div className="fixed inset-0 pointer-events-none overflow-hidden">
-        <div className="absolute top-0 right-0 w-[800px] h-[800px] bg-gradient-to-br from-[#FF5C9A]/10 via-[#C8B6FF]/10 to-transparent rounded-full blur-3xl"></div>
-        <div className="absolute bottom-0 left-0 w-[600px] h-[600px] bg-gradient-to-tr from-[#C8B6FF]/10 via-[#FF5C9A]/5 to-transparent rounded-full blur-3xl"></div>
+      <div className="fixed inset-0 pointer-events-none overflow-hidden z-0">
+        <div className="absolute top-[-10%] right-[-5%] w-[800px] h-[800px] bg-aura-pink/10 rounded-full blur-[120px] mix-blend-multiply"></div>
+        <div className="absolute bottom-[-10%] left-[-5%] w-[600px] h-[600px] bg-aura-blue/10 rounded-full blur-[100px] mix-blend-multiply"></div>
       </div>
 
       {/* Header */}
-      <header className="sticky top-0 z-50 bg-white/80 backdrop-blur-xl border-b border-gray-100">
+      <header className="sticky top-0 z-50 glass border-b-0 rounded-b-3xl">
         <div className="max-w-[1440px] mx-auto px-8 py-4 flex items-center justify-between">
           <div className="flex items-center gap-12">
-            <div className="flex items-center gap-2">
-              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[#FF5C9A] to-[#C8B6FF] flex items-center justify-center">
-                <Heart className="w-6 h-6 text-white fill-white" />
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-2xl bg-aura-dark flex items-center justify-center shadow-md">
+                <Heart className="w-5 h-5 text-white fill-white" />
               </div>
-              <span className="text-xl font-semibold bg-gradient-to-r from-[#FF5C9A] to-[#C8B6FF] bg-clip-text text-transparent">
-                Aura Dating
+              <span className="text-2xl font-semibold text-aura-dark tracking-tight">
+                Aura
               </span>
             </div>
-            <nav className="flex items-center gap-8">
-              <button
-                type="button"
-                onClick={() => navigate("/dashboard")}
-                className="text-[#1F2937] font-medium hover:text-[#FF5C9A] transition-colors"
-              >
-                Trang chủ
-              </button>
-              <button
-                type="button"
-                onClick={() => navigate("/discover")}
-                className="text-[#6B7280] hover:text-[#FF5C9A] transition-colors"
-              >
-                Khám phá
-              </button>
-              <button
-                type="button"
-                onClick={() => navigate("/matches")}
-                className="text-[#6B7280] hover:text-[#FF5C9A] transition-colors"
-              >
-                Ghép đôi
-              </button>
-              <button
-                type="button"
-                onClick={() => navigate("/matches")}
-                className="text-[#6B7280] hover:text-[#FF5C9A] transition-colors"
-              >
-                Tin nhắn
-              </button>
-              <button
-                type="button"
-                onClick={() => navigate("/matches")}
-                className="text-[#6B7280] hover:text-[#FF5C9A] transition-colors"
-              >
-                Yêu thích
-              </button>
+
+            <nav className="hidden md:flex items-center gap-8">
+              {menuItems.map((item, index) => (
+                <button
+                  key={index}
+                  onClick={item.onClick}
+                  className={`text-sm font-medium transition-colors ${
+                    item.active
+                      ? "text-aura-dark"
+                      : "text-gray-500 hover:text-aura-dark"
+                  }`}
+                >
+                  {item.label}
+                  {item.active && (
+                    <div className="h-0.5 bg-aura-dark rounded-t-full mt-1 w-full absolute bottom-[-17px]"></div>
+                  )}
+                </button>
+              ))}
             </nav>
           </div>
+
           <div className="flex items-center gap-4">
-            
-            {/* ── Notification Bell ── */}
+            {/* Notification Dropdown */}
             <div className="relative">
               <button 
                 onClick={() => setShowNotifDropdown(!showNotifDropdown)}
-                className="relative p-2.5 hover:bg-gray-50 rounded-xl transition-colors"
+                className="w-10 h-10 rounded-xl bg-white border border-gray-200 flex items-center justify-center text-gray-500 hover:text-aura-dark hover:border-aura-dark transition-all btn-magnetic"
               >
-                <Bell className="w-5 h-5 text-[#6B7280]" />
+                <Bell className="w-5 h-5" />
                 {unreadCount > 0 && (
-                  <span className="absolute top-1.5 right-1.5 w-4 h-4 bg-[#FF5C9A] text-white text-[10px] font-bold flex items-center justify-center rounded-full border-2 border-white">
+                  <span className="absolute -top-1 -right-1 w-4 h-4 bg-aura-pink text-white text-[10px] font-bold rounded-full flex items-center justify-center">
                     {unreadCount}
                   </span>
                 )}
               </button>
 
               {showNotifDropdown && (
-                <div className="absolute top-full right-0 mt-2 w-80 bg-white rounded-2xl shadow-xl border border-gray-100 z-50 overflow-hidden">
-                  <div className="p-4 border-b border-gray-100 flex items-center justify-between bg-gray-50/50">
-                    <h3 className="font-bold text-[#1F2937]">Thông báo</h3>
+                <div className="absolute right-0 mt-2 w-80 glass rounded-2xl shadow-xl z-50 overflow-hidden border border-gray-100">
+                  <div className="p-4 border-b border-gray-100 flex justify-between items-center bg-white/50">
+                    <h3 className="font-semibold text-gray-900">Thông báo</h3>
                     {unreadCount > 0 && (
-                      <button onClick={markAllAsRead} className="text-xs text-[#FF5C9A] font-medium hover:underline">
+                      <button 
+                        onClick={markAllAsRead}
+                        className="text-xs text-aura-blue hover:underline"
+                      >
                         Đánh dấu đã đọc tất cả
                       </button>
                     )}
                   </div>
-                  <div className="max-h-96 overflow-y-auto">
+                  <div className="max-h-[400px] overflow-y-auto">
                     {notifications.length === 0 ? (
-                      <div className="p-8 text-center text-[#9CA3AF] text-sm">
-                        Chưa có thông báo nào.
+                      <div className="p-6 text-center text-gray-500 text-sm">
+                        Không có thông báo nào.
                       </div>
                     ) : (
                       notifications.map(notif => (
                         <div 
                           key={notif.id} 
+                          className={`p-4 border-b border-gray-50 flex gap-3 hover:bg-white/60 transition-colors cursor-pointer ${notif.isRead ? 'opacity-70' : 'bg-white/80'}`}
                           onClick={() => !notif.isRead && markAsRead(notif.id)}
-                          className={`p-4 border-b border-gray-50 hover:bg-gray-50 transition-colors cursor-pointer flex gap-3 ${!notif.isRead ? 'bg-pink-50/30' : ''}`}
                         >
-                          <div className="w-10 h-10 rounded-full bg-gradient-to-br from-[#FF5C9A]/20 to-[#C8B6FF]/20 flex items-center justify-center flex-shrink-0">
-                            {notif.type === 'NewMatch' ? '🎉' : '🔔'}
-                          </div>
                           <div>
                             <p className={`text-sm ${!notif.isRead ? 'font-semibold text-[#1F2937]' : 'text-[#6B7280]'}`}>
                               {notif.content}
@@ -366,349 +353,216 @@ export default function Dashboard() {
           </aside>
 
           {/* Main Content */}
-          <main className="col-span-7">
-            <div className="space-y-6">
-              {/* Welcome Hero Card */}
-              <div className="relative overflow-hidden bg-gradient-to-br from-[#FF5C9A]/20 via-[#C8B6FF]/15 to-white rounded-[28px] border border-[#FF5C9A]/20 p-8 shadow-xl">
-                <div className="absolute top-0 right-0 w-64 h-64 bg-gradient-to-br from-[#FF5C9A]/20 to-transparent rounded-full blur-3xl"></div>
-                <div className="relative">
-                  <h1 className="text-3xl font-semibold text-[#1F2937] mb-2">
-                    Chào mừng trở lại, {profileName} 💖
-                  </h1>
-                  <p className="text-[#6B7280] mb-6">
-                    Hôm nay có{" "}
-                    <span className="font-semibold text-[#FF5C9A]">
-                      {suggestedMatches.length} người phù hợp mới
-                    </span>{" "}
-                    dành cho bạn.
-                  </p>
-                  <div className="flex gap-4">
-                    <button
-                      type="button"
-                      onClick={() => navigate("/discover")}
-                      className="px-6 py-3 bg-gradient-to-r from-[#FF5C9A] to-[#C8B6FF] text-white rounded-2xl font-medium shadow-lg shadow-[#FF5C9A]/30 hover:shadow-xl hover:shadow-[#FF5C9A]/40 transition-all hover:scale-105"
-                    >
-                      Khám phá ngay
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => navigate("/matches")}
-                      className="px-6 py-3 bg-white/80 backdrop-blur-sm text-[#FF5C9A] rounded-2xl font-medium border border-[#FF5C9A]/30 hover:bg-white hover:border-[#FF5C9A] transition-all"
-                    >
-                      Xem lượt thích
-                    </button>
-                  </div>
-                </div>
-              </div>
-
-              {/* Suggested Matches */}
-              <section>
-                <div className="flex items-center justify-between mb-4">
-                  <div>
-                    <h2 className="text-2xl font-semibold text-[#1F2937]">
-                      Gợi ý phù hợp hôm nay
-                    </h2>
-                    <p className="text-sm text-[#6B7280] mt-1">
-                      Những người có mức tương hợp cao đang chờ kết nối
-                    </p>
-                  </div>
-                  <button className="text-[#FF5C9A] font-medium flex items-center gap-1 hover:gap-2 transition-all">
-                    Xem tất cả <ChevronRight className="w-4 h-4" />
+          <main className="col-span-7 lg:col-span-5 space-y-8">
+            {/* Welcome Hero Card */}
+            <div className="relative overflow-hidden glass rounded-[32px] p-8">
+              <div className="absolute top-0 right-0 w-64 h-64 bg-aura-pink/20 rounded-full blur-3xl mix-blend-multiply"></div>
+              <div className="relative z-10">
+                <h1 className="text-4xl font-semibold text-aura-dark tracking-tight mb-2">
+                  Chào mừng trở lại, {profileName}
+                </h1>
+                <p className="text-gray-500 text-lg mb-8">
+                  Hôm nay có <span className="font-semibold text-aura-pink">{suggestedMatches.length} người phù hợp mới</span> dành cho bạn.
+                </p>
+                <div className="flex gap-4">
+                  <button
+                    type="button"
+                    onClick={() => navigate("/discover")}
+                    className="btn-magnetic px-8 py-4 bg-aura-dark text-white rounded-2xl font-medium shadow-md shadow-gray-900/10"
+                  >
+                    Khám phá ngay
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => navigate("/matches")}
+                    className="btn-magnetic px-8 py-4 bg-white text-aura-dark rounded-2xl font-medium border border-gray-200 hover:border-aura-dark transition-all"
+                  >
+                    Xem lượt thích
                   </button>
                 </div>
-                {loading && (
-                  <div className="bg-white rounded-3xl border border-gray-100 p-6 text-[#6B7280]">
-                    Đang tải gợi ý từ cơ sở dữ liệu...
-                  </div>
-                )}
-                {!loading && error && (
-                  <div className="bg-red-50 rounded-3xl border border-red-100 p-6 text-red-600">
-                    {error}
-                  </div>
-                )}
-                {!loading && !error && suggestedMatches.length > 0 && (
-                  <div className="grid grid-cols-2 gap-4">
+              </div>
+            </div>
+
+            {/* Suggested Matches - Bento Grid */}
+            <section>
+              <div className="flex items-center justify-between mb-6">
+                <div>
+                  <h2 className="text-2xl font-semibold text-gray-900 tracking-tight">
+                    Gợi ý hôm nay
+                  </h2>
+                </div>
+                <button className="text-aura-dark font-medium flex items-center gap-1 hover:gap-2 transition-all">
+                  Tất cả <ChevronRight className="w-4 h-4" />
+                </button>
+              </div>
+
+              {loading && (
+                <div className="glass rounded-[32px] p-8 text-center text-gray-500">
+                  <div className="w-8 h-8 border-4 border-aura-pink border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+                  Đang phân tích độ tương hợp...
+                </div>
+              )}
+              {!loading && error && (
+                <div className="bg-red-50 rounded-3xl border border-red-100 p-6 text-red-600 text-center">
+                  {error}
+                </div>
+              )}
+              {!loading && !error && suggestedMatches.length > 0 && (
+                <div className="grid grid-cols-2 gap-6">
                   {suggestedMatches.map((match, index) => (
                     <div
                       key={match.id || index}
                       onClick={() => navigate("/discover")}
-                      className="group bg-white rounded-[28px] border border-gray-100 overflow-hidden shadow-sm hover:shadow-2xl hover:-translate-y-1 transition-all duration-300 cursor-pointer"
+                      className="group glass p-2 rounded-[32px] cursor-pointer hover:border-aura-dark transition-all duration-500 overflow-hidden"
                     >
-                      <div className="relative aspect-[3/4] overflow-hidden">
+                      <div className="relative aspect-[4/5] rounded-[24px] overflow-hidden">
                         <img
                           src={match.image}
                           alt={match.name}
-                          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                          className="w-full h-full object-cover group-hover:scale-[1.03] transition-transform duration-700"
                         />
                         {match.online && (
-                          <div className="absolute top-4 right-4 px-3 py-1.5 bg-white/90 backdrop-blur-sm rounded-full flex items-center gap-1.5">
-                            <span className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></span>
-                            <span className="text-xs font-medium text-[#1F2937]">
-                              Online
-                            </span>
+                          <div className="absolute top-4 right-4 px-3 py-1.5 bg-white/40 backdrop-blur-md rounded-full flex items-center gap-2 border border-white/40">
+                            <span className="w-2 h-2 bg-green-400 rounded-full animate-pulse shadow-[0_0_8px_rgba(74,222,128,0.8)]"></span>
+                            <span className="text-xs font-semibold text-white tracking-wide">ONLINE</span>
                           </div>
                         )}
-                        {match.newMember && (
-                          <div className="absolute top-4 left-4 px-3 py-1.5 bg-gradient-to-r from-[#FF5C9A] to-[#C8B6FF] rounded-full">
-                            <span className="text-xs font-medium text-white">
-                              Mới tham gia
-                            </span>
-                          </div>
-                        )}
-                        <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/60 to-transparent p-4">
-                          <div className="flex items-center justify-between text-white">
+                        <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent"></div>
+                        <div className="absolute bottom-0 left-0 right-0 p-5">
+                          <div className="flex items-end justify-between">
                             <div>
-                              <div className="flex items-center gap-2">
-                                <h3 className="font-semibold text-lg">
-                                  {match.name}, {match.age}
-                                </h3>
+                              <h3 className="font-semibold text-2xl text-white tracking-tight leading-tight flex items-center gap-2 mb-1">
+                                {match.name}, {match.age}
                                 {match.verified && (
-                                  <div className="w-5 h-5 bg-[#C8B6FF] rounded-full flex items-center justify-center">
+                                  <div className="w-5 h-5 bg-aura-blue rounded-full flex items-center justify-center">
                                     <Sparkles className="w-3 h-3 text-white" />
                                   </div>
                                 )}
-                              </div>
-                              <div className="flex items-center gap-1 text-sm text-white/80 mt-1">
-                                <MapPin className="w-3 h-3" />
+                              </h3>
+                              <div className="flex items-center gap-1.5 text-sm text-white/80">
+                                <MapPin className="w-4 h-4" />
                                 <span>{match.city}</span>
                               </div>
                             </div>
-                            <div className="text-center">
-                              <div className="text-2xl font-bold">
-                                {match.compatibility}%
-                              </div>
-                              <div className="text-xs text-white/70">
-                                Phù hợp
-                              </div>
+                            <div className="bg-white/20 backdrop-blur-md px-3 py-2 rounded-2xl border border-white/20 text-center">
+                              <div className="text-xl font-bold text-white">{match.compatibility}%</div>
                             </div>
                           </div>
                         </div>
-                      </div>
-                      <div className="p-4 flex gap-2">
-                        <button className="flex-1 py-2.5 bg-gradient-to-r from-[#FF5C9A] to-[#C8B6FF] text-white rounded-xl font-medium hover:shadow-lg hover:shadow-[#FF5C9A]/30 transition-all">
-                          <Heart className="w-4 h-4 inline mr-1" />
-                          Thích
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => navigate("/discover")}
-                          className="flex-1 py-2.5 bg-gray-50 text-[#1F2937] rounded-xl font-medium hover:bg-gray-100 transition-all"
-                        >
-                          Xem hồ sơ
-                        </button>
                       </div>
                     </div>
                   ))}
                 </div>
-                )}
-              </section>
+              )}
+            </section>
+          </main>
 
-              {/* Recent Likes */}
-              <section>
-                <h2 className="text-2xl font-semibold text-[#1F2937] mb-4">
-                  Người vừa thích bạn
-                </h2>
-                <div className="bg-white rounded-[28px] border border-gray-100 p-6 shadow-sm">
-                  <div className="flex gap-4 overflow-x-auto">
-                    {recentLikes.map((like) => (
-                      <div
-                        key={like.id}
-                        className="flex-shrink-0 group cursor-pointer"
-                      >
-                        <div className="relative">
-                          <img
-                            src={like.image}
-                            alt={like.name}
-                            className="w-24 h-24 rounded-2xl object-cover group-hover:scale-105 transition-transform ring-4 ring-[#FF5C9A]/20"
-                          />
-                          <div className="absolute -bottom-2 -right-2 w-8 h-8 bg-[#FF5C9A] rounded-full flex items-center justify-center shadow-lg">
-                            <Heart className="w-4 h-4 text-white fill-white" />
-                          </div>
-                        </div>
-                        <div className="mt-3 text-center">
-                          <div className="font-medium text-[#1F2937] text-sm">
-                            {like.name}
-                            {like.age ? `, ${like.age}` : ""}
-                          </div>
-                          <div className="text-xs text-[#6B7280] mt-0.5">
-                            {like.time}
-                          </div>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              </section>
-
-              {/* Recent Chats */}
-              <section>
-                <div className="flex items-center justify-between mb-4">
-                  <h2 className="text-2xl font-semibold text-[#1F2937]">
-                    Trò chuyện gần đây
-                  </h2>
-                  <button className="text-[#FF5C9A] font-medium flex items-center gap-1 hover:gap-2 transition-all">
-                    Xem tất cả <ChevronRight className="w-4 h-4" />
+          {/* Right Sidebar - Social & Stats */}
+          <aside className="col-span-7 lg:col-span-2 space-y-6">
+            <div className="sticky top-24 space-y-6">
+              {/* Recent Likes Mini-Bento */}
+              <div className="glass rounded-[32px] p-6">
+                <h3 className="text-lg font-semibold text-gray-900 mb-4 tracking-tight flex items-center justify-between">
+                  Vừa thích bạn
+                  <button className="text-aura-dark bg-gray-50 p-1.5 rounded-full hover:bg-gray-100 transition-colors">
+                    <ChevronRight className="w-4 h-4" />
                   </button>
+                </h3>
+                <div className="grid grid-cols-2 gap-3">
+                  {recentLikes.slice(0, 4).map((like) => (
+                    <div key={like.id} className="relative group cursor-pointer aspect-square rounded-2xl overflow-hidden">
+                      <img
+                        src={like.image}
+                        alt={like.name}
+                        className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
+                      />
+                      <div className="absolute inset-0 bg-gradient-to-t from-aura-pink/80 to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex items-end justify-center pb-2">
+                        <Heart className="w-5 h-5 text-white fill-white" />
+                      </div>
+                    </div>
+                  ))}
+                  {recentLikes.length === 0 && (
+                    <div className="col-span-2 text-center text-sm text-gray-500 py-4">
+                      Chưa có lượt thích mới.
+                    </div>
+                  )}
                 </div>
-                <div className="bg-white rounded-[28px] border border-gray-100 shadow-sm overflow-hidden">
-                  {recentChats.map((chat, index) => (
+              </div>
+
+              {/* Quick Chats */}
+              <div className="glass rounded-[32px] p-6">
+                <h3 className="text-lg font-semibold text-gray-900 mb-4 tracking-tight">
+                  Tin nhắn mới
+                </h3>
+                <div className="space-y-4">
+                  {recentChats.slice(0, 3).map((chat) => (
                     <div
                       key={chat.id}
                       onClick={() => {
                         if (chat.partnerId) navigate(`/chat/${chat.partnerId}`);
                       }}
-                      className={`flex items-center gap-4 p-5 hover:bg-gray-50 cursor-pointer transition-colors ${
-                        index !== recentChats.length - 1
-                          ? "border-b border-gray-100"
-                          : ""
-                      }`}
+                      className="flex items-center gap-3 cursor-pointer group"
                     >
-                      <div className="relative flex-shrink-0">
+                      <div className="relative">
                         <img
                           src={chat.image}
                           alt={chat.name}
-                          className="w-14 h-14 rounded-full object-cover"
+                          className="w-12 h-12 rounded-full object-cover group-hover:ring-2 ring-aura-dark transition-all"
                         />
                         {chat.online && (
-                          <span className="absolute bottom-0 right-0 w-4 h-4 bg-green-400 rounded-full border-2 border-white"></span>
+                          <span className="absolute bottom-0 right-0 w-3 h-3 bg-green-400 rounded-full border-2 border-white"></span>
                         )}
                       </div>
                       <div className="flex-1 min-w-0">
-                        <div className="flex items-center justify-between mb-1">
-                          <h3 className="font-medium text-[#1F2937]">
-                            {chat.name}
-                          </h3>
-                          <span className="text-xs text-[#6B7280]">
-                            {chat.time}
-                          </span>
-                        </div>
-                        <p className="text-sm text-[#6B7280] truncate">
-                          {chat.message}
-                        </p>
+                        <h4 className="font-semibold text-gray-900 text-sm truncate">{chat.name}</h4>
+                        <p className="text-xs text-gray-500 truncate">{chat.message}</p>
                       </div>
                       {chat.unread > 0 && (
-                        <div className="flex-shrink-0 w-6 h-6 bg-[#FF5C9A] rounded-full flex items-center justify-center">
-                          <span className="text-xs font-medium text-white">
-                            {chat.unread}
-                          </span>
+                        <div className="w-5 h-5 bg-aura-pink rounded-full flex items-center justify-center">
+                          <span className="text-[10px] font-bold text-white">{chat.unread}</span>
                         </div>
                       )}
                     </div>
                   ))}
-                </div>
-              </section>
-            </div>
-          </main>
-
-          {/* Right Sidebar */}
-          <aside className="col-span-3">
-            <div className="sticky top-24 space-y-6">
-              {/* Connection Stats */}
-              <div className="bg-gradient-to-br from-[#FF5C9A] to-[#C8B6FF] rounded-[28px] p-6 text-white shadow-xl">
-                <h3 className="font-semibold mb-4 flex items-center gap-2">
-                  <TrendingUp className="w-5 h-5" />
-                  Chỉ số kết nối
-                </h3>
-                <div className="space-y-4">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      <Eye className="w-4 h-4 text-white/80" />
-                      <span className="text-sm text-white/90">
-                        Lượt xem hồ sơ
-                      </span>
-                    </div>
-                    <span className="text-2xl font-bold">{suggestedMatches.length}</span>
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      <Heart className="w-4 h-4 text-white/80" />
-                      <span className="text-sm text-white/90">
-                        Lượt thích mới
-                      </span>
-                    </div>
-                    <span className="text-2xl font-bold">{recentLikes.length}</span>
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      <MessageCircle className="w-4 h-4 text-white/80" />
-                      <span className="text-sm text-white/90">
-                        Cuộc trò chuyện mới
-                      </span>
-                    </div>
-                    <span className="text-2xl font-bold">{recentChats.length}</span>
-                  </div>
-                </div>
-              </div>
-
-              {/* Featured Profile */}
-              <div className="bg-white rounded-[28px] border border-gray-100 overflow-hidden shadow-sm hover:shadow-lg transition-shadow">
-                <div className="relative aspect-[4/5]">
-                  {featured ? (
-                    <img
-                      src={featured.image}
-                      alt={featured.name}
-                      className="w-full h-full object-cover"
-                    />
-                  ) : (
-                    <div className="w-full h-full bg-gray-100 flex items-center justify-center text-gray-500">
-                      Chưa có hồ sơ nổi bật
+                  {recentChats.length === 0 && (
+                    <div className="text-center text-sm text-gray-500 py-2">
+                      Bắt đầu cuộc trò chuyện.
                     </div>
                   )}
-                  <div className="absolute top-4 left-4 px-3 py-1.5 bg-gradient-to-r from-[#FF5C9A] to-[#C8B6FF] rounded-full">
-                    <span className="text-xs font-medium text-white flex items-center gap-1">
-                      <Sparkles className="w-3 h-3" />
-                      Nổi bật
-                    </span>
-                  </div>
-                </div>
-                <div className="p-4">
-                  <h3 className="font-semibold text-[#1F2937] mb-1">
-                    Hồ sơ nổi bật hôm nay
-                  </h3>
-                  <p className="text-sm text-[#6B7280] mb-3">
-                    {featured ? `${featured.name}${featured.age ? `, ${featured.age} tuổi` : ""}` : "Hệ thống sẽ cập nhật sớm"}
-                  </p>
-                  <button className="w-full py-2.5 bg-gradient-to-r from-[#FF5C9A] to-[#C8B6FF] text-white rounded-xl font-medium hover:shadow-lg transition-all">
-                    Xem hồ sơ
-                  </button>
                 </div>
               </div>
 
               {/* Connection Tips */}
-              <div className="bg-gradient-to-br from-[#C8B6FF]/10 to-[#FF5C9A]/5 rounded-[28px] border border-[#C8B6FF]/20 p-6">
-                <div className="flex items-start gap-3">
-                  <div className="w-10 h-10 bg-gradient-to-br from-[#FF5C9A] to-[#C8B6FF] rounded-xl flex items-center justify-center flex-shrink-0">
+              <div className="bg-aura-dark rounded-[32px] p-6 relative overflow-hidden">
+                <div className="absolute -right-4 -bottom-4 w-32 h-32 bg-aura-pink/30 rounded-full blur-2xl mix-blend-screen"></div>
+                <div className="relative z-10">
+                  <div className="w-10 h-10 bg-white/10 rounded-xl flex items-center justify-center mb-4 border border-white/10 backdrop-blur-md">
                     <Sparkles className="w-5 h-5 text-white" />
                   </div>
-                  <div>
-                    <h3 className="font-semibold text-[#1F2937] mb-2">
-                      Mẹo kết nối
-                    </h3>
-                    <p className="text-sm text-[#6B7280] leading-relaxed">
-                      "Ảnh đại diện tự nhiên giúp tăng{" "}
-                      <span className="font-semibold text-[#FF5C9A]">
-                        40% lượt tương tác
-                      </span>
-                      ."
-                    </p>
-                  </div>
+                  <h3 className="font-semibold text-white mb-2">
+                    Mẹo tăng tương tác
+                  </h3>
+                  <p className="text-sm text-white/70 leading-relaxed">
+                    Ảnh đại diện tự nhiên, chụp ngoài trời giúp tăng 40% lượt phản hồi tin nhắn.
+                  </p>
                 </div>
               </div>
             </div>
           </aside>
         </div>
       </div>
-      {/* ── Realtime Toast Notification ── */}
+
+      {/* Realtime Toast Notification */}
       {toastNotif && (
-        <div className="fixed bottom-6 right-6 z-[100] bg-white rounded-2xl shadow-2xl border border-gray-100 p-4 flex items-center gap-4 animate-[slideIn_0.3s_ease-out]">
-          <div className="w-12 h-12 rounded-full bg-gradient-to-br from-[#FF5C9A]/20 to-[#C8B6FF]/20 flex items-center justify-center text-xl shadow-inner">
+        <div className="fixed bottom-6 right-6 z-[100] glass rounded-[24px] p-4 flex items-center gap-4 animate-[slideIn_0.3s_ease-out] shadow-2xl">
+          <div className="w-12 h-12 rounded-full bg-aura-dark flex items-center justify-center text-xl text-white">
             {toastNotif.type === 'NewMatch' ? '🎉' : '🔔'}
           </div>
-          <div>
-            <h4 className="font-bold text-[#1F2937] text-sm">Thông báo mới</h4>
-            <p className="text-[#6B7280] text-sm">{toastNotif.content}</p>
+          <div className="pr-4">
+            <h4 className="font-bold text-gray-900 text-sm tracking-tight">Thông báo mới</h4>
+            <p className="text-gray-500 text-sm line-clamp-1">{toastNotif.content}</p>
           </div>
-          <button onClick={() => setToastNotif(null)} className="ml-2 text-gray-400 hover:text-gray-600">
+          <button onClick={() => setToastNotif(null)} className="ml-auto text-gray-400 hover:text-gray-900 p-2">
             <X className="w-4 h-4" />
           </button>
         </div>

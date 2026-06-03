@@ -14,12 +14,13 @@ namespace DatingApp.Helpers
             _config = config;
         }
 
-        public string GenerateToken(Guid userId, string email)
+        public string GenerateToken(Guid userId, string email, DatingApp.Enums.Role role)
         {
             var claims = new[]
             {
                 new Claim(ClaimTypes.NameIdentifier, userId.ToString()),
-                new Claim(ClaimTypes.Email, email)
+                new Claim(ClaimTypes.Email, email),
+                new Claim(ClaimTypes.Role, role.ToString())
             };
 
             var key = new SymmetricSecurityKey(

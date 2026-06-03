@@ -12,6 +12,7 @@
           "CloudinaryDotNet": "1.26.2",
           "Google.Apis.Auth": "1.74.0",
           "Microsoft.AspNetCore.Authentication.JwtBearer": "8.0.7",
+          "Microsoft.AspNetCore.SpaProxy": "8.0.7",
           "Microsoft.EntityFrameworkCore": "8.0.2",
           "Microsoft.EntityFrameworkCore.Tools": "8.0.2",
           "Npgsql.EntityFrameworkCore.PostgreSQL": "8.0.2",
@@ -91,6 +92,14 @@
         },
         "runtime": {
           "lib/net8.0/Microsoft.AspNetCore.Authentication.JwtBearer.dll": {
+            "assemblyVersion": "8.0.7.0",
+            "fileVersion": "8.0.724.31402"
+          }
+        }
+      },
+      "Microsoft.AspNetCore.SpaProxy/8.0.7": {
+        "runtime": {
+          "lib/net8.0/Microsoft.AspNetCore.SpaProxy.dll": {
             "assemblyVersion": "8.0.7.0",
             "fileVersion": "8.0.724.31402"
           }
@@ -1168,6 +1177,13 @@
       "sha512": "sha512-HXcmJizLBx9mP2XtHZZgvi3GZCrGg98PMQ9AozrF1/RqSffp9CqCiTdrz7TaFLqOUph/S4hqx/IJD18Al+zE+w==",
       "path": "microsoft.aspnetcore.authentication.jwtbearer/8.0.7",
       "hashPath": "microsoft.aspnetcore.authentication.jwtbearer.8.0.7.nupkg.sha512"
+    },
+    "Microsoft.AspNetCore.SpaProxy/8.0.7": {
+      "type": "package",
+      "serviceable": true,
+      "sha512": "sha512-31Tcbla9XXgcKaso1VYPy5LBMzYSbY0i8taXYEyO6bknvak4DqKhWJ/FxDp7A9k21rT6QHyKT2P0Kl5FaeHDzA==",
+      "path": "microsoft.aspnetcore.spaproxy/8.0.7",
+      "hashPath": "microsoft.aspnetcore.spaproxy.8.0.7.nupkg.sha512"
     },
     "Microsoft.Bcl.AsyncInterfaces/6.0.0": {
       "type": "package",

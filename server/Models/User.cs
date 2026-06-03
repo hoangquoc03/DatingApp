@@ -57,6 +57,9 @@ namespace DatingApp.Models
 
         public UserStatus Status { get; set; }
 
+        public Role Role { get; set; } = Role.User;
+        public bool IsActive { get; set; } = true;
+
         public string? RefreshTokenHash { get; set; }
         public DateTime? RefreshTokenExpiresAt { get; set; }
 

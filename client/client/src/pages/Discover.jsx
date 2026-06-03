@@ -476,7 +476,9 @@ function SwipeCard({ user, style }) {
   const [showInfo, setShowInfo] = useState(false);
   const [currentPhotoIndex, setCurrentPhotoIndex] = useState(0);
 
-  const photos = user.photos?.length > 0 ? user.photos : (user.avatarUrl ? [{ url: user.avatarUrl }] : []);
+  const idFallback = (Math.abs(user.id?.charCodeAt(0) || user.fullName?.charCodeAt(0) || 0) % 5) + 1;
+  const fallbackUrl = `/avatars/${idFallback}.jpg`;
+  const photos = user.photos?.length > 0 ? user.photos : (user.avatarUrl ? [{ url: user.avatarUrl }] : [{ url: fallbackUrl }]);
   const currentPhoto = photos[currentPhotoIndex]?.url;
 
   const initials = user.fullName?.split(" ").map((w) => w[0]).join("").slice(0, 2).toUpperCase();

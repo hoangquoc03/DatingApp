@@ -272,38 +272,46 @@ export default function Chat() {
 
   // ─── RENDER ───────────────────────────────────────────────────────────────
   return (
-    <div className="h-screen flex bg-white overflow-hidden">
+    <div className="h-screen flex bg-aura-bg font-sans overflow-hidden relative">
+      {/* Ambient bg */}
+      <div className="absolute inset-0 pointer-events-none z-0 overflow-hidden">
+        <div className="absolute top-[-10%] right-[-5%] w-[800px] h-[800px] bg-aura-pink/10 rounded-full blur-[120px] mix-blend-multiply" />
+        <div className="absolute bottom-[-10%] left-[-5%] w-[600px] h-[600px] bg-aura-blue/10 rounded-full blur-[100px] mix-blend-multiply" />
+      </div>
+
       {/* ── Sidebar: danh sách match ── */}
-      <aside className="w-80 flex-shrink-0 border-r border-gray-100 flex flex-col">
-        <div className="px-5 py-5 border-b border-gray-100">
-          <div className="flex items-center justify-between mb-4">
+      <aside className="w-80 flex-shrink-0 flex flex-col z-10 glass border-r border-white/50 shadow-xl">
+        <div className="px-5 py-6 border-b border-white/40">
+          <div className="flex items-center justify-between mb-5">
             <button
               onClick={() => navigate("/dashboard")}
-              className="flex items-center gap-2 text-[#6B7280] hover:text-[#FF5C9A] transition-colors text-sm"
+              className="flex items-center gap-2 text-gray-500 hover:text-aura-dark transition-colors text-sm font-medium"
             >
               <ArrowLeft className="w-4 h-4" />
               Dashboard
             </button>
-            <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-[#FF5C9A] to-[#C8B6FF] flex items-center justify-center">
-              <MessageCircle className="w-4 h-4 text-white" />
+            <div className="w-10 h-10 rounded-xl bg-aura-dark flex items-center justify-center shadow-md">
+              <MessageCircle className="w-5 h-5 text-white" />
             </div>
           </div>
-          <h1 className="text-xl font-bold text-[#1F2937]">Tin nhắn</h1>
-          <p className="text-sm text-[#6B7280] mt-0.5">{matches.length} kết nối</p>
+          <h1 className="text-2xl font-bold text-gray-900 tracking-tight">Tin nhắn</h1>
+          <p className="text-sm text-gray-500 mt-1">{matches.length} kết nối</p>
         </div>
 
-        <div className="flex-1 overflow-y-auto">
+        <div className="flex-1 overflow-y-auto custom-scrollbar">
           {matchesLoading ? (
             <div className="flex justify-center py-10">
-              <Loader2 className="w-6 h-6 animate-spin text-[#FF5C9A]" />
+              <Loader2 className="w-6 h-6 animate-spin text-aura-pink" />
             </div>
           ) : matches.length === 0 ? (
-            <div className="flex flex-col items-center py-12 px-6 gap-3 text-center">
-              <Heart className="w-12 h-12 text-[#FF5C9A]/30" />
-              <p className="text-sm text-[#6B7280]">Chưa có match nào. Hãy tiếp tục swipe!</p>
+            <div className="flex flex-col items-center py-12 px-6 gap-4 text-center">
+              <div className="w-16 h-16 rounded-full bg-white/50 flex items-center justify-center shadow-sm">
+                <Heart className="w-8 h-8 text-aura-pink/50" />
+              </div>
+              <p className="text-sm text-gray-500">Chưa có match nào. Hãy tiếp tục vuốt!</p>
               <button
                 onClick={() => navigate("/discover")}
-                className="text-sm text-[#FF5C9A] font-medium hover:underline"
+                className="text-sm text-aura-dark font-semibold hover:underline"
               >
                 Khám phá ngay →
               </button>
@@ -326,43 +334,43 @@ export default function Chat() {
       </aside>
 
       {/* ── Chat area ── */}
-      <div className="flex-1 flex flex-col min-w-0">
+      <div className="flex-1 flex flex-col min-w-0 z-10 bg-white/30 backdrop-blur-3xl">
         {activeChatId && activeUser ? (
           <>
             {/* Chat header */}
-            <div className="px-6 py-4 border-b border-gray-100 flex items-center gap-4 bg-white/80 backdrop-blur-sm">
+            <div className="px-6 py-5 border-b border-white/40 flex items-center gap-4 bg-white/40 backdrop-blur-xl shadow-sm">
               <div className="relative">
-                <Avatar user={activeUser} size={44} />
+                <Avatar user={activeUser} size={48} />
                 {isOnline(activeUser.id) && (
-                  <span className="absolute bottom-0 right-0 w-3 h-3 bg-green-400 rounded-full border-2 border-white" />
+                  <span className="absolute bottom-0 right-0 w-3.5 h-3.5 bg-green-400 rounded-full border-2 border-white shadow-sm" />
                 )}
               </div>
               <div className="flex-1 min-w-0">
-                <h2 className="font-semibold text-[#1F2937] truncate">{activeUser.fullName}</h2>
-                <p className="text-xs text-[#6B7280]">
+                <h2 className="font-semibold text-lg text-gray-900 tracking-tight truncate">{activeUser.fullName}</h2>
+                <p className="text-sm text-gray-500">
                   {typing
-                    ? <span className="text-[#FF5C9A] animate-pulse">Đang nhập...</span>
+                    ? <span className="text-aura-pink font-medium animate-pulse">Đang soạn tin...</span>
                     : isOnline(activeUser.id)
-                    ? "Đang online"
-                    : activeUser.location || "Offline"}
+                    ? "Đang trực tuyến"
+                    : activeUser.location || "Ngoại tuyến"}
                 </p>
               </div>
             </div>
 
             {/* Messages */}
-            <div className="flex-1 overflow-y-auto px-6 py-5 space-y-2">
+            <div className="flex-1 overflow-y-auto px-6 py-6 space-y-4 custom-scrollbar">
               {msgLoading ? (
                 <div className="flex justify-center py-10">
-                  <Loader2 className="w-6 h-6 animate-spin text-[#FF5C9A]" />
+                  <Loader2 className="w-6 h-6 animate-spin text-aura-pink" />
                 </div>
               ) : messages.length === 0 ? (
-                <div className="flex flex-col items-center justify-center h-full gap-4 text-center">
-                  <div className="w-20 h-20 rounded-full bg-gradient-to-br from-[#FF5C9A]/10 to-[#C8B6FF]/10 flex items-center justify-center">
-                    <Heart className="w-10 h-10 text-[#FF5C9A]/50 fill-[#FF5C9A]/20" />
+                <div className="flex flex-col items-center justify-center h-full gap-5 text-center">
+                  <div className="w-24 h-24 rounded-full bg-white/60 shadow-lg border border-white/50 flex items-center justify-center">
+                    <Heart className="w-12 h-12 text-aura-pink/50 fill-aura-pink/20" />
                   </div>
                   <div>
-                    <p className="font-semibold text-[#1F2937]">Đây là match mới của bạn!</p>
-                    <p className="text-sm text-[#6B7280] mt-1">Hãy gửi tin nhắn đầu tiên 👋</p>
+                    <p className="text-xl font-semibold text-gray-900 tracking-tight">Tương hợp mới!</p>
+                    <p className="text-gray-500 mt-2">Bắt đầu câu chuyện với {activeUser.fullName} ngay.</p>
                   </div>
                 </div>
               ) : (
@@ -406,34 +414,34 @@ export default function Chat() {
 
             {/* Image preview bar */}
             {imagePreview && (
-              <div className="px-6 py-3 border-t border-gray-100 bg-gray-50 flex items-center gap-3">
-                <div className="relative">
+              <div className="px-6 py-3 border-t border-white/40 bg-white/50 backdrop-blur-md flex items-center gap-4 shadow-[0_-4px_10px_rgba(0,0,0,0.02)]">
+                <div className="relative group">
                   <img
                     src={imagePreview.url}
                     alt="preview"
-                    className="w-20 h-20 object-cover rounded-xl border border-gray-200"
+                    className="w-20 h-20 object-cover rounded-[16px] shadow-sm"
                   />
                   <button
                     onClick={() => setImagePreview(null)}
-                    className="absolute -top-2 -right-2 w-5 h-5 bg-gray-600 text-white rounded-full flex items-center justify-center hover:bg-red-500 transition-colors"
+                    className="absolute -top-2 -right-2 w-6 h-6 bg-gray-900 text-white rounded-full flex items-center justify-center hover:bg-red-500 transition-colors opacity-0 group-hover:opacity-100 shadow-md"
                   >
                     <X className="w-3 h-3" />
                   </button>
                 </div>
                 <div className="flex-1">
-                  <p className="text-sm text-[#6B7280]">Sẵn sàng gửi ảnh</p>
-                  <p className="text-xs text-[#9CA3AF] mt-0.5">{imagePreview.file.name}</p>
+                  <p className="text-sm font-medium text-gray-900">Sẵn sàng gửi ảnh</p>
+                  <p className="text-xs text-gray-500 mt-0.5 truncate max-w-xs">{imagePreview.file.name}</p>
                 </div>
                 <button
                   onClick={sendImage}
                   disabled={uploadingImage}
-                  className="px-4 py-2 bg-gradient-to-r from-[#FF5C9A] to-[#C8B6FF] text-white text-sm rounded-xl font-medium hover:opacity-90 transition-opacity disabled:opacity-60 flex items-center gap-2"
+                  className="btn-magnetic px-5 py-2.5 bg-aura-dark text-white text-sm rounded-xl font-medium hover:bg-gray-800 transition-colors disabled:opacity-60 flex items-center gap-2 shadow-md"
                 >
                   {uploadingImage
                     ? <Loader2 className="w-4 h-4 animate-spin" />
                     : <Send className="w-4 h-4" />
                   }
-                  Gửi
+                  Gửi ảnh
                 </button>
               </div>
             )}
@@ -441,7 +449,7 @@ export default function Chat() {
             {/* Input */}
             <form
               onSubmit={sendMessage}
-              className="px-6 py-4 border-t border-gray-100 flex items-end gap-3"
+              className="px-6 py-5 bg-white/60 backdrop-blur-xl border-t border-white/40 flex items-end gap-3 shadow-[0_-4px_20px_rgba(0,0,0,0.03)]"
             >
               {/* Nút chọn ảnh */}
               <input
@@ -454,10 +462,10 @@ export default function Chat() {
               <button
                 type="button"
                 onClick={() => fileInputRef.current?.click()}
-                className="flex-shrink-0 w-12 h-12 rounded-2xl bg-gray-100 hover:bg-gray-200 flex items-center justify-center transition-colors"
+                className="flex-shrink-0 w-12 h-12 rounded-2xl bg-white border border-gray-200 hover:border-aura-dark hover:text-aura-dark flex items-center justify-center transition-all text-gray-400 btn-magnetic shadow-sm"
                 title="Gửi ảnh"
               >
-                <Image className="w-5 h-5 text-[#6B7280]" />
+                <Image className="w-5 h-5" />
               </button>
 
               <div className="flex-1 relative">
@@ -471,26 +479,26 @@ export default function Chat() {
                       sendMessage();
                     }
                   }}
-                  placeholder="Nhắn tin..."
+                  placeholder="Nhập tin nhắn..."
                   rows={1}
-                  className="w-full px-4 py-3 bg-gray-50 border-2 border-gray-100 rounded-2xl outline-none focus:border-[#FF5C9A] focus:bg-white transition-all resize-none text-[#1F2937] placeholder:text-[#9CA3AF] leading-relaxed max-h-32 overflow-y-auto"
-                  style={{ minHeight: "48px" }}
+                  className="w-full px-5 py-3.5 bg-white border border-gray-200 rounded-2xl outline-none focus:border-aura-dark focus:ring-4 focus:ring-aura-dark/5 transition-all resize-none text-gray-900 placeholder:text-gray-400 font-medium leading-relaxed max-h-32 overflow-y-auto shadow-sm"
+                  style={{ minHeight: "52px" }}
                 />
               </div>
               <button
                 type="submit"
                 disabled={!text.trim() || sending}
                 className={`
-                  flex-shrink-0 w-12 h-12 rounded-2xl flex items-center justify-center transition-all
+                  flex-shrink-0 w-12 h-12 rounded-2xl flex items-center justify-center transition-all btn-magnetic
                   ${text.trim() && !sending
-                    ? "bg-gradient-to-r from-[#FF5C9A] to-[#C8B6FF] shadow-lg shadow-pink-500/30 hover:scale-105 active:scale-95"
-                    : "bg-gray-100 cursor-not-allowed"
+                    ? "bg-aura-dark text-white shadow-md shadow-gray-900/10"
+                    : "bg-gray-100 text-gray-300 cursor-not-allowed"
                   }
                 `}
               >
                 {sending
-                  ? <Loader2 className="w-5 h-5 text-white animate-spin" />
-                  : <Send className={`w-5 h-5 ${text.trim() ? "text-white" : "text-gray-400"}`} />
+                  ? <Loader2 className="w-5 h-5 animate-spin" />
+                  : <Send className={`w-5 h-5`} />
                 }
               </button>
             </form>
@@ -596,12 +604,16 @@ function MessageBubble({ msg, isMine, showAvatar, otherUser, isLastMine }) {
   return (
     <div className={`flex items-end gap-2 ${isMine ? "flex-row-reverse" : ""}`}>
       {!isMine && (
-        <div className="w-7 flex-shrink-0">
-          {showAvatar && <Avatar user={otherUser} size={28} />}
+        <div className="w-8 flex-shrink-0">
+          {showAvatar ? (
+            <Avatar user={otherUser} size={32} />
+          ) : (
+            <div className="w-8" />
+          )}
         </div>
       )}
 
-      <div className={`flex flex-col gap-1 max-w-[65%] ${isMine ? "items-end" : "items-start"}`}>
+      <div className={`flex flex-col gap-1.5 max-w-[70%] ${isMine ? "items-end" : "items-start"}`}>
         {/* Ảnh */}
         {msg.imageUrl && (
           <a href={msg.imageUrl} target="_blank" rel="noopener noreferrer">
@@ -609,10 +621,10 @@ function MessageBubble({ msg, isMine, showAvatar, otherUser, isLastMine }) {
               src={msg.imageUrl}
               alt="ảnh"
               className={`
-                max-w-[240px] max-h-[280px] rounded-2xl object-cover cursor-pointer
-                hover:opacity-90 transition-opacity
+                max-w-[260px] max-h-[300px] rounded-3xl object-cover cursor-pointer
+                hover:opacity-95 transition-opacity shadow-sm
                 ${msg._optimistic ? "opacity-60" : "opacity-100"}
-                ${isMine ? "rounded-br-none" : "rounded-bl-none"}
+                ${isMine ? "rounded-br-sm" : "rounded-bl-sm"}
               `}
             />
           </a>
@@ -622,10 +634,10 @@ function MessageBubble({ msg, isMine, showAvatar, otherUser, isLastMine }) {
         {msg.content && (
           <div
             className={`
-              px-4 py-2.5 rounded-2xl text-sm leading-relaxed break-words
+              px-5 py-3.5 rounded-3xl text-sm leading-relaxed break-words font-medium shadow-sm
               ${isMine
-                ? "bg-gradient-to-r from-[#FF5C9A] to-[#C8B6FF] text-white rounded-br-none"
-                : "bg-gray-100 text-[#1F2937] rounded-bl-none"
+                ? "bg-aura-dark text-white rounded-br-sm"
+                : "bg-white/80 backdrop-blur-xl text-gray-900 border border-white/60 rounded-bl-sm"
               }
               ${msg._optimistic ? "opacity-70" : "opacity-100"}
             `}
@@ -635,12 +647,12 @@ function MessageBubble({ msg, isMine, showAvatar, otherUser, isLastMine }) {
         )}
 
         {/* Time + seen tick */}
-        <div className="flex items-center gap-1 px-1">
-          <span className="text-[10px] text-[#9CA3AF]">{time}</span>
+        <div className={`flex items-center gap-1.5 px-2 mt-0.5 ${isMine ? "flex-row-reverse" : ""}`}>
+          <span className="text-[10px] font-medium text-gray-400">{time}</span>
           {isMine && isLastMine && (
             msg.isSeen
-              ? <CheckCheck className="w-3 h-3 text-[#FF5C9A]" />
-              : <Check className="w-3 h-3 text-[#9CA3AF]" />
+              ? <CheckCheck className="w-3.5 h-3.5 text-aura-pink" />
+              : <Check className="w-3.5 h-3.5 text-gray-400" />
           )}
         </div>
       </div>
