@@ -1,0 +1,16 @@
+namespace DatingApp.Desktop.Models;
+
+public class AuthResponse
+{
+    public string Token { get; set; } = string.Empty;
+    public UserProfile User { get; set; } = new();
+}
+
+public class UserProfile
+{
+    public int Id { get; set; }
+    public string Email { get; set; } = string.Empty;
+    public string FullName { get; set; } = string.Empty;
+    public string AvatarUrl { get; set; } = string.Empty;
+    public int RoleId { get; set; }
+}
