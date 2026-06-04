@@ -11,18 +11,8 @@ System.AppContext.SetSwitch("Npgsql.EnableLegacyTimestampBehavior", true);
 var builder = WebApplication.CreateBuilder(args);
 
 // ── Database ──────────────────────────────────────────────────────────────────
-var provider = builder.Configuration["DatabaseProvider"] ?? "Postgres";
 builder.Services.AddDbContext<AppDbContext>(options =>
-{
-    if (provider.ToLower() == "sqlite")
-    {
-        options.UseSqlite(builder.Configuration.GetConnectionString("SqliteConnection"));
-    }
-    else
-    {
-        options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection"));
-    }
-});
+    options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
 // ── Controllers (💡 ĐÃ FIX: Ngăn chặn hoàn toàn lỗi sập Swagger do vòng lặp dữ liệu) ──
 builder.Services.AddControllers()
     .AddJsonOptions(options =>
@@ -142,12 +132,6 @@ using (var scope = app.Services.CreateScope())
 {
     var services = scope.ServiceProvider;
     var context = services.GetRequiredService<AppDbContext>();
-    var config = services.GetRequiredService<IConfiguration>();
-    
-    if (config["DatabaseProvider"]?.ToLower() == "sqlite")
-    {
-        context.Database.EnsureCreated();
-    }
     // Nếu bạn đã tạo file DbInitializer ở các bước trước, hãy mở comment dòng này:
     // await DbInitializer.SeedData(context);
 }
