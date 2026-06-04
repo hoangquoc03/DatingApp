@@ -1,0 +1,155 @@
+<UserControl x:Class="DatingApp.Desktop.Views.AdminView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
+             xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes"
+             xmlns:viewmodels="clr-namespace:DatingApp.Desktop.ViewModels"
+             xmlns:converters="clr-namespace:DatingApp.Desktop.Converters"
+             d:DataContext="{d:DesignInstance Type=viewmodels:AdminViewModel}"
+             mc:Ignorable="d" 
+             d:DesignHeight="600" d:DesignWidth="700">
+    <UserControl.Resources>
+        <BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter"/>
+        <converters:ToggleStatusConverter x:Key="ToggleStatusConverter"/>
+        <converters:ToggleColorConverter x:Key="ToggleColorConverter"/>
+        <converters:InitialsConverter x:Key="InitialsConverter"/>
+    </UserControl.Resources>
+
+    <Grid Background="White">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+        </Grid.RowDefinitions>
+
+        <!-- Header -->
+        <Border Grid.Row="0" Background="#FFF5F8" Padding="24,16">
+            <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                <materialDesign:PackIcon Kind="Security" Width="32" Height="32" Foreground="#E6005C" Margin="0,0,16,0"/>
+                <TextBlock Text="Quản trị Hệ thống" FontSize="24" FontWeight="Bold" Foreground="#1F2937"/>
+                <Button Command="{Binding LoadUsersCommand}" Style="{StaticResource MaterialDesignIconButton}" ToolTip="Làm mới" Margin="20,0,0,0">
+                    <materialDesign:PackIcon Kind="Refresh" Foreground="#6B7280"/>
+                </Button>
+            </StackPanel>
+        </Border>
+
+        <!-- STATS DASHBOARD -->
+        <Border Grid.Row="1" Background="White" Margin="24,24,24,0" CornerRadius="12" Padding="20">
+            <Border.Effect>
+                <DropShadowEffect BlurRadius="20" ShadowDepth="5" Opacity="0.05" Color="Black"/>
+            </Border.Effect>
+            <UniformGrid Columns="5">
+                <StackPanel>
+                    <TextBlock Text="Tổng Users" Foreground="Gray" FontSize="14" HorizontalAlignment="Center"/>
+                    <TextBlock Text="{Binding TotalUsers}" FontSize="24" FontWeight="Bold" Foreground="#1F2937" HorizontalAlignment="Center" Margin="0,5,0,0"/>
+                </StackPanel>
+                <StackPanel>
+                    <TextBlock Text="Đang hoạt động" Foreground="Gray" FontSize="14" HorizontalAlignment="Center"/>
+                    <TextBlock Text="{Binding ActiveUsers}" FontSize="24" FontWeight="Bold" Foreground="#10B981" HorizontalAlignment="Center" Margin="0,5,0,0"/>
+                </StackPanel>
+                <StackPanel>
+                    <TextBlock Text="Số lượt Match" Foreground="Gray" FontSize="14" HorizontalAlignment="Center"/>
+                    <TextBlock Text="{Binding TotalMatches}" FontSize="24" FontWeight="Bold" Foreground="#E6005C" HorizontalAlignment="Center" Margin="0,5,0,0"/>
+                </StackPanel>
+                <StackPanel>
+                    <TextBlock Text="Tổng Báo cáo" Foreground="Gray" FontSize="14" HorizontalAlignment="Center"/>
+                    <TextBlock Text="{Binding TotalReports}" FontSize="24" FontWeight="Bold" Foreground="#F59E0B" HorizontalAlignment="Center" Margin="0,5,0,0"/>
+                </StackPanel>
+                <StackPanel>
+                    <TextBlock Text="Báo cáo chờ xử lý" Foreground="Gray" FontSize="14" HorizontalAlignment="Center"/>
+                    <TextBlock Text="{Binding UnresolvedReports}" FontSize="24" FontWeight="Bold" Foreground="#EF4444" HorizontalAlignment="Center" Margin="0,5,0,0"/>
+                </StackPanel>
+            </UniformGrid>
+        </Border>
+
+        <!-- Loading Indicator -->
+        <ProgressBar Grid.Row="2" IsIndeterminate="True" Visibility="{Binding IsLoading, Converter={StaticResource BooleanToVisibilityConverter}}" VerticalAlignment="Top" Foreground="#E6005C"/>
+
+        <!-- Data Grid -->
+        <DataGrid Grid.Row="2" Margin="24" ItemsSource="{Binding Users}" AutoGenerateColumns="False" 
+                  CanUserAddRows="False" CanUserDeleteRows="False" IsReadOnly="True" 
+                  Style="{StaticResource MaterialDesignDataGrid}" Background="White">
+            <DataGrid.Columns>
+                <!-- Avatar -->
+                <DataGridTemplateColumn Header="Avatar">
+                    <DataGridTemplateColumn.CellTemplate>
+                        <DataTemplate>
+                            <Grid Width="40" Height="40" Margin="4">
+                                <!-- Nền màu hồng hiển thị khi không có ảnh -->
+                                <Ellipse Fill="#FFD6E7"/>
+                                <!-- Chữ viết tắt hiển thị trên nền -->
+                                <TextBlock Text="{Binding FullName, Converter={StaticResource InitialsConverter}}"
+                                           HorizontalAlignment="Center" VerticalAlignment="Center"
+                                           FontWeight="Bold" FontSize="14" Foreground="#E6005C"/>
+                            </Grid>
+                        </DataTemplate>
+                    </DataGridTemplateColumn.CellTemplate>
+                </DataGridTemplateColumn>
+
+                <DataGridTextColumn Header="Họ tên" Binding="{Binding FullName}" Width="*" />
+                <DataGridTextColumn Header="Email" Binding="{Binding Email}" Width="*" />
+                <DataGridTextColumn Header="Vai trò" Binding="{Binding RoleDisplay}" Width="100"/>
+                <DataGridTextColumn Header="Trạng thái" Binding="{Binding StatusDisplay}" Width="100"/>
+                <DataGridTextColumn Header="Ngày tham gia" Binding="{Binding CreatedAt, StringFormat=dd/MM/yyyy}" Width="150"/>
+                
+                <!-- Actions -->
+                <DataGridTemplateColumn Header="Thao tác" Width="200">
+                    <DataGridTemplateColumn.CellTemplate>
+                        <DataTemplate>
+                            <StackPanel Orientation="Horizontal">
+                                <Button Content="{Binding IsActive, Converter={StaticResource ToggleStatusConverter}}"
+                                        Command="{Binding DataContext.ToggleUserActiveCommand, RelativeSource={RelativeSource AncestorType=DataGrid}}"
+                                        CommandParameter="{Binding}"
+                                        Style="{StaticResource MaterialDesignFlatButton}"
+                                        Foreground="{Binding IsActive, Converter={StaticResource ToggleColorConverter}}"
+                                        Padding="4" Margin="0,0,5,0"/>
+                                
+                                <Button Command="{Binding DataContext.EditUserCommand, RelativeSource={RelativeSource AncestorType=DataGrid}}"
+                                        CommandParameter="{Binding}"
+                                        Style="{StaticResource MaterialDesignIconButton}" ToolTip="Sửa" Width="28" Height="28">
+                                    <materialDesign:PackIcon Kind="Pencil" Foreground="#3B82F6"/>
+                                </Button>
+
+                                <Button Command="{Binding DataContext.DeleteUserCommand, RelativeSource={RelativeSource AncestorType=DataGrid}}"
+                                        CommandParameter="{Binding}"
+                                        Style="{StaticResource MaterialDesignIconButton}" ToolTip="Xóa" Width="28" Height="28">
+                                    <materialDesign:PackIcon Kind="Delete" Foreground="#EF4444"/>
+                                </Button>
+                            </StackPanel>
+                        </DataTemplate>
+                    </DataGridTemplateColumn.CellTemplate>
+                </DataGridTemplateColumn>
+            </DataGrid.Columns>
+        </DataGrid>
+
+        <!-- Edit Panel Overlay -->
+        <Grid Grid.Row="0" Grid.RowSpan="3" Background="#80000000" Visibility="{Binding IsEditing, Converter={StaticResource BooleanToVisibilityConverter}}">
+            <Border Background="White" Width="400" Padding="24" CornerRadius="12" HorizontalAlignment="Center" VerticalAlignment="Center">
+                <StackPanel>
+                    <TextBlock Text="Chỉnh sửa Người dùng" FontSize="20" FontWeight="Bold" Foreground="#1F2937" Margin="0,0,0,20"/>
+
+                    <TextBox Text="{Binding EditingUser.FullName, UpdateSourceTrigger=PropertyChanged}" 
+                             materialDesign:HintAssist.Hint="Họ và tên" 
+                             Style="{StaticResource MaterialDesignFloatingHintTextBox}" Margin="0,0,0,16"/>
+
+                    <ComboBox SelectedIndex="{Binding EditingUser.Role}" 
+                              materialDesign:HintAssist.Hint="Vai trò" 
+                              Style="{StaticResource MaterialDesignFloatingHintComboBox}" Margin="0,0,0,16">
+                        <ComboBoxItem Content="Người dùng thường"/>
+                        <ComboBoxItem Content="Quản trị viên"/>
+                    </ComboBox>
+
+                    <TextBox Text="{Binding EditPassword, UpdateSourceTrigger=PropertyChanged}" 
+                             materialDesign:HintAssist.Hint="Mật khẩu mới (Bỏ trống nếu không đổi)" 
+                             Style="{StaticResource MaterialDesignFloatingHintTextBox}" Margin="0,0,0,24"/>
+
+                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+                        <Button Command="{Binding CancelEditCommand}" Content="Hủy" Style="{StaticResource MaterialDesignFlatButton}" Foreground="Gray" Margin="0,0,10,0"/>
+                        <Button Command="{Binding SaveEditCommand}" Content="Lưu" Style="{StaticResource MaterialDesignFlatMidBgButton}" Background="#E6005C" Foreground="White" BorderBrush="Transparent"/>
+                    </StackPanel>
+                </StackPanel>
+            </Border>
+        </Grid>
+    </Grid>
+</UserControl>

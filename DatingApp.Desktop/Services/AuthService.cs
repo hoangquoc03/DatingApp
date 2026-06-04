@@ -15,7 +15,9 @@ public class AuthService
 
     public AuthService(IHttpClientFactory httpClientFactory)
     {
-        _httpClient = httpClientFactory.CreateClient("ApiClient");
+        // Dùng "PublicClient" — KHÔNG có AuthTokenHandler để tránh circular dependency.
+        // Login và Register không cần Bearer token.
+        _httpClient = httpClientFactory.CreateClient("PublicClient");
     }
 
     public async Task<bool> LoginAsync(string email, string password)
@@ -35,6 +37,12 @@ public class AuthService
             }
         }
         return false;
+    }
+
+    public async Task<bool> RegisterAsync(RegisterDto dto)
+    {
+        var response = await _httpClient.PostAsJsonAsync("/api/Auth/register", dto);
+        return response.IsSuccessStatusCode;
     }
 
     public void Logout()

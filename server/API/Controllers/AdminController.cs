@@ -145,5 +145,60 @@ namespace DatingApp.Controllers
 
             return Ok(new { message = "Đã đánh dấu xử lý xong báo cáo." });
         }
+        [HttpDelete("users/{id}")]
+        public async Task<IActionResult> DeleteUser(Guid id)
+        {
+            if (!IsAdmin()) return Forbid();
+
+            var user = await _context.Users.FindAsync(id);
+            if (user == null) return NotFound();
+
+            if (user.Role == Role.Admin) return BadRequest("Không thể xóa tài khoản Admin.");
+
+            // Xoá các bản ghi liên quan (bỏ qua cascade constraint)
+            await _context.Swipes.Where(s => s.FromUserId == id || s.ToUserId == id).ExecuteDeleteAsync();
+            await _context.Matches.Where(m => m.User1Id == id || m.User2Id == id).ExecuteDeleteAsync();
+            await _context.Messages.Where(m => m.SenderId == id || m.ReceiverId == id).ExecuteDeleteAsync();
+            await _context.Photos.Where(p => p.UserId == id).ExecuteDeleteAsync();
+            await _context.Blocks.Where(b => b.BlockerId == id || b.BlockedUserId == id).ExecuteDeleteAsync();
+            await _context.Reports.Where(r => r.ReporterId == id || r.ReportedUserId == id).ExecuteDeleteAsync();
+            await _context.Notifications.Where(n => n.UserId == id).ExecuteDeleteAsync();
+
+            _context.Users.Remove(user);
+            await _context.SaveChangesAsync();
+
+            return Ok(new { message = "Đã xóa người dùng thành công." });
+        }
+
+        [HttpPut("users/{id}")]
+        public async Task<IActionResult> UpdateUser(Guid id, [FromBody] UpdateUserDto dto)
+        {
+            if (!IsAdmin()) return Forbid();
+
+            var user = await _context.Users.FindAsync(id);
+            if (user == null) return NotFound();
+
+            if (user.Role == Role.Admin && dto.Role != Role.Admin) return BadRequest("Không thể giáng cấp Admin.");
+
+            user.FullName = dto.FullName ?? user.FullName;
+            user.Role = dto.Role;
+            
+            // Cho phép Admin đổi mật khẩu nếu có nhập mật khẩu mới
+            if (!string.IsNullOrWhiteSpace(dto.Password))
+            {
+                user.PasswordHash = BCrypt.Net.BCrypt.HashPassword(dto.Password);
+            }
+
+            await _context.SaveChangesAsync();
+
+            return Ok(new { message = "Cập nhật thông tin thành công." });
+        }
+    }
+
+    public class UpdateUserDto
+    {
+        public string? FullName { get; set; }
+        public Role Role { get; set; }
+        public string? Password { get; set; }
     }
 }
