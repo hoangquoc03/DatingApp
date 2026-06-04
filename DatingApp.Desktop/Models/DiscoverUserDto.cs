@@ -1,0 +1,27 @@
+namespace DatingApp.Desktop.Models;
+
+public class DiscoverUserDto
+{
+    public string Id { get; set; } = string.Empty;
+    public string FullName { get; set; } = string.Empty;
+    public string Bio { get; set; } = string.Empty;
+    public string AvatarUrl { get; set; } = string.Empty;
+    public int? Age { get; set; }
+}
+
+public class DiscoverResponse
+{
+    public System.Collections.Generic.List<DiscoverUserDto> Data { get; set; } = new();
+    public PaginationInfo? Pagination { get; set; }
+}
+
+public class PaginationInfo
+{
+    public int Page { get; set; }
+    public int PageSize { get; set; }
+    public int Total { get; set; }
+    public int TotalPages { get; set; }
+    public bool HasNext { get; set; }
+    public bool HasPrev { get; set; }
+}
+

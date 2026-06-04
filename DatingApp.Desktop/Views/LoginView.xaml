@@ -19,40 +19,116 @@
             </LinearGradientBrush>
         </Grid.Background>
 
-        <Border Width="400" Padding="40" Background="White" CornerRadius="16" VerticalAlignment="Center" HorizontalAlignment="Center">
+        <Border Width="450" Padding="40" Background="White" CornerRadius="16" VerticalAlignment="Center" HorizontalAlignment="Center">
             <Border.Effect>
                 <DropShadowEffect BlurRadius="30" ShadowDepth="10" Opacity="0.1" Color="Black"/>
             </Border.Effect>
 
-            <StackPanel>
-                <TextBlock Text="Aura Premium" FontSize="28" FontWeight="Bold" Foreground="#E6005C" HorizontalAlignment="Center" Margin="0,0,0,10"/>
-                <TextBlock Text="Đăng nhập để kết nối" FontSize="16" Foreground="Gray" HorizontalAlignment="Center" Margin="0,0,0,30"/>
+            <Grid>
+                <!-- PANEL 1: LOGIN -->
+                <StackPanel Visibility="{Binding IsLoginPanelVisible, Converter={StaticResource BooleanToVisibilityConverter}}">
+                    <TextBlock Text="Aura Premium" FontSize="28" FontWeight="Bold" Foreground="#E6005C" HorizontalAlignment="Center" Margin="0,0,0,10"/>
+                    <TextBlock Text="Đăng nhập để kết nối" FontSize="16" Foreground="Gray" HorizontalAlignment="Center" Margin="0,0,0,30"/>
 
-                <TextBox Text="{Binding Email, UpdateSourceTrigger=PropertyChanged}" 
-                         materialDesign:HintAssist.Hint="Email" 
-                         Style="{StaticResource MaterialDesignFloatingHintTextBox}" 
-                         Margin="0,0,0,20" FontSize="16"/>
+                    <TextBox Text="{Binding Email, UpdateSourceTrigger=PropertyChanged}" 
+                             materialDesign:HintAssist.Hint="Email" 
+                             Style="{StaticResource MaterialDesignFloatingHintTextBox}" 
+                             Margin="0,0,0,20" FontSize="16"/>
 
-                <PasswordBox x:Name="PasswordBox" 
-                             materialDesign:HintAssist.Hint="Mật khẩu" 
+                    <PasswordBox x:Name="PasswordBox" 
+                                 materialDesign:HintAssist.Hint="Mật khẩu" 
+                                 Style="{StaticResource MaterialDesignFloatingHintPasswordBox}" 
+                                 Margin="0,0,0,10" FontSize="16"
+                                 PasswordChanged="PasswordBox_PasswordChanged"/>
+
+                    <TextBlock Text="{Binding ErrorMessage}" Foreground="Red" TextWrapping="Wrap" HorizontalAlignment="Center" Margin="0,5,0,15"/>
+
+                    <Button Command="{Binding LoginCommand}" 
+                            Content="Đăng nhập" 
+                            Height="50" FontSize="16" FontWeight="SemiBold"
+                            Style="{StaticResource MaterialDesignFlatMidBgButton}"
+                            materialDesign:ButtonAssist.CornerRadius="10"
+                            Background="#FF5C9A" Foreground="White" BorderBrush="Transparent" Margin="0,10,0,10"/>
+
+                    <Button Command="{Binding ShowRegisterStep1Command}" 
+                            Content="Chưa có tài khoản? Đăng ký ngay" 
+                            Style="{StaticResource MaterialDesignFlatButton}" Foreground="#E6005C" HorizontalAlignment="Center"/>
+
+                    <TextBlock Text="Đang xử lý..." Foreground="Gray" HorizontalAlignment="Center" Margin="0,10,0,0" 
+                               Visibility="{Binding IsBusy, Converter={StaticResource BooleanToVisibilityConverter}}"/>
+                </StackPanel>
+
+                <!-- PANEL 2: REGISTER STEP 1 (Email / Password) -->
+                <StackPanel Visibility="{Binding IsRegisterStep1Visible, Converter={StaticResource BooleanToVisibilityConverter}}">
+                    <TextBlock Text="Tạo tài khoản" FontSize="28" FontWeight="Bold" Foreground="#E6005C" HorizontalAlignment="Center" Margin="0,0,0,10"/>
+                    <TextBlock Text="Bước 1: Thông tin đăng nhập" FontSize="16" Foreground="Gray" HorizontalAlignment="Center" Margin="0,0,0,30"/>
+
+                    <TextBox Text="{Binding RegisterEmail, UpdateSourceTrigger=PropertyChanged}" 
+                             materialDesign:HintAssist.Hint="Email" 
+                             Style="{StaticResource MaterialDesignFloatingHintTextBox}" 
+                             Margin="0,0,0,20" FontSize="16"/>
+
+                    <PasswordBox x:Name="RegisterPasswordBox"
+                             materialDesign:HintAssist.Hint="Mật khẩu (ít nhất 6 ký tự)" 
                              Style="{StaticResource MaterialDesignFloatingHintPasswordBox}" 
                              Margin="0,0,0,10" FontSize="16"
-                             PasswordChanged="PasswordBox_PasswordChanged"/>
+                             PasswordChanged="RegisterPasswordBox_PasswordChanged"/>
 
-                <TextBlock Text="{Binding ErrorMessage}" Foreground="Red" TextWrapping="Wrap" HorizontalAlignment="Center" Margin="0,5,0,15"/>
+                    <TextBlock Text="{Binding ErrorMessage}" Foreground="Red" TextWrapping="Wrap" HorizontalAlignment="Center" Margin="0,5,0,15"/>
 
-                <Button Command="{Binding LoginCommand}" 
-                        CommandParameter="{Binding ElementName=PasswordBox}"
-                        Content="Đăng nhập" 
-                        Height="50" FontSize="16" FontWeight="SemiBold"
-                        Style="{StaticResource MaterialDesignFlatMidBgButton}"
-                        materialDesign:ButtonAssist.CornerRadius="10"
-                        Background="#FF5C9A" Foreground="White" BorderBrush="Transparent" Margin="0,10,0,0">
-                </Button>
+                    <Button Command="{Binding ShowRegisterStep2Command}" 
+                            Content="Tiếp tục" 
+                            Height="50" FontSize="16" FontWeight="SemiBold"
+                            Style="{StaticResource MaterialDesignFlatMidBgButton}"
+                            materialDesign:ButtonAssist.CornerRadius="10"
+                            Background="#FF5C9A" Foreground="White" BorderBrush="Transparent" Margin="0,10,0,10"/>
 
-                <TextBlock Text="Đang xử lý..." Foreground="Gray" HorizontalAlignment="Center" Margin="0,10,0,0" 
-                           Visibility="{Binding IsBusy, Converter={StaticResource BooleanToVisibilityConverter}}"/>
-            </StackPanel>
+                    <Button Command="{Binding BackToLoginCommand}" 
+                            Content="Quay lại Đăng nhập" 
+                            Style="{StaticResource MaterialDesignFlatButton}" Foreground="Gray" HorizontalAlignment="Center"/>
+                </StackPanel>
+
+                <!-- PANEL 3: REGISTER STEP 2 (Profile Info) -->
+                <StackPanel Visibility="{Binding IsRegisterStep2Visible, Converter={StaticResource BooleanToVisibilityConverter}}">
+                    <TextBlock Text="Hồ sơ cá nhân" FontSize="28" FontWeight="Bold" Foreground="#E6005C" HorizontalAlignment="Center" Margin="0,0,0,10"/>
+                    <TextBlock Text="Bước 2: Hoàn thiện hồ sơ" FontSize="16" Foreground="Gray" HorizontalAlignment="Center" Margin="0,0,0,20"/>
+
+                    <TextBox Text="{Binding RegisterFullName, UpdateSourceTrigger=PropertyChanged}" 
+                             materialDesign:HintAssist.Hint="Họ và Tên" 
+                             Style="{StaticResource MaterialDesignFloatingHintTextBox}" 
+                             Margin="0,0,0,20" FontSize="16"/>
+
+                    <DatePicker SelectedDate="{Binding RegisterDOB}" 
+                                materialDesign:HintAssist.Hint="Ngày sinh" 
+                                Style="{StaticResource MaterialDesignFloatingHintDatePicker}" 
+                                Margin="0,0,0,20" FontSize="16"/>
+
+                    <ComboBox SelectedIndex="{Binding RegisterGender}" 
+                              materialDesign:HintAssist.Hint="Giới tính" 
+                              Style="{StaticResource MaterialDesignFloatingHintComboBox}" 
+                              Margin="0,0,0,20" FontSize="16">
+                        <ComboBoxItem Content="Nam"/>
+                        <ComboBoxItem Content="Nữ"/>
+                        <ComboBoxItem Content="Khác"/>
+                    </ComboBox>
+
+                    <TextBlock Text="{Binding ErrorMessage}" Foreground="Red" TextWrapping="Wrap" HorizontalAlignment="Center" Margin="0,5,0,15"/>
+
+                    <Button Command="{Binding CompleteRegisterCommand}" 
+                            Content="Hoàn tất Đăng ký" 
+                            Height="50" FontSize="16" FontWeight="SemiBold"
+                            Style="{StaticResource MaterialDesignFlatMidBgButton}"
+                            materialDesign:ButtonAssist.CornerRadius="10"
+                            Background="#FF5C9A" Foreground="White" BorderBrush="Transparent" Margin="0,10,0,10"/>
+
+                    <Button Command="{Binding ShowRegisterStep1Command}" 
+                            Content="Quay lại Bước 1" 
+                            Style="{StaticResource MaterialDesignFlatButton}" Foreground="Gray" HorizontalAlignment="Center"/>
+                    
+                    <TextBlock Text="Đang xử lý..." Foreground="Gray" HorizontalAlignment="Center" Margin="0,10,0,0" 
+                               Visibility="{Binding IsBusy, Converter={StaticResource BooleanToVisibilityConverter}}"/>
+                </StackPanel>
+            </Grid>
         </Border>
     </Grid>
 </UserControl>

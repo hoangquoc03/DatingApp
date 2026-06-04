@@ -50,7 +50,8 @@ namespace DatingApp.Services
                     x.Interests,
                     x.Values,
                     x.Vibe,
-                    x.MaxDistance
+                    x.MaxDistance,
+                    x.ProfileCompletionScore
                 })
                 .FirstOrDefaultAsync();
 
@@ -83,6 +84,9 @@ namespace DatingApp.Services
             if (dto.LookingFor != null) user.LookingFor = dto.LookingFor;
             if (dto.Lifestyle != null) user.Lifestyle = dto.Lifestyle;
             if (dto.Interests != null) user.Interests = dto.Interests;
+            if (dto.Values != null) user.Values = dto.Values;
+            if (dto.Vibe != null) user.Vibe = dto.Vibe;
+            if (dto.MaxDistance.HasValue) user.MaxDistance = dto.MaxDistance.Value;
 
             user.UpdatedAt = DateTime.UtcNow;
             await _context.SaveChangesAsync();
@@ -105,7 +109,10 @@ namespace DatingApp.Services
                 user.Drinking,
                 user.LookingFor,
                 user.Lifestyle,
-                user.Interests
+                user.Interests,
+                user.Values,
+                user.Vibe,
+                user.MaxDistance
             });
         }
 
@@ -120,7 +127,17 @@ namespace DatingApp.Services
             if (dto.Values != null) user.Values = dto.Values;
             if (dto.Distance.HasValue) user.MaxDistance = dto.Distance;
             user.Vibe = dto.Vibe;
+            
+            if (dto.Gender.HasValue) user.Gender = dto.Gender.Value;
+            if (dto.InterestedIn.HasValue) user.InterestedIn = dto.InterestedIn.Value;
+            if (dto.Height.HasValue) user.Height = dto.Height.Value;
+            if (!string.IsNullOrEmpty(dto.Smoking)) user.Smoking = dto.Smoking;
+            if (!string.IsNullOrEmpty(dto.Drinking)) user.Drinking = dto.Drinking;
+            if (!string.IsNullOrEmpty(dto.Education)) user.Education = dto.Education;
+            if (!string.IsNullOrEmpty(dto.Bio)) user.Bio = dto.Bio;
+
             user.IsOnboarded = true;
+            CalculateCompletionScore(user);
             
             user.UpdatedAt = DateTime.UtcNow;
             await _context.SaveChangesAsync();
@@ -163,6 +180,7 @@ namespace DatingApp.Services
             }
 
             user.AvatarUrl = newAvatarUrl;
+            CalculateCompletionScore(user);
             user.UpdatedAt = DateTime.UtcNow;
             await _context.SaveChangesAsync();
 
@@ -207,7 +225,8 @@ namespace DatingApp.Services
                     (!dobMax.HasValue || x.DateOfBirth <= dobMax) &&
                     (!dobMin.HasValue || x.DateOfBirth >= dobMin)
                 )
-                .OrderBy(x => x.CreatedAt);
+                .OrderByDescending(x => x.ProfileCompletionScore)
+                .ThenBy(x => x.CreatedAt);
 
             var total = await query.CountAsync();
 
@@ -355,6 +374,32 @@ namespace DatingApp.Services
                 totalMatches,
                 recentLikes
             });
+        }
+
+        private void CalculateCompletionScore(User user)
+        {
+            int score = 0;
+            
+            // Avatar
+            if (!string.IsNullOrEmpty(user.AvatarUrl)) score += 20;
+            
+            // Bio
+            if (!string.IsNullOrEmpty(user.Bio)) score += 15;
+            
+            // Gender & InterestedIn
+            if (user.Gender != DatingApp.Enums.Gender.Other) score += 10;
+            if (user.InterestedIn.HasValue) score += 5;
+            
+            // Details
+            if (user.Height.HasValue || !string.IsNullOrEmpty(user.Education) || !string.IsNullOrEmpty(user.Occupation)) score += 20;
+            
+            // Gallery photos
+            if (user.Photos != null && user.Photos.Count > 0) score += 20;
+            
+            // Interests
+            if (user.Interests != null && user.Interests.Count > 0) score += 10;
+            
+            user.ProfileCompletionScore = Math.Min(100, score);
         }
     }
 }

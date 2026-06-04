@@ -97,7 +97,9 @@ namespace DatingApp.Services
                     user.Email,
                     user.FullName,
                     user.AvatarUrl,
-                    Role = (int)user.Role
+                    Role = (int)user.Role,
+                    user.IsOnboarded,
+                    user.ProfileCompletionScore
                 }
             });
         }
@@ -158,7 +160,7 @@ namespace DatingApp.Services
                 token,
                 accessToken = token,
                 refreshToken,
-                user = new { user.Id, user.Email, user.FullName, user.AvatarUrl, Role = (int)user.Role }
+                user = new { user.Id, user.Email, user.FullName, user.AvatarUrl, Role = (int)user.Role, user.IsOnboarded, user.ProfileCompletionScore }
             });
         }
 

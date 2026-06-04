@@ -44,5 +44,12 @@ namespace DatingApp.DTOs
 
         // Sở thích
         public List<string>? Interests { get; set; }
+        
+        public List<string>? Values { get; set; }
+
+        public int? MaxDistance { get; set; }
+
+        [StringLength(50)]
+        public string? Vibe { get; set; }
     }
 }

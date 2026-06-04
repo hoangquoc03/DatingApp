@@ -16,4 +16,12 @@ public partial class LoginView : UserControl
             vm.Password = ((PasswordBox)sender).Password;
         }
     }
+
+    private void RegisterPasswordBox_PasswordChanged(object sender, System.Windows.RoutedEventArgs e)
+    {
+        if (DataContext is ViewModels.LoginViewModel vm)
+        {
+            vm.RegisterPassword = ((PasswordBox)sender).Password;
+        }
+    }
 }

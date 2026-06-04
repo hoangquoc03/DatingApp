@@ -60,3 +60,9 @@ C:\Users\ADMIN\source\repos\DatingApp\DatingApp.Desktop\obj\Debug\net8.0-windows
 C:\Users\ADMIN\source\repos\DatingApp\DatingApp.Desktop\obj\Debug\net8.0-windows\DatingApp.Desktop.pdb
 C:\Users\ADMIN\source\repos\DatingApp\DatingApp.Desktop\obj\Debug\net8.0-windows\DatingApp.Desktop.genruntimeconfig.cache
 C:\Users\ADMIN\source\repos\DatingApp\DatingApp.Desktop\obj\Debug\net8.0-windows\ref\DatingApp.Desktop.dll
+C:\Users\ADMIN\source\repos\DatingApp\DatingApp.Desktop\obj\Debug\net8.0-windows\Views\DashboardView.g.cs
+C:\Users\ADMIN\source\repos\DatingApp\DatingApp.Desktop\obj\Debug\net8.0-windows\Views\DashboardView.baml
+C:\Users\ADMIN\source\repos\DatingApp\DatingApp.Desktop\obj\Debug\net8.0-windows\Views\AdminView.g.cs
+C:\Users\ADMIN\source\repos\DatingApp\DatingApp.Desktop\obj\Debug\net8.0-windows\Views\AdminView.baml
+C:\Users\ADMIN\source\repos\DatingApp\DatingApp.Desktop\obj\Debug\net8.0-windows\Views\OnboardingView.g.cs
+C:\Users\ADMIN\source\repos\DatingApp\DatingApp.Desktop\obj\Debug\net8.0-windows\Views\OnboardingView.baml

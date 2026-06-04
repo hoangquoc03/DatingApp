@@ -1,0 +1,321 @@
+<UserControl x:Class="DatingApp.Desktop.Views.DashboardView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
+             xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes"
+             xmlns:viewmodels="clr-namespace:DatingApp.Desktop.ViewModels"
+             d:DataContext="{d:DesignInstance Type=viewmodels:DashboardViewModel}"
+             mc:Ignorable="d" 
+             d:DesignHeight="700" d:DesignWidth="1000">
+    <UserControl.Resources>
+        <BooleanToVisibilityConverter x:Key="BoolToVis"/>
+    </UserControl.Resources>
+
+    <Grid Background="#FFF5F8"> <!-- Soft Pinkish White Background -->
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="280"/>
+            <ColumnDefinition Width="*"/>
+        </Grid.ColumnDefinitions>
+
+        <!-- SIDEBAR -->
+        <Border Grid.Column="0" Background="White" CornerRadius="0,20,20,0">
+            <Border.Effect>
+                <DropShadowEffect BlurRadius="40" ShadowDepth="5" Opacity="0.05" Color="Black"/>
+            </Border.Effect>
+            
+            <Grid Margin="24">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="*"/>
+                    <RowDefinition Height="Auto"/>
+                </Grid.RowDefinitions>
+
+                <!-- Header / Logo -->
+                <StackPanel Grid.Row="0" Margin="0,0,0,40">
+                    <TextBlock Text="Aura Premium" FontSize="26" FontWeight="ExtraBold" Foreground="#E6005C" FontFamily="Segoe UI"/>
+                </StackPanel>
+
+                <!-- Navigation -->
+                <StackPanel Grid.Row="1">
+                    <Button Command="{Binding ShowDiscoverCommand}" Style="{StaticResource MaterialDesignFlatButton}" Foreground="{Binding DiscoverTabColor}" HorizontalContentAlignment="Left" Padding="15,12" Margin="0,0,0,10" Height="Auto" MinHeight="50">
+                        <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                            <materialDesign:PackIcon Kind="CardsHeart" Width="26" Height="26" Margin="0,0,16,0"/>
+                            <TextBlock Text="Khám phá" FontSize="18" FontWeight="Bold"/>
+                        </StackPanel>
+                    </Button>
+                    <Button Style="{StaticResource MaterialDesignFlatButton}" Foreground="#9CA3AF" HorizontalContentAlignment="Left" Padding="15,12" Margin="0,0,0,10" Height="Auto" MinHeight="50">
+                        <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                            <materialDesign:PackIcon Kind="MessageText" Width="26" Height="26" Margin="0,0,16,0"/>
+                            <TextBlock Text="Tin nhắn" FontSize="18" FontWeight="SemiBold"/>
+                        </StackPanel>
+                    </Button>
+                    <Button Command="{Binding ShowProfileCommand}" Style="{StaticResource MaterialDesignFlatButton}" Foreground="{Binding ProfileTabColor}" HorizontalContentAlignment="Left" Padding="15,12" Margin="0,0,0,10" Height="Auto" MinHeight="50">
+                        <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                            <materialDesign:PackIcon Kind="Account" Width="26" Height="26" Margin="0,0,16,0"/>
+                            <TextBlock Text="Hồ sơ" FontSize="18" FontWeight="SemiBold"/>
+                        </StackPanel>
+                    </Button>
+                    <!-- Admin Button -->
+                    <Button Command="{Binding OpenAdminCommand}" Visibility="{Binding IsAdmin, Converter={StaticResource BoolToVis}}" Style="{StaticResource MaterialDesignFlatButton}" Foreground="#1F2937" HorizontalContentAlignment="Left" Padding="15,12" Height="Auto" MinHeight="50">
+                        <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                            <materialDesign:PackIcon Kind="Security" Width="26" Height="26" Margin="0,0,16,0"/>
+                            <TextBlock Text="Quản trị viên" FontSize="18" FontWeight="Bold"/>
+                        </StackPanel>
+                    </Button>
+                </StackPanel>
+
+                <!-- Footer Profile -->
+                <Border Grid.Row="2" Background="#FFF1F6" CornerRadius="12" Padding="16">
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto"/>
+                            <ColumnDefinition Width="*"/>
+                        </Grid.ColumnDefinitions>
+                        <!-- Fake Avatar -->
+                        <Ellipse Width="40" Height="40" Fill="#FF5C9A" Grid.Column="0" Margin="0,0,12,0"/>
+                        <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                            <TextBlock Text="Tài khoản của bạn" FontSize="14" FontWeight="Bold" Foreground="#1F2937"/>
+                            <TextBlock Text="Chỉnh sửa thông tin" FontSize="12" Foreground="#E6005C" Margin="0,2,0,0" Cursor="Hand"/>
+                        </StackPanel>
+                    </Grid>
+                </Border>
+            </Grid>
+        </Border>
+
+        <!-- MAIN SWIPING AREA -->
+        <Grid Grid.Column="1" Visibility="{Binding IsDiscoverVisible, Converter={StaticResource BoolToVis}}">
+            <Border x:Name="SwipeCard" Width="380" Height="650" CornerRadius="28" Background="White" 
+                    HorizontalAlignment="Center" VerticalAlignment="Center"
+                    MouseLeftButtonDown="SwipeCard_MouseLeftButtonDown"
+                    MouseMove="SwipeCard_MouseMove"
+                    MouseLeftButtonUp="SwipeCard_MouseLeftButtonUp"
+                    Cursor="Hand">
+                <Border.RenderTransform>
+                    <TransformGroup>
+                        <TranslateTransform x:Name="CardTranslate" X="0" Y="0" />
+                        <RotateTransform x:Name="CardRotate" Angle="0" CenterX="190" CenterY="650" />
+                    </TransformGroup>
+                </Border.RenderTransform>
+                <Border.Effect>
+                    <DropShadowEffect BlurRadius="60" ShadowDepth="20" Opacity="0.12" Color="#111827"/>
+                </Border.Effect>
+                <Grid>
+                    <!-- Background Image -->
+                    <Border CornerRadius="28" ClipToBounds="True">
+                        <Image Source="{Binding CurrentUserImage}" Stretch="UniformToFill"/>
+                    </Border>
+                    
+                    <!-- Gradient Overlay for Text Readability -->
+                    <Border CornerRadius="28">
+                        <Border.Background>
+                            <LinearGradientBrush StartPoint="0,0.5" EndPoint="0,1">
+                                <GradientStop Color="Transparent" Offset="0"/>
+                                <GradientStop Color="#E6000000" Offset="1"/>
+                            </LinearGradientBrush>
+                        </Border.Background>
+                    </Border>
+
+                    <!-- Info -->
+                    <StackPanel VerticalAlignment="Bottom" Margin="24,0,24,110">
+                        <TextBlock Text="{Binding CurrentUserName}" FontSize="36" FontWeight="Black" Foreground="White" Margin="0,0,0,4"/>
+                        <TextBlock Text="{Binding CurrentUserBio}" FontSize="18" FontWeight="Medium" Foreground="#E5E7EB" TextWrapping="Wrap" MaxHeight="60" TextTrimming="CharacterEllipsis"/>
+                    </StackPanel>
+
+                    <!-- Action Buttons -->
+                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" VerticalAlignment="Bottom" Margin="0,0,0,30">
+                        <!-- PASS Button -->
+                        <Button x:Name="BtnPass" Command="{Binding PassCommand}" 
+                                Style="{StaticResource MaterialDesignFloatingActionLightButton}" 
+                                Background="White" BorderBrush="White" Width="72" Height="72" Margin="0,0,30,0">
+                            <Button.Effect>
+                                <DropShadowEffect BlurRadius="25" ShadowDepth="8" Opacity="0.15" Color="Black"/>
+                            </Button.Effect>
+                            <materialDesign:PackIcon Kind="Close" Width="42" Height="42" Foreground="#4B5563"/>
+                        </Button>
+
+                        <!-- LIKE Button -->
+                        <Button x:Name="BtnLike" Command="{Binding LikeCommand}" 
+                                Style="{StaticResource MaterialDesignFloatingActionLightButton}" 
+                                Background="White" BorderBrush="White" Width="72" Height="72">
+                            <Button.Effect>
+                                <DropShadowEffect BlurRadius="25" ShadowDepth="8" Opacity="0.15" Color="Black"/>
+                            </Button.Effect>
+                            <materialDesign:PackIcon Kind="Heart" Width="40" Height="40" Foreground="#E6005C"/>
+                        </Button>
+                    </StackPanel>
+                </Grid>
+            </Border>
+            
+            <!-- Hiệu ứng thông báo Match -->
+            <Border x:Name="MatchPopup" Visibility="{Binding IsMatchPopupVisible, Converter={StaticResource BoolToVis}}" Background="#CC000000" CornerRadius="24" Width="400" Height="600" HorizontalAlignment="Center" VerticalAlignment="Center" Panel.ZIndex="100">
+                <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center">
+                    <materialDesign:PackIcon Kind="CardsHeart" Width="100" Height="100" Foreground="#FF5C9A" HorizontalAlignment="Center"/>
+                    <TextBlock Text="IT'S A MATCH!" FontSize="36" FontWeight="Black" Foreground="White" Margin="0,20,0,0" HorizontalAlignment="Center"/>
+                    <Button Content="Tiếp tục" Width="150" Margin="0,30,0,0" Command="{Binding CloseMatchPopupCommand}" Background="#FF5C9A" BorderBrush="Transparent"/>
+                </StackPanel>
+            </Border>
+        </Grid>
+        
+        <!-- PROFILE AREA -->
+        <Grid Grid.Column="1" Visibility="{Binding IsProfileVisible, Converter={StaticResource BoolToVis}}">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="*"/>
+            </Grid.RowDefinitions>
+            <TextBlock Text="Chỉnh sửa Hồ sơ" FontSize="28" FontWeight="Bold" Foreground="#1F2937" Margin="40,40,0,10"/>
+            
+            <StackPanel Margin="40,0,40,20">
+                <Grid Margin="0,0,0,4">
+                    <TextBlock Text="Độ hoàn thiện hồ sơ" FontSize="14" FontWeight="SemiBold" Foreground="#4B5563" HorizontalAlignment="Left"/>
+                    <TextBlock Text="{Binding ProfileCompletionScore, StringFormat={}{0}%}" FontSize="14" FontWeight="Bold" Foreground="#E6005C" HorizontalAlignment="Right"/>
+                </Grid>
+                <ProgressBar Value="{Binding ProfileCompletionScore}" Height="8" Minimum="0" Maximum="100" Background="#E5E7EB" Foreground="#E6005C" BorderThickness="0"/>
+                <TextBlock Text="Hoàn thiện hồ sơ để tăng 100% khả năng hiển thị!" FontSize="12" Foreground="#6B7280" Margin="0,4,0,0">
+                    <TextBlock.Style>
+                        <Style TargetType="TextBlock">
+                            <Setter Property="Visibility" Value="Visible"/>
+                            <Style.Triggers>
+                                <DataTrigger Binding="{Binding IsProfileComplete}" Value="True">
+                                    <Setter Property="Visibility" Value="Collapsed"/>
+                                </DataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </TextBlock.Style>
+                </TextBlock>
+            </StackPanel>
+
+            <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto">
+                <StackPanel Margin="40,0,40,40" MaxWidth="500" HorizontalAlignment="Left">
+                    <!-- Avatar -->
+                    <Border Width="120" Height="120" CornerRadius="60" HorizontalAlignment="Left" Margin="0,0,0,20">
+                        <Border.Background>
+                            <ImageBrush ImageSource="{Binding ProfileAvatarUrl, TargetNullValue='pack://application:,,,/Resources/default-avatar.jpg', FallbackValue='pack://application:,,,/Resources/default-avatar.jpg'}" Stretch="UniformToFill"/>
+                        </Border.Background>
+                    </Border>
+                    <Button Content="Đổi ảnh đại diện" Command="{Binding UploadAvatarCommand}" Style="{StaticResource MaterialDesignOutlinedButton}" Foreground="#E6005C" BorderBrush="#E6005C" HorizontalAlignment="Left" Margin="0,0,0,30"/>
+                    
+                    <!-- Form -->
+                    <TextBox materialDesign:HintAssist.Hint="Họ và tên" Text="{Binding ProfileFullName, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource MaterialDesignOutlinedTextBox}" Margin="0,0,0,20"/>
+                    <TextBox materialDesign:HintAssist.Hint="Giới thiệu bản thân (Bio)" Text="{Binding ProfileBio, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource MaterialDesignOutlinedTextBox}" TextWrapping="Wrap" AcceptsReturn="True" Height="100" Margin="0,0,0,20"/>
+                    
+                    <ComboBox materialDesign:HintAssist.Hint="Giới tính" Text="{Binding ProfileGender, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource MaterialDesignOutlinedComboBox}" Margin="0,0,0,20">
+                        <ComboBoxItem Content="Nam"/>
+                        <ComboBoxItem Content="Nữ"/>
+                        <ComboBoxItem Content="Khác"/>
+                    </ComboBox>
+                    
+                    <DatePicker materialDesign:HintAssist.Hint="Ngày sinh" SelectedDate="{Binding ProfileDateOfBirth, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource MaterialDesignOutlinedDatePicker}" Margin="0,0,0,20"/>
+                    
+                    <Grid Margin="0,0,0,20">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="20"/>
+                            <ColumnDefinition Width="*"/>
+                        </Grid.ColumnDefinitions>
+                        <TextBox Grid.Column="0" materialDesign:HintAssist.Hint="Chiều cao (cm)" Text="{Binding ProfileHeight, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource MaterialDesignOutlinedTextBox}"/>
+                        <TextBox Grid.Column="2" materialDesign:HintAssist.Hint="Học vấn" Text="{Binding ProfileEducation, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource MaterialDesignOutlinedTextBox}"/>
+                    </Grid>
+
+                    <Grid Margin="0,0,0,20">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="20"/>
+                            <ColumnDefinition Width="*"/>
+                        </Grid.ColumnDefinitions>
+                        <TextBox Grid.Column="0" materialDesign:HintAssist.Hint="Nghề nghiệp" Text="{Binding ProfileOccupation, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource MaterialDesignOutlinedTextBox}"/>
+                        <TextBox Grid.Column="2" materialDesign:HintAssist.Hint="Địa điểm (Thành phố)" Text="{Binding ProfileLocation, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource MaterialDesignOutlinedTextBox}"/>
+                    </Grid>
+
+                    <Grid Margin="0,0,0,20">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="20"/>
+                            <ColumnDefinition Width="*"/>
+                        </Grid.ColumnDefinitions>
+                        <ComboBox Grid.Column="0" materialDesign:HintAssist.Hint="Hút thuốc" Text="{Binding ProfileSmoking, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource MaterialDesignOutlinedComboBox}">
+                            <ComboBoxItem Content="Không"/>
+                            <ComboBoxItem Content="Thỉnh thoảng"/>
+                            <ComboBoxItem Content="Thường xuyên"/>
+                        </ComboBox>
+                        <ComboBox Grid.Column="2" materialDesign:HintAssist.Hint="Nhậu nhẹt" Text="{Binding ProfileDrinking, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource MaterialDesignOutlinedComboBox}">
+                            <ComboBoxItem Content="Không"/>
+                            <ComboBoxItem Content="Xã giao"/>
+                            <ComboBoxItem Content="Thường xuyên"/>
+                        </ComboBox>
+                    </Grid>
+
+                    <Grid Margin="0,0,0,20">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="20"/>
+                            <ColumnDefinition Width="*"/>
+                        </Grid.ColumnDefinitions>
+                        <ComboBox Grid.Column="0" materialDesign:HintAssist.Hint="Cung Hoàng Đạo" Text="{Binding ProfileZodiac, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource MaterialDesignOutlinedComboBox}">
+                            <ComboBoxItem Content="Bạch Dương"/>
+                            <ComboBoxItem Content="Kim Ngưu"/>
+                            <ComboBoxItem Content="Song Tử"/>
+                            <ComboBoxItem Content="Cự Giải"/>
+                            <ComboBoxItem Content="Sư Tử"/>
+                            <ComboBoxItem Content="Xử Nữ"/>
+                            <ComboBoxItem Content="Thiên Bình"/>
+                            <ComboBoxItem Content="Bọ Cạp"/>
+                            <ComboBoxItem Content="Nhân Mã"/>
+                            <ComboBoxItem Content="Ma Kết"/>
+                            <ComboBoxItem Content="Bảo Bình"/>
+                            <ComboBoxItem Content="Song Ngư"/>
+                        </ComboBox>
+                        <ComboBox Grid.Column="2" materialDesign:HintAssist.Hint="MBTI" Text="{Binding ProfileMbti, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource MaterialDesignOutlinedComboBox}">
+                            <ComboBoxItem Content="INTJ"/>
+                            <ComboBoxItem Content="INTP"/>
+                            <ComboBoxItem Content="ENTJ"/>
+                            <ComboBoxItem Content="ENTP"/>
+                            <ComboBoxItem Content="INFJ"/>
+                            <ComboBoxItem Content="INFP"/>
+                            <ComboBoxItem Content="ENFJ"/>
+                            <ComboBoxItem Content="ENFP"/>
+                            <ComboBoxItem Content="ISTJ"/>
+                            <ComboBoxItem Content="ISFJ"/>
+                            <ComboBoxItem Content="ESTJ"/>
+                            <ComboBoxItem Content="ESFJ"/>
+                            <ComboBoxItem Content="ISTP"/>
+                            <ComboBoxItem Content="ISFP"/>
+                            <ComboBoxItem Content="ESTP"/>
+                            <ComboBoxItem Content="ESFP"/>
+                        </ComboBox>
+                    </Grid>
+
+                    <Grid Margin="0,0,0,20">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="20"/>
+                            <ColumnDefinition Width="*"/>
+                        </Grid.ColumnDefinitions>
+                        <ComboBox Grid.Column="0" materialDesign:HintAssist.Hint="Đang tìm kiếm" Text="{Binding ProfileLookingFor, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource MaterialDesignOutlinedComboBox}">
+                            <ComboBoxItem Content="Mối quan hệ nghiêm túc"/>
+                            <ComboBoxItem Content="Tìm bạn bè"/>
+                            <ComboBoxItem Content="Không ràng buộc"/>
+                            <ComboBoxItem Content="Chưa xác định"/>
+                        </ComboBox>
+                        <TextBox Grid.Column="2" materialDesign:HintAssist.Hint="Lối sống" Text="{Binding ProfileLifestyle, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource MaterialDesignOutlinedTextBox}"/>
+                    </Grid>
+
+                    <Grid Margin="0,0,0,20">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="20"/>
+                            <ColumnDefinition Width="*"/>
+                        </Grid.ColumnDefinitions>
+                        <TextBox Grid.Column="0" materialDesign:HintAssist.Hint="Vibe / Tính cách" Text="{Binding ProfileVibe, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource MaterialDesignOutlinedTextBox}"/>
+                        <TextBox Grid.Column="2" materialDesign:HintAssist.Hint="Khoảng cách tìm kiếm tối đa (km)" Text="{Binding ProfileMaxDistance, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource MaterialDesignOutlinedTextBox}"/>
+                    </Grid>
+
+                    <TextBox materialDesign:HintAssist.Hint="Sở thích (ngăn cách bởi dấu phẩy)" Text="{Binding ProfileInterests, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource MaterialDesignOutlinedTextBox}" Margin="0,0,0,20"/>
+                    <TextBox materialDesign:HintAssist.Hint="Giá trị sống (ngăn cách bởi dấu phẩy)" Text="{Binding ProfileValues, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource MaterialDesignOutlinedTextBox}" Margin="0,0,0,30"/>
+                    
+                    <Button Content="Lưu Thay Đổi" Command="{Binding SaveProfileCommand}" Background="#E6005C" BorderBrush="Transparent" Height="45" FontSize="16"/>
+                </StackPanel>
+            </ScrollViewer>
+        </Grid>
+    </Grid>
+</UserControl>

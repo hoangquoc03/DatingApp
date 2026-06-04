@@ -325,6 +325,9 @@ namespace DatingApp.Migrations
                     b.Property<string>("PasswordResetTokenHash")
                         .HasColumnType("text");
 
+                    b.Property<int>("ProfileCompletionScore")
+                        .HasColumnType("integer");
+
                     b.Property<DateTime?>("RefreshTokenExpiresAt")
                         .HasColumnType("timestamp without time zone");
 

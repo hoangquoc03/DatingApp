@@ -58,6 +58,8 @@ namespace DatingApp.Models
         public UserStatus Status { get; set; }
 
         public Role Role { get; set; } = Role.User;
+
+        public int ProfileCompletionScore { get; set; } = 0;
         public bool IsActive { get; set; } = true;
 
         public string? RefreshTokenHash { get; set; }

@@ -1,4 +1,4 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
     <OutputType>WinExe</OutputType>
@@ -14,6 +14,10 @@
     <PackageReference Include="Microsoft.AspNetCore.SignalR.Client" Version="10.0.8" />
     <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="10.0.8" />
     <PackageReference Include="Microsoft.Extensions.Http" Version="10.0.8" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Resource Include="Resources\default-avatar.jpg" />
   </ItemGroup>
 
 </Project>
