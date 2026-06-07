@@ -7,7 +7,12 @@ public class UserDto
     public string Id { get; set; } = string.Empty;
     public string Email { get; set; } = string.Empty;
     public string FullName { get; set; } = string.Empty;
-    public string AvatarUrl { get; set; } = string.Empty;
+    private string? _avatarUrl;
+    public string? AvatarUrl 
+    { 
+        get => _avatarUrl; 
+        set => _avatarUrl = string.IsNullOrWhiteSpace(value) ? null : value; 
+    }
     public int Role { get; set; }
     public bool IsActive { get; set; }
     public DateTime CreatedAt { get; set; }
@@ -40,6 +45,8 @@ public class UserDto
     public string Vibe { get; set; } = string.Empty;
     
     public string Location { get; set; } = string.Empty;
+
+    public System.Collections.Generic.List<PhotoDto> Photos { get; set; } = new();
 
     public string RoleDisplay => Role == 1 ? "Admin" : "User";
     public string StatusDisplay => IsActive ? "Hoạt động" : "Bị Khóa";
