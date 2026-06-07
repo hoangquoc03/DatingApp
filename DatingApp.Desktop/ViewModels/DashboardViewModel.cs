@@ -9,6 +9,9 @@ using System.Collections.ObjectModel;
 using System.Net.Http;
 using System.Net.Http.Json;
 using System.Threading.Tasks;
+using Microsoft.AspNetCore.SignalR.Client;
+using System.Windows;
+using System.Linq;
 
 namespace DatingApp.Desktop.ViewModels;
 
@@ -37,14 +40,20 @@ public partial class DashboardViewModel : ObservableObject
     private bool _isProfileVisible = false;
 
     [ObservableProperty]
+    private bool _isMessagesVisible = false;
+
+    [ObservableProperty]
     private string _discoverTabColor = "#E6005C";
 
     [ObservableProperty]
     private string _profileTabColor = "#6B7280";
 
+    [ObservableProperty]
+    private string _messagesTabColor = "#6B7280";
+
     // --- Profile Data ---
     [ObservableProperty]
-    private string _profileAvatarUrl = "pack://application:,,,/Resources/default-avatar.jpg";
+    private string? _profileAvatarUrl = null;
 
     [ObservableProperty]
     private string _profileFullName = "";
@@ -104,6 +113,9 @@ public partial class DashboardViewModel : ObservableObject
     private string _profileValues = "";
 
     [ObservableProperty]
+    private ObservableCollection<PhotoDto> _profilePhotos = new();
+
+    [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(IsProfileComplete))]
     private int _profileCompletionScore = 0;
 
@@ -115,6 +127,58 @@ public partial class DashboardViewModel : ObservableObject
 
     private List<DiscoverUserDto> _discoverQueue = new();
     private DiscoverUserDto? _currentUserDto;
+
+    // --- Discover Filters ---
+    [ObservableProperty]
+    private string _filterAgeMin = "18";
+
+    [ObservableProperty]
+    private string _filterAgeMax = "99";
+
+    [ObservableProperty]
+    private string _filterGender = ""; // Empty = All, "0" = Nam, "1" = Nữ
+
+    [ObservableProperty]
+    private string _filterMaxDistance = "50";
+
+    // --- Chat System ---
+    private HubConnection? _hubConnection;
+
+    [ObservableProperty]
+    private ObservableCollection<MatchDto> _matches = new();
+
+    [ObservableProperty]
+    private ObservableCollection<MessageDto> _currentMessages = new();
+
+    private bool _isReloadingMatches;
+
+    public bool IsChatActive => SelectedMatch != null;
+
+    private MatchDto? _selectedMatch;
+    public MatchDto? SelectedMatch
+    {
+        get => _selectedMatch;
+        set
+        {
+            if (_isReloadingMatches && value == null)
+            {
+                return;
+            }
+
+            var oldPartnerId = _selectedMatch?.Partner?.Id;
+            if (SetProperty(ref _selectedMatch, value))
+            {
+                OnPropertyChanged(nameof(IsChatActive));
+                if (value != null && value.Partner.Id != oldPartnerId)
+                {
+                    _ = LoadMessagesAsync(value.Partner.Id);
+                }
+            }
+        }
+    }
+
+    [ObservableProperty]
+    private string _messageDraft = "";
 
     public DashboardViewModel(AuthService authService, IHttpClientFactory httpClientFactory)
     {
@@ -130,13 +194,34 @@ public partial class DashboardViewModel : ObservableObject
         }
 
         _ = LoadDiscoverUsersAsync();
+        _ = InitializeSignalRAsync();
+    }
+
+    [RelayCommand]
+    private async Task ApplyFiltersAsync()
+    {
+        await LoadDiscoverUsersAsync();
     }
 
     private async Task LoadDiscoverUsersAsync()
     {
         try
         {
-            var response = await _httpClient.GetFromJsonAsync<DiscoverResponse>("/api/User/discover");
+            CurrentUserName = "Đang tìm kiếm...";
+            CurrentUserImage = "https://via.placeholder.com/600x800/FFF5F8/E6005C?text=Loading...";
+            
+            var query = new List<string>();
+            if (int.TryParse(FilterAgeMin, out int ageMin)) query.Add($"ageMin={ageMin}");
+            if (int.TryParse(FilterAgeMax, out int ageMax)) query.Add($"ageMax={ageMax}");
+            if (int.TryParse(FilterMaxDistance, out int maxDistance)) query.Add($"maxDistance={maxDistance}");
+            
+            if (FilterGender == "Nam") query.Add("gender=0");
+            else if (FilterGender == "Nữ") query.Add("gender=1");
+            else if (FilterGender == "Khác") query.Add("gender=2");
+
+            string queryString = query.Count > 0 ? "?" + string.Join("&", query) : "";
+            var response = await _httpClient.GetFromJsonAsync<DiscoverResponse>($"/api/User/discover{queryString}");
+            
             if (response != null && response.Data.Count > 0)
             {
                 _discoverQueue = response.Data;
@@ -239,8 +324,23 @@ public partial class DashboardViewModel : ObservableObject
     {
         IsDiscoverVisible = true;
         IsProfileVisible = false;
+        IsMessagesVisible = false;
         DiscoverTabColor = "#E6005C";
         ProfileTabColor = "#6B7280";
+        MessagesTabColor = "#6B7280";
+    }
+
+    [RelayCommand]
+    private void ShowMessages()
+    {
+        IsDiscoverVisible = false;
+        IsProfileVisible = false;
+        IsMessagesVisible = true;
+        DiscoverTabColor = "#6B7280";
+        ProfileTabColor = "#6B7280";
+        MessagesTabColor = "#E6005C";
+
+        _ = LoadMatchesAsync();
     }
 
     [RelayCommand]
@@ -277,6 +377,15 @@ public partial class DashboardViewModel : ObservableObject
                 ProfileMaxDistance = profile.MaxDistance?.ToString() ?? "";
                 ProfileInterests = profile.Interests != null ? string.Join(", ", profile.Interests) : "";
                 ProfileValues = profile.Values != null ? string.Join(", ", profile.Values) : "";
+
+                ProfilePhotos.Clear();
+                if (profile.Photos != null)
+                {
+                    foreach (var photo in profile.Photos)
+                    {
+                        ProfilePhotos.Add(photo);
+                    }
+                }
             }
         }
         catch { }
@@ -315,6 +424,17 @@ public partial class DashboardViewModel : ObservableObject
     [RelayCommand]
     private async Task UploadAvatarAsync()
     {
+        await UploadPhotoImplAsync(true);
+    }
+
+    [RelayCommand]
+    private async Task AddPhotoAsync()
+    {
+        await UploadPhotoImplAsync(false);
+    }
+
+    private async Task UploadPhotoImplAsync(bool isAvatar)
+    {
         var openFileDialog = new Microsoft.Win32.OpenFileDialog
         {
             Filter = "Image files (*.jpg, *.jpeg, *.png) | *.jpg; *.jpeg; *.png"
@@ -331,16 +451,30 @@ public partial class DashboardViewModel : ObservableObject
                 
                 form.Add(streamContent, "file", System.IO.Path.GetFileName(openFileDialog.FileName));
 
-                var response = await _httpClient.PostAsync("/api/User/avatar", form);
+                var endpoint = isAvatar ? "/api/User/avatar" : "/api/User/photos";
+                var response = await _httpClient.PostAsync(endpoint, form);
+                
                 if (response.IsSuccessStatusCode)
                 {
-                    var result = await response.Content.ReadFromJsonAsync<System.Text.Json.JsonElement>();
-                    if (result.TryGetProperty("avatarUrl", out var avatarUrlProp))
+                    if (isAvatar)
                     {
-                        ProfileAvatarUrl = avatarUrlProp.GetString() ?? ProfileAvatarUrl;
-                        _authService.CurrentUser!.AvatarUrl = ProfileAvatarUrl; // Update local session
+                        var result = await response.Content.ReadFromJsonAsync<System.Text.Json.JsonElement>();
+                        if (result.TryGetProperty("avatarUrl", out var avatarUrlProp))
+                        {
+                            ProfileAvatarUrl = avatarUrlProp.GetString() ?? ProfileAvatarUrl;
+                            _authService.CurrentUser!.AvatarUrl = ProfileAvatarUrl;
+                        }
+                        System.Windows.MessageBox.Show("Cập nhật Avatar thành công!", "Thành công");
                     }
-                    System.Windows.MessageBox.Show("Cập nhật Avatar thành công!", "Thành công");
+                    else
+                    {
+                        var newPhoto = await response.Content.ReadFromJsonAsync<PhotoDto>();
+                        if (newPhoto != null)
+                        {
+                            ProfilePhotos.Add(newPhoto);
+                        }
+                        System.Windows.MessageBox.Show("Thêm ảnh thành công!", "Thành công");
+                    }
                 }
             }
             catch (Exception ex)
@@ -348,5 +482,312 @@ public partial class DashboardViewModel : ObservableObject
                 System.Windows.MessageBox.Show("Lỗi upload ảnh: " + ex.Message, "Lỗi");
             }
         }
+    }
+
+    [RelayCommand]
+    private async Task DeletePhotoAsync(PhotoDto photo)
+    {
+        if (photo == null) return;
+        try
+        {
+            var response = await _httpClient.DeleteAsync($"/api/User/photos/{photo.Id}");
+            if (response.IsSuccessStatusCode)
+            {
+                ProfilePhotos.Remove(photo);
+            }
+        }
+        catch { }
+    }
+
+    [RelayCommand]
+    private async Task SetMainPhotoAsync(PhotoDto photo)
+    {
+        if (photo == null) return;
+        try
+        {
+            var response = await _httpClient.PutAsync($"/api/User/photos/{photo.Id}/setMain", null);
+            if (response.IsSuccessStatusCode)
+            {
+                foreach (var p in ProfilePhotos) p.IsMain = false;
+                photo.IsMain = true;
+                
+                ProfileAvatarUrl = photo.Url;
+                _authService.CurrentUser!.AvatarUrl = photo.Url;
+            }
+        }
+        catch { }
+    }
+
+    // --- CHAT & MATCH LOGIC ---
+
+    private async Task InitializeSignalRAsync()
+    {
+        if (string.IsNullOrEmpty(_authService.CurrentToken)) return;
+
+        var baseUrl = _httpClient.BaseAddress?.ToString().TrimEnd('/');
+        if (string.IsNullOrEmpty(baseUrl)) return;
+
+        _hubConnection = new HubConnectionBuilder()
+            .WithUrl($"{baseUrl}/hubs/chat", options =>
+            {
+                options.AccessTokenProvider = () => Task.FromResult(_authService.CurrentToken)!;
+            })
+            .WithAutomaticReconnect()
+            .Build();
+
+        _hubConnection.On<System.Text.Json.JsonElement>("ReceiveMessage", message =>
+        {
+            var msgDto = new MessageDto
+            {
+                Id = message.GetProperty("id").GetGuid(),
+                SenderId = message.GetProperty("senderId").GetGuid(),
+                ReceiverId = message.GetProperty("receiverId").GetGuid(),
+                Content = message.TryGetProperty("content", out var contentProp) && contentProp.ValueKind != System.Text.Json.JsonValueKind.Null ? contentProp.GetString() ?? "" : "",
+                ImageUrl = message.TryGetProperty("imageUrl", out var imageProp) && imageProp.ValueKind != System.Text.Json.JsonValueKind.Null ? imageProp.GetString() ?? "" : "",
+                IsSeen = message.GetProperty("isSeen").GetBoolean(),
+                SentAt = message.GetProperty("sentAt").GetDateTime(),
+                IsMine = false
+            };
+
+            // Kiểm tra xem tin nhắn có thuộc về cuộc trò chuyện đang mở không
+            if (SelectedMatch != null && msgDto.SenderId == SelectedMatch.Partner.Id)
+            {
+                Application.Current.Dispatcher.Invoke(() =>
+                {
+                    CurrentMessages.Add(msgDto);
+                });
+                // Đánh dấu đã đọc trên server
+                _ = _httpClient.PutAsync($"/api/Messages/seen/{msgDto.SenderId}", null);
+            }
+            
+            _ = LoadMatchesAsync(); // Làm mới danh sách match để hiển thị last message
+        });
+
+        _hubConnection.On<System.Text.Json.JsonElement>("ReceiveNotification", notif =>
+        {
+            if (notif.TryGetProperty("type", out var type) && type.GetString() == "NewMatch")
+            {
+                _ = LoadMatchesAsync();
+            }
+        });
+
+        try
+        {
+            await _hubConnection.StartAsync();
+        }
+        catch { }
+    }
+
+    private async Task LoadMatchesAsync()
+    {
+        try
+        {
+            var list = await _httpClient.GetFromJsonAsync<List<MatchDto>>("/api/Match");
+            if (list != null)
+            {
+                Application.Current.Dispatcher.Invoke(() =>
+                {
+                    _isReloadingMatches = true;
+                    try
+                    {
+                        var selectedId = SelectedMatch?.Id;
+
+                        Matches.Clear();
+                        foreach (var match in list)
+                        {
+                            Matches.Add(match);
+                        }
+
+                        _isReloadingMatches = false;
+
+                        if (selectedId.HasValue)
+                        {
+                            var newSelection = Matches.FirstOrDefault(m => m.Id == selectedId.Value);
+                            SelectedMatch = newSelection;
+                        }
+                    }
+                    finally
+                    {
+                        _isReloadingMatches = false;
+                    }
+                });
+            }
+        }
+        catch { }
+    }
+
+    private async Task LoadMessagesAsync(Guid partnerId)
+    {
+        try
+        {
+            var messages = await _httpClient.GetFromJsonAsync<List<MessageDto>>($"/api/Messages/{partnerId}");
+            if (messages != null)
+            {
+                Application.Current.Dispatcher.Invoke(() =>
+                {
+                    CurrentMessages.Clear();
+                    foreach (var msg in messages)
+                    {
+                        msg.IsMine = (msg.SenderId.ToString() == _authService.CurrentUser?.Id);
+                        CurrentMessages.Add(msg);
+                    }
+                });
+                
+                // Đánh dấu đã đọc
+                _ = _httpClient.PutAsync($"/api/Messages/seen/{partnerId}", null);
+                _ = LoadMatchesAsync(); // Update unread count
+            }
+        }
+        catch { }
+    }
+
+    [RelayCommand]
+    private void SelectMatch(MatchDto match)
+    {
+        SelectedMatch = match;
+        ShowMessages();
+    }
+
+    [RelayCommand]
+    private async Task SendMessageAsync()
+    {
+        if (string.IsNullOrWhiteSpace(MessageDraft) || SelectedMatch == null) return;
+
+        var dto = new { ReceiverId = SelectedMatch.Partner.Id, Content = MessageDraft };
+        var draft = MessageDraft;
+        MessageDraft = "";
+
+        try
+        {
+            var response = await _httpClient.PostAsJsonAsync("/api/Messages", dto);
+            if (response.IsSuccessStatusCode)
+            {
+                var result = await response.Content.ReadFromJsonAsync<System.Text.Json.JsonElement>();
+                var msgDto = new MessageDto
+                {
+                    Id = result.GetProperty("id").GetGuid(),
+                    SenderId = result.GetProperty("senderId").GetGuid(),
+                    ReceiverId = result.GetProperty("receiverId").GetGuid(),
+                    Content = result.GetProperty("content").GetString() ?? "",
+                    IsSeen = result.GetProperty("isSeen").GetBoolean(),
+                    SentAt = result.GetProperty("sentAt").GetDateTime(),
+                    IsMine = true
+                };
+
+                Application.Current.Dispatcher.Invoke(() =>
+                {
+                    CurrentMessages.Add(msgDto);
+                });
+                
+                _ = LoadMatchesAsync();
+            }
+            else
+            {
+                MessageDraft = draft; // Revert
+            }
+        }
+        catch
+        {
+            MessageDraft = draft; // Revert
+        }
+    }
+
+    [RelayCommand]
+    private async Task SendImageAsync()
+    {
+        if (SelectedMatch == null) return;
+
+        var openFileDialog = new Microsoft.Win32.OpenFileDialog
+        {
+            Filter = "Image files (*.jpg, *.jpeg, *.png) | *.jpg; *.jpeg; *.png"
+        };
+
+        if (openFileDialog.ShowDialog() == true)
+        {
+            try
+            {
+                using var form = new MultipartFormDataContent();
+                using var fileStream = new System.IO.FileStream(openFileDialog.FileName, System.IO.FileMode.Open, System.IO.FileAccess.Read);
+                using var streamContent = new StreamContent(fileStream);
+                streamContent.Headers.ContentType = new System.Net.Http.Headers.MediaTypeHeaderValue("image/jpeg");
+                
+                form.Add(streamContent, "file", System.IO.Path.GetFileName(openFileDialog.FileName));
+                form.Add(new StringContent(SelectedMatch.Partner.Id.ToString()), "receiverId");
+
+                var response = await _httpClient.PostAsync("/api/Messages/image", form);
+                if (response.IsSuccessStatusCode)
+                {
+                    var result = await response.Content.ReadFromJsonAsync<System.Text.Json.JsonElement>();
+                    var msgDto = new MessageDto
+                    {
+                        Id = result.GetProperty("id").GetGuid(),
+                        SenderId = result.GetProperty("senderId").GetGuid(),
+                        ReceiverId = result.GetProperty("receiverId").GetGuid(),
+                        Content = result.TryGetProperty("content", out var contentProp) && contentProp.ValueKind != System.Text.Json.JsonValueKind.Null ? contentProp.GetString() ?? "" : "",
+                        ImageUrl = result.TryGetProperty("imageUrl", out var imageProp) && imageProp.ValueKind != System.Text.Json.JsonValueKind.Null ? imageProp.GetString() ?? "" : "",
+                        IsSeen = result.GetProperty("isSeen").GetBoolean(),
+                        SentAt = result.GetProperty("sentAt").GetDateTime(),
+                        IsMine = true
+                    };
+
+                    Application.Current.Dispatcher.Invoke(() =>
+                    {
+                        CurrentMessages.Add(msgDto);
+                    });
+                    
+                    _ = LoadMatchesAsync();
+                }
+                else
+                {
+                    System.Windows.MessageBox.Show("Lỗi khi gửi ảnh.", "Lỗi");
+                }
+            }
+            catch (Exception ex)
+            {
+                System.Windows.MessageBox.Show("Lỗi gửi ảnh: " + ex.Message, "Lỗi");
+            }
+        }
+    }
+
+    [RelayCommand]
+    private async Task UnmatchAsync()
+    {
+        if (SelectedMatch == null) return;
+        
+        var confirm = System.Windows.MessageBox.Show($"Bạn có chắc chắn muốn huỷ tương hợp với {SelectedMatch.Partner.FullName} không?", "Xác nhận", System.Windows.MessageBoxButton.YesNo);
+        if (confirm != System.Windows.MessageBoxResult.Yes) return;
+
+        try
+        {
+            var response = await _httpClient.DeleteAsync($"/api/Match/{SelectedMatch.Id}");
+            if (response.IsSuccessStatusCode)
+            {
+                Matches.Remove(SelectedMatch);
+                SelectedMatch = null;
+                CurrentMessages.Clear();
+            }
+        }
+        catch { }
+    }
+
+    [RelayCommand]
+    private async Task BlockAsync()
+    {
+        if (SelectedMatch == null) return;
+        
+        var confirm = System.Windows.MessageBox.Show($"Bạn có chắc chắn muốn chặn {SelectedMatch.Partner.FullName} không? Bạn sẽ không thấy họ nữa.", "Cảnh báo", System.Windows.MessageBoxButton.YesNo, System.Windows.MessageBoxImage.Warning);
+        if (confirm != System.Windows.MessageBoxResult.Yes) return;
+
+        try
+        {
+            var response = await _httpClient.PostAsync($"/api/Match/block/{SelectedMatch.Partner.Id}", null);
+            if (response.IsSuccessStatusCode)
+            {
+                Matches.Remove(SelectedMatch);
+                SelectedMatch = null;
+                CurrentMessages.Clear();
+            }
+        }
+        catch { }
     }
 }
