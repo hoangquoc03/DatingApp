@@ -8,6 +8,11 @@ public class DiscoverUserDto
     public string AvatarUrl { get; set; } = string.Empty;
     public int? Age { get; set; }
     public bool IsVerified { get; set; }
+    public string Location { get; set; } = string.Empty;
+    public string? Zodiac { get; set; }
+    public string? Mbti { get; set; }
+    public System.Collections.Generic.List<string> Interests { get; set; } = new();
+    public int CompatibilityScore { get; set; }
 }
 
 public class DiscoverResponse

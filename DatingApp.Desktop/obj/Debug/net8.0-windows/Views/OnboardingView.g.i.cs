@@ -56,7 +56,7 @@ namespace DatingApp.Desktop.Views {
                 return;
             }
             _contentLoaded = true;
-            System.Uri resourceLocater = new System.Uri("/DatingApp.Desktop;component/views/onboardingview.xaml", System.UriKind.Relative);
+            System.Uri resourceLocater = new System.Uri("/DatingApp.Desktop;V1.0.0.0;component/views/onboardingview.xaml", System.UriKind.Relative);
             
             #line 1 "..\..\..\..\Views\OnboardingView.xaml"
             System.Windows.Application.LoadComponent(this, resourceLocater);

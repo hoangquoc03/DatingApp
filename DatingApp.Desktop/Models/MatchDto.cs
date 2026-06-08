@@ -1,8 +1,9 @@
 using System;
+using CommunityToolkit.Mvvm.ComponentModel;
 
 namespace DatingApp.Desktop.Models;
 
-public class MatchPartnerDto
+public partial class MatchPartnerDto : ObservableObject
 {
     public Guid Id { get; set; }
     public string FullName { get; set; } = string.Empty;
@@ -13,23 +14,39 @@ public class MatchPartnerDto
         set => _avatarUrl = string.IsNullOrWhiteSpace(value) ? null : value; 
     }
     public string Bio { get; set; } = string.Empty;
-    public bool IsOnline { get; set; }
+
+    [ObservableProperty]
+    private bool _isOnline;
+
     public bool IsVerified { get; set; }
 }
 
-public class MatchLastMessageDto
+public partial class MatchLastMessageDto : ObservableObject
 {
-    public string Content { get; set; } = string.Empty;
-    public DateTime SentAt { get; set; }
-    public bool IsMine { get; set; }
-    public bool IsSeen { get; set; }
+    [ObservableProperty]
+    private string _content = string.Empty;
+
+    [ObservableProperty]
+    private DateTime _sentAt;
+
+    [ObservableProperty]
+    private bool _isMine;
+
+    [ObservableProperty]
+    private bool _isSeen;
 }
 
-public class MatchDto
+public partial class MatchDto : ObservableObject
 {
     public Guid Id { get; set; }
     public DateTime CreatedAt { get; set; }
-    public MatchPartnerDto Partner { get; set; } = new();
-    public MatchLastMessageDto? LastMessage { get; set; }
-    public int UnreadCount { get; set; }
+
+    [ObservableProperty]
+    private MatchPartnerDto _partner = new();
+
+    [ObservableProperty]
+    private MatchLastMessageDto? _lastMessage;
+
+    [ObservableProperty]
+    private int _unreadCount;
 }
