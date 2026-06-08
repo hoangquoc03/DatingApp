@@ -35,6 +35,24 @@ public partial class DashboardViewModel : ObservableObject
     [ObservableProperty]
     private bool _isCurrentUserVerified;
 
+    [ObservableProperty]
+    private string _currentUserLocation = "";
+
+    [ObservableProperty]
+    private string _currentUserZodiac = "";
+
+    [ObservableProperty]
+    private string _currentUserMbti = "";
+
+    [ObservableProperty]
+    private int _currentUserCompatibilityScore;
+
+    [ObservableProperty]
+    private bool _isCompatibilityVisible;
+
+    [ObservableProperty]
+    private ObservableCollection<string> _currentUserInterests = new();
+
     // --- Tabs ---
     [ObservableProperty]
     private bool _isDiscoverVisible = true;
@@ -153,6 +171,12 @@ public partial class DashboardViewModel : ObservableObject
     [ObservableProperty]
     private string _filterMaxDistance = "50";
 
+    [ObservableProperty]
+    private bool _filterVerifiedOnly;
+
+    [ObservableProperty]
+    private bool _filterOnlineOnly;
+
     // --- Chat System ---
     private HubConnection? _hubConnection;
 
@@ -191,6 +215,36 @@ public partial class DashboardViewModel : ObservableObject
 
     [ObservableProperty]
     private string _messageDraft = "";
+
+    [ObservableProperty]
+    private bool _isPartnerTyping;
+
+    private System.Threading.CancellationTokenSource? _typingResetTokenSource;
+    private DateTime _lastTypingSentTime = DateTime.MinValue;
+
+    partial void OnMessageDraftChanged(string value)
+    {
+        if (!string.IsNullOrEmpty(value))
+        {
+            _ = SendTypingNotificationAsync();
+        }
+    }
+
+    private async Task SendTypingNotificationAsync()
+    {
+        if (SelectedMatch == null || _hubConnection == null || _hubConnection.State != HubConnectionState.Connected) return;
+
+        var now = DateTime.UtcNow;
+        if (now - _lastTypingSentTime > TimeSpan.FromSeconds(2))
+        {
+            _lastTypingSentTime = now;
+            try
+            {
+                await _hubConnection.SendAsync("Typing", SelectedMatch.Partner.Id.ToString());
+            }
+            catch {}
+        }
+    }
 
     public DashboardViewModel(AuthService authService, IHttpClientFactory httpClientFactory)
     {
@@ -231,6 +285,9 @@ public partial class DashboardViewModel : ObservableObject
             if (FilterGender == "Nam") query.Add("gender=0");
             else if (FilterGender == "Nữ") query.Add("gender=1");
             else if (FilterGender == "Khác") query.Add("gender=2");
+
+            if (FilterVerifiedOnly) query.Add("verifiedOnly=true");
+            if (FilterOnlineOnly) query.Add("onlineOnly=true");
 
             string queryString = query.Count > 0 ? "?" + string.Join("&", query) : "";
             var response = await _httpClient.GetFromJsonAsync<DiscoverResponse>($"/api/User/discover{queryString}");
@@ -315,6 +372,20 @@ public partial class DashboardViewModel : ObservableObject
                 ? "pack://application:,,,/Resources/default-avatar.jpg" // Fallback cho có ảnh
                 : _currentUserDto.AvatarUrl;
             IsCurrentUserVerified = _currentUserDto.IsVerified;
+            CurrentUserLocation = _currentUserDto.Location ?? string.Empty;
+            CurrentUserZodiac = _currentUserDto.Zodiac ?? string.Empty;
+            CurrentUserMbti = _currentUserDto.Mbti ?? string.Empty;
+            CurrentUserCompatibilityScore = _currentUserDto.CompatibilityScore;
+            IsCompatibilityVisible = _currentUserDto.CompatibilityScore > 0;
+
+            CurrentUserInterests.Clear();
+            if (_currentUserDto.Interests != null)
+            {
+                foreach (var interest in _currentUserDto.Interests)
+                {
+                    CurrentUserInterests.Add(interest);
+                }
+            }
         }
         else
         {
@@ -323,6 +394,12 @@ public partial class DashboardViewModel : ObservableObject
             CurrentUserImage = "https://via.placeholder.com/600x800/FFF5F8/E6005C?text=No+more+profiles";
             _currentUserDto = null;
             IsCurrentUserVerified = false;
+            CurrentUserLocation = string.Empty;
+            CurrentUserZodiac = string.Empty;
+            CurrentUserMbti = string.Empty;
+            CurrentUserCompatibilityScore = 0;
+            IsCompatibilityVisible = false;
+            CurrentUserInterests.Clear();
         }
     }
 
@@ -600,6 +677,79 @@ public partial class DashboardViewModel : ObservableObject
             if (notif.TryGetProperty("type", out var type) && type.GetString() == "NewMatch")
             {
                 _ = LoadMatchesAsync();
+            }
+        });
+
+        _hubConnection.On<string>("UserOnline", userIdStr =>
+        {
+            if (Guid.TryParse(userIdStr, out var userId))
+            {
+                Application.Current.Dispatcher.Invoke(() =>
+                {
+                    var match = Matches.FirstOrDefault(m => m.Partner.Id == userId);
+                    if (match != null)
+                    {
+                        match.Partner.IsOnline = true;
+                    }
+                });
+            }
+        });
+
+        _hubConnection.On<string>("UserOffline", userIdStr =>
+        {
+            if (Guid.TryParse(userIdStr, out var userId))
+            {
+                Application.Current.Dispatcher.Invoke(() =>
+                {
+                    var match = Matches.FirstOrDefault(m => m.Partner.Id == userId);
+                    if (match != null)
+                    {
+                        match.Partner.IsOnline = false;
+                    }
+                });
+            }
+        });
+
+        _hubConnection.On<System.Text.Json.JsonElement>("MessagesSeen", payload =>
+        {
+            try
+            {
+                var byUserIdStr = payload.GetProperty("byUserId").GetString();
+                if (Guid.TryParse(byUserIdStr, out var byUserId) && SelectedMatch != null && byUserId == SelectedMatch.Partner.Id)
+                {
+                    Application.Current.Dispatcher.Invoke(() =>
+                    {
+                        foreach (var msg in CurrentMessages.Where(m => m.IsMine))
+                        {
+                            msg.IsSeen = true;
+                        }
+                    });
+                }
+            }
+            catch {}
+        });
+
+        _hubConnection.On<string>("Typing", senderIdStr =>
+        {
+            if (Guid.TryParse(senderIdStr, out var senderId) && SelectedMatch != null && senderId == SelectedMatch.Partner.Id)
+            {
+                Application.Current.Dispatcher.Invoke(() =>
+                {
+                    IsPartnerTyping = true;
+                    _typingResetTokenSource?.Cancel();
+                    _typingResetTokenSource = new System.Threading.CancellationTokenSource();
+                    var token = _typingResetTokenSource.Token;
+                    Task.Delay(3000, token).ContinueWith(t =>
+                    {
+                        if (!token.IsCancellationRequested)
+                        {
+                            Application.Current.Dispatcher.Invoke(() =>
+                            {
+                                IsPartnerTyping = false;
+                            });
+                        }
+                    }, TaskScheduler.Default);
+                });
             }
         });
 

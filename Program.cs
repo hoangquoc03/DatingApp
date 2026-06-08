@@ -132,8 +132,7 @@ using (var scope = app.Services.CreateScope())
 {
     var services = scope.ServiceProvider;
     var context = services.GetRequiredService<AppDbContext>();
-    // Nếu bạn đã tạo file DbInitializer ở các bước trước, hãy mở comment dòng này:
-    // await DbInitializer.SeedData(context);
+    await DbInitializer.SeedData(context);
 }
 
 app.Run();

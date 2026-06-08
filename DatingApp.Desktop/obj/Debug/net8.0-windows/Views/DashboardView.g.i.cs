@@ -9,7 +9,6 @@
 // </auto-generated>
 //------------------------------------------------------------------------------
 
-using DatingApp.Desktop.Converters;
 using DatingApp.Desktop.ViewModels;
 using MaterialDesignThemes.Wpf;
 using MaterialDesignThemes.Wpf.Converters;

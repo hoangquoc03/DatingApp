@@ -5,11 +5,13 @@
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
              xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes"
              xmlns:viewmodels="clr-namespace:DatingApp.Desktop.ViewModels"
+             xmlns:converters="clr-namespace:DatingApp.Desktop.Converters"
              d:DataContext="{d:DesignInstance Type=viewmodels:DashboardViewModel}"
              mc:Ignorable="d" 
              d:DesignHeight="700" d:DesignWidth="1000">
     <UserControl.Resources>
         <BooleanToVisibilityConverter x:Key="BoolToVis"/>
+        <converters:NullOrEmptyToVisibilityConverter x:Key="NullOrEmptyToVisibilityConverter"/>
     </UserControl.Resources>
 
     <Grid Background="#FFF5F8"> <!-- Soft Pinkish White Background -->
@@ -266,6 +268,12 @@
                             </StackPanel>
                         </Grid>
                         
+                        <!-- Additional Filters -->
+                        <StackPanel Orientation="Horizontal" Margin="0,15,0,0" HorizontalAlignment="Right">
+                            <CheckBox IsChecked="{Binding FilterVerifiedOnly}" Content="Đã xác thực" Margin="0,0,20,0" Foreground="#1F2937" FontSize="14" FontWeight="Medium"/>
+                            <CheckBox IsChecked="{Binding FilterOnlineOnly}" Content="Đang online" Foreground="#1F2937" FontSize="14" FontWeight="Medium"/>
+                        </StackPanel>
+                        
                         <Button Content="Áp dụng bộ lọc" Command="{Binding ApplyFiltersCommand}" Background="#E6005C" BorderBrush="Transparent" Margin="0,15,0,0" HorizontalAlignment="Right"/>
                     </StackPanel>
                 </Grid>
@@ -304,14 +312,77 @@
                         </Border.Background>
                     </Border>
 
+                    <!-- Compatibility Score Badge -->
+                    <Border VerticalAlignment="Top" HorizontalAlignment="Right" Margin="20" CornerRadius="16" Padding="12,6"
+                            Visibility="{Binding IsCompatibilityVisible, Converter={StaticResource BoolToVis}}">
+                        <Border.Background>
+                            <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
+                                <GradientStop Color="#FF4D80" Offset="0"/>
+                                <GradientStop Color="#7A22FF" Offset="1"/>
+                            </LinearGradientBrush>
+                        </Border.Background>
+                        <Border.Effect>
+                            <DropShadowEffect BlurRadius="12" ShadowDepth="3" Opacity="0.3" Color="#7A22FF"/>
+                        </Border.Effect>
+                        <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                            <materialDesign:PackIcon Kind="HeartFlash" Foreground="White" Width="18" Height="18" Margin="0,0,6,0" VerticalAlignment="Center"/>
+                            <TextBlock Text="{Binding CurrentUserCompatibilityScore, StringFormat='Tương hợp AI: {0}%'}" 
+                                       Foreground="White" FontWeight="Bold" FontSize="13" VerticalAlignment="Center"/>
+                        </StackPanel>
+                    </Border>
+
                     <!-- Info -->
-                    <StackPanel VerticalAlignment="Bottom" Margin="24,0,24,110">
+                    <StackPanel VerticalAlignment="Bottom" Margin="24,0,24,125">
                         <StackPanel Orientation="Horizontal" Margin="0,0,0,4">
                             <TextBlock Text="{Binding CurrentUserName}" FontSize="36" FontWeight="Black" Foreground="White" VerticalAlignment="Center"/>
                             <materialDesign:PackIcon Kind="CheckDecagram" Foreground="#3B82F6" Width="28" Height="28" Margin="10,0,0,0" VerticalAlignment="Center"
                                                      Visibility="{Binding IsCurrentUserVerified, Converter={StaticResource BoolToVis}}"/>
                         </StackPanel>
-                        <TextBlock Text="{Binding CurrentUserBio}" FontSize="18" FontWeight="Medium" Foreground="#E5E7EB" TextWrapping="Wrap" MaxHeight="60" TextTrimming="CharacterEllipsis"/>
+
+                        <!-- Location -->
+                        <StackPanel Orientation="Horizontal" Margin="0,0,0,8" Visibility="{Binding CurrentUserLocation, Converter={StaticResource NullOrEmptyToVisibilityConverter}}">
+                            <materialDesign:PackIcon Kind="MapMarkerOutline" Width="16" Height="16" Foreground="#E5E7EB" VerticalAlignment="Center" Margin="0,0,4,0"/>
+                            <TextBlock Text="{Binding CurrentUserLocation}" FontSize="14" Foreground="#E5E7EB" FontWeight="Medium" VerticalAlignment="Center"/>
+                        </StackPanel>
+
+                        <TextBlock Text="{Binding CurrentUserBio}" FontSize="16" FontWeight="Medium" Foreground="#E5E7EB" TextWrapping="Wrap" MaxHeight="45" TextTrimming="CharacterEllipsis" Margin="0,0,0,8"/>
+
+                        <!-- Tags (Zodiac, MBTI, Interests) -->
+                        <WrapPanel Orientation="Horizontal">
+                            <!-- Zodiac Chip -->
+                            <Border CornerRadius="12" Background="#4DFFFFFF" Padding="10,4" Margin="0,0,8,6" 
+                                    Visibility="{Binding CurrentUserZodiac, Converter={StaticResource NullOrEmptyToVisibilityConverter}}">
+                                <StackPanel Orientation="Horizontal">
+                                    <materialDesign:PackIcon Kind="CompassOutline" Width="14" Height="14" Foreground="White" VerticalAlignment="Center" Margin="0,0,4,0"/>
+                                    <TextBlock Text="{Binding CurrentUserZodiac}" FontSize="12" Foreground="White" FontWeight="SemiBold"/>
+                                </StackPanel>
+                            </Border>
+                            
+                            <!-- MBTI Chip -->
+                            <Border CornerRadius="12" Background="#4DFFFFFF" Padding="10,4" Margin="0,0,8,6"
+                                    Visibility="{Binding CurrentUserMbti, Converter={StaticResource NullOrEmptyToVisibilityConverter}}">
+                                <StackPanel Orientation="Horizontal">
+                                    <materialDesign:PackIcon Kind="Brain" Width="14" Height="14" Foreground="White" VerticalAlignment="Center" Margin="0,0,4,0"/>
+                                    <TextBlock Text="{Binding CurrentUserMbti}" FontSize="12" Foreground="White" FontWeight="SemiBold"/>
+                                </StackPanel>
+                            </Border>
+
+                            <!-- Interests List -->
+                            <ItemsControl ItemsSource="{Binding CurrentUserInterests}">
+                                <ItemsControl.ItemsPanel>
+                                    <ItemsPanelTemplate>
+                                        <WrapPanel Orientation="Horizontal"/>
+                                    </ItemsPanelTemplate>
+                                </ItemsControl.ItemsPanel>
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate>
+                                        <Border CornerRadius="12" Background="#26FFFFFF" BorderBrush="#33FFFFFF" BorderThickness="1" Padding="10,4" Margin="0,0,8,6">
+                                            <TextBlock Text="{Binding}" FontSize="12" Foreground="White"/>
+                                        </Border>
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
+                        </WrapPanel>
                     </StackPanel>
 
                     <!-- Action Buttons -->
@@ -621,11 +692,20 @@
                                         <ColumnDefinition Width="Auto"/>
                                     </Grid.ColumnDefinitions>
                                     
-                                    <Border Grid.Column="0" Width="50" Height="50" CornerRadius="25">
-                                        <Border.Background>
-                                            <ImageBrush ImageSource="{Binding Partner.AvatarUrl, TargetNullValue='pack://application:,,,/Resources/default-avatar.jpg'}" Stretch="UniformToFill"/>
-                                        </Border.Background>
-                                    </Border>
+                                    <Grid Grid.Column="0" Width="50" Height="50">
+                                        <Border Width="50" Height="50" CornerRadius="25">
+                                            <Border.Background>
+                                                <ImageBrush ImageSource="{Binding Partner.AvatarUrl, TargetNullValue='pack://application:,,,/Resources/default-avatar.jpg'}" Stretch="UniformToFill"/>
+                                            </Border.Background>
+                                        </Border>
+                                        
+                                        <!-- Online Status Badge -->
+                                        <Ellipse Width="12" Height="12" Fill="#10B981" 
+                                                 Stroke="White" StrokeThickness="2"
+                                                 HorizontalAlignment="Right" VerticalAlignment="Bottom"
+                                                 Margin="0,0,1,1"
+                                                 Visibility="{Binding Partner.IsOnline, Converter={StaticResource BoolToVis}}"/>
+                                    </Grid>
                                     
                                     <StackPanel Grid.Column="1" VerticalAlignment="Center" Margin="10,0,0,0">
                                         <StackPanel Orientation="Horizontal">
@@ -685,7 +765,20 @@
                                 <materialDesign:PackIcon Kind="CheckDecagram" Foreground="#3B82F6" Width="18" Height="18" Margin="6,0,0,0" VerticalAlignment="Center"
                                                          Visibility="{Binding SelectedMatch.Partner.IsVerified, Converter={StaticResource BoolToVis}}"/>
                             </StackPanel>
-                            <TextBlock Text="Đang hoạt động" FontSize="12" Foreground="#10B981"/>
+                            <TextBlock FontSize="12" VerticalAlignment="Center">
+                                <TextBlock.Style>
+                                    <Style TargetType="TextBlock">
+                                        <Setter Property="Text" Value="Ngoại tuyến"/>
+                                        <Setter Property="Foreground" Value="Gray"/>
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding SelectedMatch.Partner.IsOnline}" Value="True">
+                                                <Setter Property="Text" Value="Đang hoạt động"/>
+                                                <Setter Property="Foreground" Value="#10B981"/>
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </TextBlock.Style>
+                            </TextBlock>
                         </StackPanel>
                         
                         <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center">
@@ -740,6 +833,52 @@
                                             </TextBlock>
                                         </StackPanel>
                                     </Border>
+                                    
+                                    <!-- Sent time and Seen receipt -->
+                                    <StackPanel Orientation="Horizontal" Margin="5,2,5,0">
+                                        <StackPanel.Style>
+                                            <Style TargetType="StackPanel">
+                                                <Setter Property="HorizontalAlignment" Value="Left"/>
+                                                <Style.Triggers>
+                                                    <DataTrigger Binding="{Binding IsMine}" Value="True">
+                                                        <Setter Property="HorizontalAlignment" Value="Right"/>
+                                                    </DataTrigger>
+                                                </Style.Triggers>
+                                            </Style>
+                                        </StackPanel.Style>
+                                        
+                                        <!-- Sent Time -->
+                                        <TextBlock Text="{Binding SentAt, StringFormat=\{0:HH:mm\}}" FontSize="10" Foreground="Gray" VerticalAlignment="Center"/>
+                                        
+                                        <!-- Read Receipt (only for mine messages) -->
+                                        <StackPanel Orientation="Horizontal" Margin="5,0,0,0" Visibility="{Binding IsMine, Converter={StaticResource BoolToVis}}">
+                                            <materialDesign:PackIcon Kind="Check" Width="12" Height="12" Foreground="Gray" VerticalAlignment="Center">
+                                                <materialDesign:PackIcon.Style>
+                                                    <Style TargetType="materialDesign:PackIcon">
+                                                        <Setter Property="Visibility" Value="Visible"/>
+                                                        <Style.Triggers>
+                                                            <DataTrigger Binding="{Binding IsSeen}" Value="True">
+                                                                <Setter Property="Visibility" Value="Collapsed"/>
+                                                            </DataTrigger>
+                                                        </Style.Triggers>
+                                                    </Style>
+                                                </materialDesign:PackIcon.Style>
+                                            </materialDesign:PackIcon>
+                                            
+                                            <materialDesign:PackIcon Kind="CheckAll" Width="12" Height="12" Foreground="#3B82F6" VerticalAlignment="Center">
+                                                <materialDesign:PackIcon.Style>
+                                                    <Style TargetType="materialDesign:PackIcon">
+                                                        <Setter Property="Visibility" Value="Collapsed"/>
+                                                        <Style.Triggers>
+                                                            <DataTrigger Binding="{Binding IsSeen}" Value="True">
+                                                                <Setter Property="Visibility" Value="Visible"/>
+                                                            </DataTrigger>
+                                                        </Style.Triggers>
+                                                    </Style>
+                                                </materialDesign:PackIcon.Style>
+                                            </materialDesign:PackIcon>
+                                        </StackPanel>
+                                    </StackPanel>
                                 </StackPanel>
                             </DataTemplate>
                         </ItemsControl.ItemTemplate>
@@ -747,21 +886,31 @@
                 </ScrollViewer>
 
                 <!-- Input Area -->
-                <Border Grid.Row="2" Background="White" Padding="15" BorderBrush="#F3F4F6" BorderThickness="0,1,0,0">
+                <Border Grid.Row="2" Background="White" Padding="15,10,15,15" BorderBrush="#F3F4F6" BorderThickness="0,1,0,0">
                     <Grid>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="*"/>
+                        </Grid.RowDefinitions>
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="Auto"/>
                             <ColumnDefinition Width="*"/>
                             <ColumnDefinition Width="Auto"/>
                         </Grid.ColumnDefinitions>
                         
-                        <Button Grid.Column="0" Command="{Binding SendImageCommand}" Style="{StaticResource MaterialDesignFlatButton}" Foreground="#6B7280" Width="45" Height="45" Margin="0,0,10,0">
+                        <!-- Typing Indicator -->
+                        <StackPanel Grid.Row="0" Grid.Column="0" Grid.ColumnSpan="3" Orientation="Horizontal" Margin="55,0,0,5" Visibility="{Binding IsPartnerTyping, Converter={StaticResource BoolToVis}}">
+                            <TextBlock Text="{Binding SelectedMatch.Partner.FullName}" FontSize="12" FontWeight="SemiBold" Foreground="#E6005C"/>
+                            <TextBlock Text=" đang soạn tin nhắn..." FontSize="12" FontStyle="Italic" Foreground="Gray"/>
+                        </StackPanel>
+                        
+                        <Button Grid.Row="1" Grid.Column="0" Command="{Binding SendImageCommand}" Style="{StaticResource MaterialDesignFlatButton}" Foreground="#6B7280" Width="45" Height="45" Margin="0,0,10,0">
                             <materialDesign:PackIcon Kind="ImageOutline" Width="24" Height="24"/>
                         </Button>
                         
-                        <TextBox Grid.Column="1" Text="{Binding MessageDraft, UpdateSourceTrigger=PropertyChanged}" materialDesign:HintAssist.Hint="Nhập tin nhắn..." Style="{StaticResource MaterialDesignOutlinedTextBox}" Height="45" VerticalContentAlignment="Center" Background="#F9FAFB"/>
+                        <TextBox Grid.Row="1" Grid.Column="1" Text="{Binding MessageDraft, UpdateSourceTrigger=PropertyChanged}" materialDesign:HintAssist.Hint="Nhập tin nhắn..." Style="{StaticResource MaterialDesignOutlinedTextBox}" Height="45" VerticalContentAlignment="Center" Background="#F9FAFB"/>
                         
-                        <Button Grid.Column="2" Command="{Binding SendMessageCommand}" Style="{StaticResource MaterialDesignFloatingActionLightButton}" Width="45" Height="45" Background="#E6005C" BorderBrush="#E6005C" Margin="10,0,0,0" Foreground="White">
+                        <Button Grid.Row="1" Grid.Column="2" Command="{Binding SendMessageCommand}" Style="{StaticResource MaterialDesignFloatingActionLightButton}" Width="45" Height="45" Background="#E6005C" BorderBrush="#E6005C" Margin="10,0,0,0" Foreground="White">
                             <materialDesign:PackIcon Kind="Send" Width="20" Height="20"/>
                         </Button>
                     </Grid>

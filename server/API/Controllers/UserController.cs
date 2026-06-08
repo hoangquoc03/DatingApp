@@ -97,12 +97,14 @@ namespace DatingApp.Controllers
             [FromQuery] int? ageMin = null,
             [FromQuery] int? ageMax = null,
             [FromQuery] string? gender = null,
-            [FromQuery] int? maxDistance = null)
+            [FromQuery] int? maxDistance = null,
+            [FromQuery] bool? verifiedOnly = null,
+            [FromQuery] bool? onlineOnly = null)
         {
             var userId = GetUserId();
             if (userId == null) return Unauthorized();
 
-            var result = await _userService.DiscoverAsync(userId.Value, page, pageSize, ageMin, ageMax, gender, maxDistance);
+            var result = await _userService.DiscoverAsync(userId.Value, page, pageSize, ageMin, ageMax, gender, maxDistance, verifiedOnly, onlineOnly);
             return result.Success ? Ok(result.Data) : StatusCode(result.StatusCode, new { message = result.Message });
         }
 

@@ -2,6 +2,7 @@ using DatingApp.Data;
 using DatingApp.DTOs;
 using DatingApp.Helpers;
 using DatingApp.Models;
+using DatingApp.Enums;
 using Microsoft.EntityFrameworkCore;
 
 namespace DatingApp.Services
@@ -194,10 +195,15 @@ namespace DatingApp.Services
             int? ageMin = null,
             int? ageMax = null,
             string? gender = null,
-            int? maxDistance = null)
+            int? maxDistance = null,
+            bool? verifiedOnly = null,
+            bool? onlineOnly = null)
         {
             pageSize = Math.Clamp(pageSize, 1, 50);
             page = Math.Max(1, page);
+
+            var currentUser = await _context.Users.FirstOrDefaultAsync(u => u.Id == userId);
+            if (currentUser == null) return ServiceResult.NotFound("User not found");
 
             var swipedIds = await _context.Swipes
                 .Where(x => x.FromUserId == userId)
@@ -214,23 +220,50 @@ namespace DatingApp.Services
             DateTime? dobMax = ageMin.HasValue ? DateTime.UtcNow.AddYears(-ageMin.Value) : null;
             DateTime? dobMin = ageMax.HasValue ? DateTime.UtcNow.AddYears(-ageMax.Value - 1) : null;
 
+            // Parse Gender filter safely
+            Gender? filterGenderEnum = null;
+            if (!string.IsNullOrEmpty(gender))
+            {
+                if (int.TryParse(gender, out int genderInt) && Enum.IsDefined(typeof(Gender), genderInt))
+                {
+                    filterGenderEnum = (Gender)genderInt;
+                }
+                else if (Enum.TryParse<Gender>(gender, true, out var parsedEnum))
+                {
+                    filterGenderEnum = parsedEnum;
+                }
+            }
+
             var query = _context.Users
                 .Where(x =>
                     x.Id != userId &&
                     !swipedIds.Contains(x.Id) &&
                     !blockedIds.Contains(x.Id) &&
                     // Filter giới tính nếu có
-                    (gender == null || x.Gender.ToString().ToLower() == gender.ToLower()) &&
+                    (filterGenderEnum == null || x.Gender == filterGenderEnum) &&
                     // Filter tuổi nếu có
                     (!dobMax.HasValue || x.DateOfBirth <= dobMax) &&
-                    (!dobMin.HasValue || x.DateOfBirth >= dobMin)
-                )
-                .OrderByDescending(x => x.ProfileCompletionScore)
+                    (!dobMin.HasValue || x.DateOfBirth >= dobMin) &&
+                    // Filter tích xanh nếu có
+                    (verifiedOnly != true || x.IsVerified)
+                );
+
+            if (onlineOnly == true)
+            {
+                var onlineUserIds = DatingApp.Hubs.ChatHub.GetOnlineUsers()
+                    .Select(idStr => Guid.TryParse(idStr, out var id) ? id : Guid.Empty)
+                    .Where(id => id != Guid.Empty)
+                    .ToList();
+                
+                query = query.Where(x => onlineUserIds.Contains(x.Id));
+            }
+
+            query = query.OrderByDescending(x => x.ProfileCompletionScore)
                 .ThenBy(x => x.CreatedAt);
 
             var total = await query.CountAsync();
 
-            var users = await query
+            var usersList = await query
                 .Skip((page - 1) * pageSize)
                 .Take(pageSize)
                 .Select(x => new
@@ -243,15 +276,35 @@ namespace DatingApp.Services
                     x.Location,
                     x.Gender,
                     x.IsVerified,
+                    x.Zodiac,
+                    x.Mbti,
+                    x.Interests,
                     Age = x.DateOfBirth.HasValue
                         ? (int)((DateTime.UtcNow - x.DateOfBirth.Value).TotalDays / 365.25)
                         : (int?)null
                 })
                 .ToListAsync();
 
+            var usersWithCompatibility = usersList.Select(x => new
+            {
+                x.Id,
+                x.FullName,
+                x.Bio,
+                x.AvatarUrl,
+                x.Photos,
+                x.Location,
+                x.Gender,
+                x.IsVerified,
+                x.Zodiac,
+                x.Mbti,
+                x.Interests,
+                x.Age,
+                CompatibilityScore = CalculateCompatibility(currentUser, x.Interests, x.Zodiac, x.Mbti, x.Age)
+            }).ToList();
+
             return ServiceResult.Ok(new
             {
-                data = users,
+                data = usersWithCompatibility,
                 pagination = new
                 {
                     page,
@@ -401,6 +454,162 @@ namespace DatingApp.Services
             if (user.Interests != null && user.Interests.Count > 0) score += 10;
             
             user.ProfileCompletionScore = Math.Min(100, score);
+        }
+
+        private int CalculateCompatibility(User currentUser, List<string>? targetInterests, string? targetZodiac, string? targetMbti, int? targetAge)
+        {
+            double totalScore = 10; // Base score out of 100
+
+            // 1. Shared Interests (40%)
+            double interestScore = 0;
+            if (currentUser.Interests != null && currentUser.Interests.Any() && targetInterests != null && targetInterests.Any())
+            {
+                var shared = currentUser.Interests.Intersect(targetInterests, StringComparer.OrdinalIgnoreCase).Count();
+                interestScore = (2.0 * shared) / (currentUser.Interests.Count + targetInterests.Count) * 40.0;
+            }
+            else
+            {
+                interestScore = 20;
+            }
+            totalScore += interestScore;
+
+            // 2. MBTI Compatibility (30%)
+            double mbtiScore = 0;
+            if (!string.IsNullOrWhiteSpace(currentUser.Mbti) && !string.IsNullOrWhiteSpace(targetMbti))
+            {
+                string m1 = currentUser.Mbti.Trim().ToUpper();
+                string m2 = targetMbti.Trim().ToUpper();
+
+                if (m1.Length == 4 && m2.Length == 4)
+                {
+                    double matchPoints = 10; // Base
+                    for (int i = 0; i < 4; i++)
+                    {
+                        if (m1[i] == m2[i])
+                        {
+                            matchPoints += 5;
+                        }
+                    }
+                    
+                    if (IsGoldenPair(m1, m2))
+                    {
+                        matchPoints += 10;
+                    }
+
+                    mbtiScore = Math.Min(30, matchPoints);
+                }
+                else
+                {
+                    mbtiScore = 15;
+                }
+            }
+            else
+            {
+                mbtiScore = 15;
+            }
+            totalScore += mbtiScore;
+
+            // 3. Zodiac Compatibility (20%)
+            double zodiacScore = 0;
+            if (!string.IsNullOrWhiteSpace(currentUser.Zodiac) && !string.IsNullOrWhiteSpace(targetZodiac))
+            {
+                string z1 = GetZodiacElement(currentUser.Zodiac);
+                string z2 = GetZodiacElement(targetZodiac);
+
+                if (z1 == "Unknown" || z2 == "Unknown")
+                {
+                    zodiacScore = 10;
+                }
+                else if (z1 == z2)
+                {
+                    zodiacScore = 20;
+                }
+                else if (AreElementsCompatible(z1, z2))
+                {
+                    zodiacScore = 15;
+                }
+                else
+                {
+                    zodiacScore = 5;
+                }
+            }
+            else
+            {
+                zodiacScore = 10;
+            }
+            totalScore += zodiacScore;
+
+            // 4. Age compatibility (up to 10 points)
+            double ageScore = 0;
+            if (currentUser.DateOfBirth.HasValue && targetAge.HasValue)
+            {
+                int currentAge = (int)((DateTime.UtcNow - currentUser.DateOfBirth.Value).TotalDays / 365.25);
+                int diff = Math.Abs(currentAge - targetAge.Value);
+                if (diff <= 3) ageScore = 10;
+                else if (diff <= 6) ageScore = 7;
+                else if (diff <= 10) ageScore = 4;
+                else ageScore = 2;
+            }
+            else
+            {
+                ageScore = 5;
+            }
+            totalScore += ageScore;
+
+            // Small hash variation to ensure no two scores look identical but are deterministic per user pair
+            int hash = Math.Abs((currentUser.Id.GetHashCode() ^ (targetAge.HasValue ? targetAge.Value : 0).GetHashCode()) % 5);
+            totalScore += hash;
+
+            return (int)Math.Clamp(totalScore, 0, 100);
+        }
+
+        private bool IsGoldenPair(string m1, string m2)
+        {
+            var goldenPairs = new (string, string)[]
+            {
+                ("INFJ", "ENFP"), ("INFJ", "ENTP"),
+                ("ENFP", "INFJ"), ("ENTP", "INFJ"),
+                ("INFP", "ENFJ"), ("INFP", "ENTJ"),
+                ("ENFJ", "INFP"), ("ENTJ", "INFP"),
+                ("INTJ", "ENFP"), ("INTJ", "ENTP"),
+                ("INTP", "ENTJ"), ("INTP", "ENFJ"),
+                ("ENTJ", "INTP"), ("ENFJ", "INTP"),
+                ("ISFJ", "ESFP"), ("ISFJ", "ESTP"),
+                ("ESFP", "ISFJ"), ("ESTP", "ISFJ"),
+                ("ESFJ", "ISFP"), ("ESFJ", "ISTP"),
+                ("ISFP", "ESFJ"), ("ISTP", "ESFJ"),
+                ("ISTJ", "ESFP"), ("ISTJ", "ESTP"),
+                ("ESTJ", "ISFP"), ("ESTJ", "ISTP")
+            };
+            return goldenPairs.Any(p => (p.Item1 == m1 && p.Item2 == m2) || (p.Item1 == m2 && p.Item2 == m1));
+        }
+
+        private string GetZodiacElement(string zodiac)
+        {
+            zodiac = zodiac.Trim().ToLower();
+            if (zodiac == "aries" || zodiac == "leo" || zodiac == "sagittarius" ||
+                zodiac == "bạch dương" || zodiac == "sư tử" || zodiac == "nhân mã")
+                return "Fire";
+            if (zodiac == "taurus" || zodiac == "virgo" || zodiac == "capricorn" ||
+                zodiac == "kim ngưu" || zodiac == "xử nữ" || zodiac == "ma kết")
+                return "Earth";
+            if (zodiac == "gemini" || zodiac == "libra" || zodiac == "aquarius" ||
+                zodiac == "song tử" || zodiac == "thiên bình" || zodiac == "bảo bình")
+                return "Air";
+            if (zodiac == "cancer" || zodiac == "scorpio" || zodiac == "pisces" ||
+                zodiac == "cự giải" || zodiac == "bọ cạp" || zodiac == "song ngư")
+                return "Water";
+
+            return "Unknown";
+        }
+
+        private bool AreElementsCompatible(string e1, string e2)
+        {
+            if (e1 == "Fire" && e2 == "Air") return true;
+            if (e1 == "Air" && e2 == "Fire") return true;
+            if (e1 == "Earth" && e2 == "Water") return true;
+            if (e1 == "Water" && e2 == "Earth") return true;
+            return false;
         }
     }
 }
