@@ -7,6 +7,7 @@ public class DiscoverUserDto
     public string Bio { get; set; } = string.Empty;
     public string AvatarUrl { get; set; } = string.Empty;
     public int? Age { get; set; }
+    public bool IsVerified { get; set; }
 }
 
 public class DiscoverResponse

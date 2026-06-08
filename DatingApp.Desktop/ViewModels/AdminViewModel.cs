@@ -1,5 +1,6 @@
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using CommunityToolkit.Mvvm.Messaging;
 using DatingApp.Desktop.Models;
 using DatingApp.Desktop.Services;
 using System.Collections.ObjectModel;
@@ -23,6 +24,15 @@ public partial class AdminViewModel : ObservableObject
     private bool _isLoading;
 
     [ObservableProperty]
+    private bool _isUserTabSelected = true;
+
+    [ObservableProperty]
+    private bool _isReportTabSelected = false;
+
+    [ObservableProperty]
+    private ObservableCollection<ReportDto> _reports = new();
+
+    [ObservableProperty]
     private int _totalUsers;
 
     [ObservableProperty]
@@ -36,6 +46,9 @@ public partial class AdminViewModel : ObservableObject
 
     [ObservableProperty]
     private int _unresolvedReports;
+
+    [ObservableProperty]
+    private int _verifiedUsers;
 
     public AdminViewModel(IHttpClientFactory httpClientFactory, AuthService authService)
     {
@@ -69,6 +82,7 @@ public partial class AdminViewModel : ObservableObject
                 TotalMatches = stats.GetProperty("totalMatches").GetInt32();
                 TotalReports = stats.GetProperty("totalReports").GetInt32();
                 UnresolvedReports = stats.GetProperty("unresolvedReports").GetInt32();
+                VerifiedUsers = stats.GetProperty("verifiedUsers").GetInt32();
             }
             catch {}
         }
@@ -95,6 +109,32 @@ public partial class AdminViewModel : ObservableObject
                 // Refresh list
                 await LoadUsersAsync();
                 MessageBox.Show("Thao tác thành công!", "Thông báo", MessageBoxButton.OK, MessageBoxImage.Information);
+            }
+            else
+            {
+                var error = await response.Content.ReadAsStringAsync();
+                MessageBox.Show("Lỗi: " + error, "Lỗi", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+        }
+        catch (System.Exception ex)
+        {
+            MessageBox.Show("Lỗi kết nối: " + ex.Message, "Lỗi", MessageBoxButton.OK, MessageBoxImage.Error);
+        }
+    }
+
+    [RelayCommand]
+    private async Task ToggleUserVerifyAsync(UserDto user)
+    {
+        if (user == null) return;
+
+        try
+        {
+            var response = await _httpClient.PostAsync($"/api/Admin/users/{user.Id}/toggle-verify", null);
+            if (response.IsSuccessStatusCode)
+            {
+                // Refresh list & stats
+                await LoadUsersAsync();
+                MessageBox.Show("Cập nhật trạng thái xác thực thành công!", "Thông báo", MessageBoxButton.OK, MessageBoxImage.Information);
             }
             else
             {
@@ -197,5 +237,119 @@ public partial class AdminViewModel : ObservableObject
                 MessageBox.Show("Lỗi kết nối: " + ex.Message, "Lỗi", MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
+    }
+
+    [RelayCommand]
+    private void SelectUserTab()
+    {
+        IsUserTabSelected = true;
+        IsReportTabSelected = false;
+        _ = LoadUsersAsync();
+    }
+
+    [RelayCommand]
+    private void SelectReportTab()
+    {
+        IsUserTabSelected = false;
+        IsReportTabSelected = true;
+        _ = LoadReportsAsync();
+    }
+
+    [RelayCommand]
+    private async Task LoadReportsAsync()
+    {
+        IsLoading = true;
+        try
+        {
+            var reports = await _httpClient.GetFromJsonAsync<List<ReportDto>>("/api/Admin/reports");
+            if (reports != null)
+            {
+                Reports = new ObservableCollection<ReportDto>(reports);
+            }
+
+            // Sync stats
+            try
+            {
+                var stats = await _httpClient.GetFromJsonAsync<System.Text.Json.JsonElement>("/api/Admin/stats");
+                TotalUsers = stats.GetProperty("totalUsers").GetInt32();
+                ActiveUsers = stats.GetProperty("activeUsers").GetInt32();
+                TotalMatches = stats.GetProperty("totalMatches").GetInt32();
+                TotalReports = stats.GetProperty("totalReports").GetInt32();
+                UnresolvedReports = stats.GetProperty("unresolvedReports").GetInt32();
+                VerifiedUsers = stats.GetProperty("verifiedUsers").GetInt32();
+            }
+            catch {}
+        }
+        catch (System.Exception ex)
+        {
+            MessageBox.Show("Lỗi lấy danh sách Báo cáo: " + ex.Message, "Lỗi", MessageBoxButton.OK, MessageBoxImage.Error);
+        }
+        finally
+        {
+            IsLoading = false;
+        }
+    }
+
+    [RelayCommand]
+    private async Task ResolveReportAsync(ReportDto report)
+    {
+        if (report == null) return;
+
+        try
+        {
+            var response = await _httpClient.PostAsync($"/api/Admin/reports/{report.Id}/resolve", null);
+            if (response.IsSuccessStatusCode)
+            {
+                MessageBox.Show("Đã đánh dấu giải quyết báo cáo!", "Thông báo", MessageBoxButton.OK, MessageBoxImage.Information);
+                await LoadReportsAsync();
+            }
+            else
+            {
+                var error = await response.Content.ReadAsStringAsync();
+                MessageBox.Show("Lỗi: " + error, "Lỗi", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+        }
+        catch (System.Exception ex)
+        {
+            MessageBox.Show("Lỗi kết nối: " + ex.Message, "Lỗi", MessageBoxButton.OK, MessageBoxImage.Error);
+        }
+    }
+
+    [RelayCommand]
+    private async Task ToggleReportedUserActiveAsync(ReportDto report)
+    {
+        if (report == null) return;
+
+        try
+        {
+            var response = await _httpClient.PostAsync($"/api/Admin/users/{report.ReportedUser.Id}/toggle-active", null);
+            if (response.IsSuccessStatusCode)
+            {
+                MessageBox.Show("Thao tác tài khoản bị tố cáo thành công!", "Thông báo", MessageBoxButton.OK, MessageBoxImage.Information);
+                await LoadReportsAsync();
+            }
+            else
+            {
+                var error = await response.Content.ReadAsStringAsync();
+                MessageBox.Show("Lỗi: " + error, "Lỗi", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+        }
+        catch (System.Exception ex)
+        {
+            MessageBox.Show("Lỗi kết nối: " + ex.Message, "Lỗi", MessageBoxButton.OK, MessageBoxImage.Error);
+        }
+    }
+
+    [RelayCommand]
+    private void Logout()
+    {
+        var app = (App)System.Windows.Application.Current;
+        var authService = app.Services.GetService(typeof(AuthService)) as AuthService;
+        authService?.Logout();
+
+        var loginVm = app.Services.GetService(typeof(LoginViewModel));
+        CommunityToolkit.Mvvm.Messaging.WeakReferenceMessenger.Default.Send(
+            new DatingApp.Desktop.Messages.NavigationMessage(loginVm!)
+        );
     }
 }

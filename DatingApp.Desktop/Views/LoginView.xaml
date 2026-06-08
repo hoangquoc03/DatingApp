@@ -41,6 +41,13 @@
                                  Margin="0,0,0,10" FontSize="16"
                                  PasswordChanged="PasswordBox_PasswordChanged"/>
 
+                    <!-- Link Quên mật khẩu -->
+                    <Button Command="{Binding ShowForgotPasswordCommand}" 
+                            Content="Quên mật khẩu?" 
+                            Style="{StaticResource MaterialDesignFlatButton}" 
+                            Foreground="Gray" FontSize="13" 
+                            HorizontalAlignment="Right" Padding="0" Height="25" Margin="0,0,0,10"/>
+
                     <TextBlock Text="{Binding ErrorMessage}" Foreground="Red" TextWrapping="Wrap" HorizontalAlignment="Center" Margin="0,5,0,15"/>
 
                     <Button Command="{Binding LoginCommand}" 
@@ -125,6 +132,110 @@
                             Content="Quay lại Bước 1" 
                             Style="{StaticResource MaterialDesignFlatButton}" Foreground="Gray" HorizontalAlignment="Center"/>
                     
+                    <TextBlock Text="Đang xử lý..." Foreground="Gray" HorizontalAlignment="Center" Margin="0,10,0,0" 
+                               Visibility="{Binding IsBusy, Converter={StaticResource BooleanToVisibilityConverter}}"/>
+                </StackPanel>
+
+                <!-- PANEL 4: OTP VERIFICATION -->
+                <StackPanel Visibility="{Binding IsOtpVerificationVisible, Converter={StaticResource BooleanToVisibilityConverter}}">
+                    <TextBlock Text="Xác minh Email" FontSize="28" FontWeight="Bold" Foreground="#E6005C" HorizontalAlignment="Center" Margin="0,0,0,10"/>
+                    <TextBlock Text="Vui lòng nhập mã OTP 6 số đã được gửi tới email của bạn:" TextWrapping="Wrap" TextAlignment="Center" FontSize="14" Foreground="Gray" HorizontalAlignment="Center" Margin="0,0,0,25"/>
+
+                    <TextBlock Text="{Binding OtpTargetEmail}" FontSize="15" FontWeight="SemiBold" Foreground="#1F2937" HorizontalAlignment="Center" Margin="0,0,0,20"/>
+
+                    <TextBox Text="{Binding OtpVerificationCode, UpdateSourceTrigger=PropertyChanged}" 
+                             materialDesign:HintAssist.Hint="Mã OTP (6 chữ số)" 
+                             MaxLength="6"
+                             Style="{StaticResource MaterialDesignFloatingHintTextBox}" 
+                             HorizontalContentAlignment="Center"
+                             Margin="0,0,0,15" FontSize="20" FontWeight="Bold"/>
+
+                    <TextBlock Text="{Binding ErrorMessage}" Foreground="Red" TextWrapping="Wrap" HorizontalAlignment="Center" Margin="0,5,0,15"/>
+
+                    <Button Command="{Binding VerifyOtpCommand}" 
+                            Content="Xác minh tài khoản" 
+                            Height="50" FontSize="16" FontWeight="SemiBold"
+                            Style="{StaticResource MaterialDesignFlatMidBgButton}"
+                            materialDesign:ButtonAssist.CornerRadius="10"
+                            Background="#E6005C" Foreground="White" BorderBrush="Transparent" Margin="0,10,0,10"/>
+
+                    <Grid Margin="0,5,0,10">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="*"/>
+                        </Grid.ColumnDefinitions>
+                        <Button Grid.Column="0" Command="{Binding ResendOtpCommand}" 
+                                Content="Gửi lại mã OTP" 
+                                Style="{StaticResource MaterialDesignFlatButton}" Foreground="#E6005C" HorizontalAlignment="Left" Padding="0"/>
+                        <Button Grid.Column="1" Command="{Binding BackToLoginCommand}" 
+                                Content="Quay lại" 
+                                Style="{StaticResource MaterialDesignFlatButton}" Foreground="Gray" HorizontalAlignment="Right" Padding="0"/>
+                    </Grid>
+
+                    <TextBlock Text="Đang xử lý..." Foreground="Gray" HorizontalAlignment="Center" Margin="0,10,0,0" 
+                               Visibility="{Binding IsBusy, Converter={StaticResource BooleanToVisibilityConverter}}"/>
+                </StackPanel>
+
+                <!-- PANEL 5: FORGOT PASSWORD -->
+                <StackPanel Visibility="{Binding IsForgotPasswordVisible, Converter={StaticResource BooleanToVisibilityConverter}}">
+                    <TextBlock Text="Quên mật khẩu" FontSize="28" FontWeight="Bold" Foreground="#E6005C" HorizontalAlignment="Center" Margin="0,0,0,10"/>
+                    <TextBlock Text="Nhập email của bạn để nhận mã phục hồi mật khẩu:" TextWrapping="Wrap" TextAlignment="Center" FontSize="14" Foreground="Gray" HorizontalAlignment="Center" Margin="0,0,0,25"/>
+
+                    <TextBox Text="{Binding ForgotEmail, UpdateSourceTrigger=PropertyChanged}" 
+                             materialDesign:HintAssist.Hint="Email tài khoản" 
+                             Style="{StaticResource MaterialDesignFloatingHintTextBox}" 
+                             Margin="0,0,0,20" FontSize="16"/>
+
+                    <TextBlock Text="{Binding ErrorMessage}" Foreground="Red" TextWrapping="Wrap" HorizontalAlignment="Center" Margin="0,5,0,15"/>
+
+                    <Button Command="{Binding SendResetLinkCommand}" 
+                            Content="Gửi mã phục hồi" 
+                            Height="50" FontSize="16" FontWeight="SemiBold"
+                            Style="{StaticResource MaterialDesignFlatMidBgButton}"
+                            materialDesign:ButtonAssist.CornerRadius="10"
+                            Background="#FF5C9A" Foreground="White" BorderBrush="Transparent" Margin="0,10,0,10"/>
+
+                    <Button Command="{Binding BackToLoginCommand}" 
+                            Content="Quay lại Đăng nhập" 
+                            Style="{StaticResource MaterialDesignFlatButton}" Foreground="Gray" HorizontalAlignment="Center"/>
+
+                    <TextBlock Text="Đang gửi..." Foreground="Gray" HorizontalAlignment="Center" Margin="0,10,0,0" 
+                               Visibility="{Binding IsBusy, Converter={StaticResource BooleanToVisibilityConverter}}"/>
+                </StackPanel>
+
+                <!-- PANEL 6: RESET PASSWORD -->
+                <StackPanel Visibility="{Binding IsResetPasswordVisible, Converter={StaticResource BooleanToVisibilityConverter}}">
+                    <TextBlock Text="Đặt lại mật khẩu" FontSize="28" FontWeight="Bold" Foreground="#E6005C" HorizontalAlignment="Center" Margin="0,0,0,10"/>
+                    <TextBlock Text="Nhập mã phục hồi (Token) và mật khẩu mới:" TextWrapping="Wrap" TextAlignment="Center" FontSize="14" Foreground="Gray" HorizontalAlignment="Center" Margin="0,0,0,20"/>
+
+                    <TextBox Text="{Binding ResetToken, UpdateSourceTrigger=PropertyChanged}" 
+                             materialDesign:HintAssist.Hint="Mã phục hồi (Token)" 
+                             Style="{StaticResource MaterialDesignFloatingHintTextBox}" 
+                             Margin="0,0,0,15" FontSize="15"/>
+
+                    <TextBox Text="{Binding ResetNewPassword, UpdateSourceTrigger=PropertyChanged}" 
+                             materialDesign:HintAssist.Hint="Mật khẩu mới (ít nhất 6 ký tự)" 
+                             Style="{StaticResource MaterialDesignFloatingHintTextBox}" 
+                             Margin="0,0,0,15" FontSize="16"/>
+
+                    <TextBox Text="{Binding ResetConfirmPassword, UpdateSourceTrigger=PropertyChanged}" 
+                             materialDesign:HintAssist.Hint="Xác nhận mật khẩu mới" 
+                             Style="{StaticResource MaterialDesignFloatingHintTextBox}" 
+                             Margin="0,0,0,15" FontSize="16"/>
+
+                    <TextBlock Text="{Binding ErrorMessage}" Foreground="Red" TextWrapping="Wrap" HorizontalAlignment="Center" Margin="0,5,0,15"/>
+
+                    <Button Command="{Binding ResetPasswordCommand}" 
+                            Content="Xác nhận mật khẩu mới" 
+                            Height="50" FontSize="16" FontWeight="SemiBold"
+                            Style="{StaticResource MaterialDesignFlatMidBgButton}"
+                            materialDesign:ButtonAssist.CornerRadius="10"
+                            Background="#E6005C" Foreground="White" BorderBrush="Transparent" Margin="0,10,0,10"/>
+
+                    <Button Command="{Binding BackToLoginCommand}" 
+                            Content="Hủy bỏ &amp; Quay lại" 
+                            Style="{StaticResource MaterialDesignFlatButton}" Foreground="Gray" HorizontalAlignment="Center"/>
+
                     <TextBlock Text="Đang xử lý..." Foreground="Gray" HorizontalAlignment="Center" Margin="0,10,0,0" 
                                Visibility="{Binding IsBusy, Converter={StaticResource BooleanToVisibilityConverter}}"/>
                 </StackPanel>

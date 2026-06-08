@@ -14,6 +14,7 @@ public class MatchPartnerDto
     }
     public string Bio { get; set; } = string.Empty;
     public bool IsOnline { get; set; }
+    public bool IsVerified { get; set; }
 }
 
 public class MatchLastMessageDto

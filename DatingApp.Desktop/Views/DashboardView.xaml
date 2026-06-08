@@ -32,9 +32,30 @@
                 </Grid.RowDefinitions>
 
                 <!-- Header / Logo -->
-                <StackPanel Grid.Row="0" Margin="0,0,0,40">
-                    <TextBlock Text="Aura Premium" FontSize="26" FontWeight="ExtraBold" Foreground="#E6005C" FontFamily="Segoe UI"/>
-                </StackPanel>
+                <Grid Grid.Row="0" Margin="0,0,0,40">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="Auto"/>
+                    </Grid.ColumnDefinitions>
+                    <TextBlock Grid.Column="0" Text="Aura Premium" FontSize="26" FontWeight="ExtraBold" Foreground="#E6005C" FontFamily="Segoe UI" VerticalAlignment="Center"/>
+                    
+                    <!-- Bell Button with Badge -->
+                    <materialDesign:Badged Grid.Column="1" Badge="{Binding UnreadNotificationCount}" BadgeBackground="#EF4444" BadgeForeground="White" VerticalAlignment="Center" Margin="5,0,0,0">
+                        <materialDesign:Badged.Style>
+                            <Style TargetType="materialDesign:Badged">
+                                <Setter Property="Visibility" Value="Visible"/>
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding UnreadNotificationCount}" Value="0">
+                                        <Setter Property="Badge" Value="{x:Null}"/>
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </materialDesign:Badged.Style>
+                        <Button Command="{Binding ToggleNotificationPanelCommand}" Style="{StaticResource MaterialDesignIconButton}" Width="36" Height="36" Padding="0">
+                            <materialDesign:PackIcon Kind="Bell" Width="24" Height="24" Foreground="#E6005C"/>
+                        </Button>
+                    </materialDesign:Badged>
+                </Grid>
 
                 <!-- Navigation -->
                 <StackPanel Grid.Row="1">
@@ -78,6 +99,117 @@
                             <TextBlock Text="Tài khoản của bạn" FontSize="14" FontWeight="Bold" Foreground="#1F2937"/>
                             <TextBlock Text="Chỉnh sửa thông tin" FontSize="12" Foreground="#E6005C" Margin="0,2,0,0" Cursor="Hand"/>
                         </StackPanel>
+                    </Grid>
+                </Border>
+            </Grid>
+        </Border>
+
+        <!-- Notification Panel Overlay -->
+        <Border Grid.Column="1" HorizontalAlignment="Left" VerticalAlignment="Top" 
+                Width="320" Height="450" Margin="10,60,0,0" CornerRadius="16" 
+                Background="White" Panel.ZIndex="95" BorderThickness="1" BorderBrush="#FFF0F5"
+                Visibility="{Binding IsNotificationPanelOpen, Converter={StaticResource BoolToVis}}">
+            <Border.Effect>
+                <DropShadowEffect BlurRadius="30" ShadowDepth="10" Opacity="0.1" Color="#E6005C"/>
+            </Border.Effect>
+            <Grid>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="*"/>
+                    <RowDefinition Height="Auto"/>
+                </Grid.RowDefinitions>
+
+                <!-- Header -->
+                <Border Grid.Row="0" BorderBrush="#FFF0F5" BorderThickness="0,0,0,1" Padding="15,10">
+                    <Grid>
+                        <TextBlock Text="Thông báo" FontSize="16" FontWeight="Bold" Foreground="#1F2937" VerticalAlignment="Center"/>
+                        <Button Command="{Binding ToggleNotificationPanelCommand}" Style="{StaticResource MaterialDesignIconButton}" HorizontalAlignment="Right" Width="28" Height="28" Padding="0">
+                            <materialDesign:PackIcon Kind="Close" Width="18" Height="18" Foreground="Gray"/>
+                        </Button>
+                    </Grid>
+                </Border>
+
+                <!-- Notifications List -->
+                <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto" Margin="0,5">
+                    <ItemsControl ItemsSource="{Binding Notifications}">
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate>
+                                <Border BorderBrush="#FFF8FB" BorderThickness="0,0,0,1" Padding="12,10" Cursor="Hand">
+                                    <Border.InputBindings>
+                                        <MouseBinding Gesture="LeftClick" 
+                                                      Command="{Binding DataContext.ClickNotificationCommand, RelativeSource={RelativeSource AncestorType=UserControl}}" 
+                                                      CommandParameter="{Binding}" />
+                                    </Border.InputBindings>
+                                    <Border.Style>
+                                        <Style TargetType="Border">
+                                            <Setter Property="Background" Value="White"/>
+                                            <Style.Triggers>
+                                                <DataTrigger Binding="{Binding IsRead}" Value="False">
+                                                    <Setter Property="Background" Value="#FFF9FB"/>
+                                                </DataTrigger>
+                                                <Trigger Property="IsMouseOver" Value="True">
+                                                    <Setter Property="Background" Value="#FFF0F5"/>
+                                                </Trigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </Border.Style>
+                                    <Grid>
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="40"/>
+                                            <ColumnDefinition Width="*"/>
+                                            <ColumnDefinition Width="10"/>
+                                        </Grid.ColumnDefinitions>
+
+                                        <!-- Avatar or Icon -->
+                                        <Border Grid.Column="0" Width="32" Height="32" CornerRadius="16" Background="#FFF0F5">
+                                            <Border CornerRadius="16" ClipToBounds="True">
+                                                <Image Source="{Binding RelatedUser.AvatarUrl, TargetNullValue='pack://application:,,,/Resources/default-avatar.jpg'}" Stretch="UniformToFill"/>
+                                            </Border>
+                                        </Border>
+
+                                        <!-- Content -->
+                                        <StackPanel Grid.Column="1" Margin="10,0,0,0" VerticalAlignment="Center">
+                                            <TextBlock Text="{Binding Content}" FontSize="13" TextWrapping="Wrap" Foreground="#374151">
+                                                <TextBlock.Style>
+                                                    <Style TargetType="TextBlock">
+                                                        <Setter Property="FontWeight" Value="Normal"/>
+                                                        <Style.Triggers>
+                                                            <DataTrigger Binding="{Binding IsRead}" Value="False">
+                                                                <Setter Property="FontWeight" Value="SemiBold"/>
+                                                            </DataTrigger>
+                                                        </Style.Triggers>
+                                                    </Style>
+                                                </TextBlock.Style>
+                                            </TextBlock>
+                                            <TextBlock Text="{Binding TimeAgo}" FontSize="11" Foreground="Gray" Margin="0,2,0,0"/>
+                                        </StackPanel>
+
+                                        <!-- Unread Dot Indicator -->
+                                        <Ellipse Grid.Column="2" Width="6" Height="6" Fill="#E6005C" VerticalAlignment="Center" HorizontalAlignment="Right">
+                                            <Ellipse.Style>
+                                                <Style TargetType="Ellipse">
+                                                    <Setter Property="Visibility" Value="Collapsed"/>
+                                                    <Style.Triggers>
+                                                        <DataTrigger Binding="{Binding IsRead}" Value="False">
+                                                            <Setter Property="Visibility" Value="Visible"/>
+                                                        </DataTrigger>
+                                                    </Style.Triggers>
+                                                </Style>
+                                            </Ellipse.Style>
+                                        </Ellipse>
+                                    </Grid>
+                                </Border>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                </ScrollViewer>
+
+                <!-- Footer / Mark Read All -->
+                <Border Grid.Row="2" BorderBrush="#FFF0F5" BorderThickness="0,1,0,0" Padding="10" Background="#FFFDFE" CornerRadius="0,0,16,16">
+                    <Grid>
+                        <Button Command="{Binding MarkAllNotificationsAsReadCommand}" Content="Đọc tất cả" 
+                                Style="{StaticResource MaterialDesignFlatButton}" Foreground="#E6005C" 
+                                FontSize="12" Height="28" Padding="10,0" HorizontalAlignment="Center"/>
                     </Grid>
                 </Border>
             </Grid>
@@ -174,7 +306,11 @@
 
                     <!-- Info -->
                     <StackPanel VerticalAlignment="Bottom" Margin="24,0,24,110">
-                        <TextBlock Text="{Binding CurrentUserName}" FontSize="36" FontWeight="Black" Foreground="White" Margin="0,0,0,4"/>
+                        <StackPanel Orientation="Horizontal" Margin="0,0,0,4">
+                            <TextBlock Text="{Binding CurrentUserName}" FontSize="36" FontWeight="Black" Foreground="White" VerticalAlignment="Center"/>
+                            <materialDesign:PackIcon Kind="CheckDecagram" Foreground="#3B82F6" Width="28" Height="28" Margin="10,0,0,0" VerticalAlignment="Center"
+                                                     Visibility="{Binding IsCurrentUserVerified, Converter={StaticResource BoolToVis}}"/>
+                        </StackPanel>
                         <TextBlock Text="{Binding CurrentUserBio}" FontSize="18" FontWeight="Medium" Foreground="#E5E7EB" TextWrapping="Wrap" MaxHeight="60" TextTrimming="CharacterEllipsis"/>
                     </StackPanel>
 
@@ -492,7 +628,11 @@
                                     </Border>
                                     
                                     <StackPanel Grid.Column="1" VerticalAlignment="Center" Margin="10,0,0,0">
-                                        <TextBlock Text="{Binding Partner.FullName}" FontSize="16" FontWeight="Bold" Foreground="#1F2937"/>
+                                        <StackPanel Orientation="Horizontal">
+                                            <TextBlock Text="{Binding Partner.FullName}" FontSize="16" FontWeight="Bold" Foreground="#1F2937" VerticalAlignment="Center"/>
+                                            <materialDesign:PackIcon Kind="CheckDecagram" Foreground="#3B82F6" Width="16" Height="16" Margin="6,0,0,0" VerticalAlignment="Center"
+                                                                     Visibility="{Binding Partner.IsVerified, Converter={StaticResource BoolToVis}}"/>
+                                        </StackPanel>
                                         <TextBlock Text="{Binding LastMessage.Content, FallbackValue='Bắt đầu trò chuyện'}" FontSize="13" Foreground="#6B7280" TextTrimming="CharacterEllipsis" MaxWidth="180"/>
                                     </StackPanel>
                                     
@@ -540,7 +680,11 @@
                             </Border.Background>
                         </Border>
                         <StackPanel Grid.Column="1" Margin="15,0,0,0" VerticalAlignment="Center">
-                            <TextBlock Text="{Binding SelectedMatch.Partner.FullName}" FontSize="18" FontWeight="Bold" Foreground="#1F2937"/>
+                            <StackPanel Orientation="Horizontal">
+                                <TextBlock Text="{Binding SelectedMatch.Partner.FullName}" FontSize="18" FontWeight="Bold" Foreground="#1F2937" VerticalAlignment="Center"/>
+                                <materialDesign:PackIcon Kind="CheckDecagram" Foreground="#3B82F6" Width="18" Height="18" Margin="6,0,0,0" VerticalAlignment="Center"
+                                                         Visibility="{Binding SelectedMatch.Partner.IsVerified, Converter={StaticResource BoolToVis}}"/>
+                            </StackPanel>
                             <TextBlock Text="Đang hoạt động" FontSize="12" Foreground="#10B981"/>
                         </StackPanel>
                         

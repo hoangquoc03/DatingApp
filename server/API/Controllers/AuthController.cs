@@ -72,5 +72,15 @@ namespace DatingApp.Controllers
             var result = await _authService.ResetPasswordAsync(dto);
             return result.Success ? Ok(result.Data) : StatusCode(result.StatusCode, new { message = result.Message });
         }
+
+        [HttpPost("verify-email")]
+        public async Task<IActionResult> VerifyEmail([FromBody] VerifyEmailDto dto)
+        {
+            if (!ModelState.IsValid)
+                return BadRequest(ModelState);
+
+            var result = await _authService.VerifyEmailAsync(dto);
+            return result.Success ? Ok(result.Data) : StatusCode(result.StatusCode, new { message = result.Message });
+        }
     }
 }

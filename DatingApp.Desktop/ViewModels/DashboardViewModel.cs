@@ -32,6 +32,9 @@ public partial class DashboardViewModel : ObservableObject
     [ObservableProperty]
     private string _currentUserImage = "https://via.placeholder.com/600x800/FFF5F8/E6005C?text=Loading...";
 
+    [ObservableProperty]
+    private bool _isCurrentUserVerified;
+
     // --- Tabs ---
     [ObservableProperty]
     private bool _isDiscoverVisible = true;
@@ -50,6 +53,15 @@ public partial class DashboardViewModel : ObservableObject
 
     [ObservableProperty]
     private string _messagesTabColor = "#6B7280";
+
+    [ObservableProperty]
+    private int _unreadNotificationCount;
+
+    [ObservableProperty]
+    private ObservableCollection<NotificationDto> _notifications = new();
+
+    [ObservableProperty]
+    private bool _isNotificationPanelOpen;
 
     // --- Profile Data ---
     [ObservableProperty]
@@ -195,6 +207,7 @@ public partial class DashboardViewModel : ObservableObject
 
         _ = LoadDiscoverUsersAsync();
         _ = InitializeSignalRAsync();
+        _ = LoadUnreadNotificationCountAsync();
     }
 
     [RelayCommand]
@@ -301,6 +314,7 @@ public partial class DashboardViewModel : ObservableObject
             CurrentUserImage = string.IsNullOrEmpty(_currentUserDto.AvatarUrl) 
                 ? "pack://application:,,,/Resources/default-avatar.jpg" // Fallback cho có ảnh
                 : _currentUserDto.AvatarUrl;
+            IsCurrentUserVerified = _currentUserDto.IsVerified;
         }
         else
         {
@@ -308,6 +322,7 @@ public partial class DashboardViewModel : ObservableObject
             CurrentUserBio = "Hãy thử lại sau nhé.";
             CurrentUserImage = "https://via.placeholder.com/600x800/FFF5F8/E6005C?text=No+more+profiles";
             _currentUserDto = null;
+            IsCurrentUserVerified = false;
         }
     }
 
@@ -565,6 +580,23 @@ public partial class DashboardViewModel : ObservableObject
 
         _hubConnection.On<System.Text.Json.JsonElement>("ReceiveNotification", notif =>
         {
+            Application.Current.Dispatcher.Invoke(() =>
+            {
+                UnreadNotificationCount++;
+                try
+                {
+                    var newNotif = System.Text.Json.JsonSerializer.Deserialize<NotificationDto>(notif.GetRawText(), new System.Text.Json.JsonSerializerOptions
+                    {
+                        PropertyNameCaseInsensitive = true
+                    });
+                    if (newNotif != null)
+                    {
+                        Notifications.Insert(0, newNotif);
+                    }
+                }
+                catch {}
+            });
+
             if (notif.TryGetProperty("type", out var type) && type.GetString() == "NewMatch")
             {
                 _ = LoadMatchesAsync();
@@ -789,5 +821,105 @@ public partial class DashboardViewModel : ObservableObject
             }
         }
         catch { }
+    }
+
+    private async Task LoadUnreadNotificationCountAsync()
+    {
+        try
+        {
+            var response = await _httpClient.GetFromJsonAsync<NotificationResponse>("/api/Notification");
+            if (response != null)
+            {
+                UnreadNotificationCount = response.UnreadCount;
+            }
+        }
+        catch {}
+    }
+
+    [RelayCommand]
+    private async Task ToggleNotificationPanelAsync()
+    {
+        IsNotificationPanelOpen = !IsNotificationPanelOpen;
+        if (IsNotificationPanelOpen)
+        {
+            await LoadNotificationsAsync();
+        }
+    }
+
+    [RelayCommand]
+    private async Task LoadNotificationsAsync()
+    {
+        try
+        {
+            var response = await _httpClient.GetFromJsonAsync<NotificationResponse>("/api/Notification");
+            if (response != null)
+            {
+                Notifications = new ObservableCollection<NotificationDto>(response.Notifications);
+                UnreadNotificationCount = response.UnreadCount;
+            }
+        }
+        catch {}
+    }
+
+    [RelayCommand]
+    private async Task MarkAllNotificationsAsReadAsync()
+    {
+        try
+        {
+            var response = await _httpClient.PutAsync("/api/Notification/read-all", null);
+            if (response.IsSuccessStatusCode)
+            {
+                foreach (var notif in Notifications)
+                {
+                    notif.IsRead = true;
+                }
+                Notifications = new ObservableCollection<NotificationDto>(Notifications);
+                UnreadNotificationCount = 0;
+            }
+        }
+        catch {}
+    }
+
+    [RelayCommand]
+    private async Task ClickNotificationAsync(NotificationDto notif)
+    {
+        if (notif == null) return;
+
+        try
+        {
+            if (!notif.IsRead)
+            {
+                var response = await _httpClient.PutAsync($"/api/Notification/{notif.Id}/read", null);
+                if (response.IsSuccessStatusCode)
+                {
+                    notif.IsRead = true;
+                    UnreadNotificationCount = Math.Max(0, UnreadNotificationCount - 1);
+                }
+            }
+
+            IsNotificationPanelOpen = false;
+
+            if (notif.Type == "NewMatch" && notif.RelatedUserId.HasValue)
+            {
+                ShowMessages();
+
+                var partnerId = notif.RelatedUserId.Value;
+                var match = Matches.FirstOrDefault(m => m.Partner.Id == partnerId);
+                if (match != null)
+                {
+                    SelectedMatch = match;
+                }
+                else
+                {
+                    await LoadMatchesAsync();
+                    match = Matches.FirstOrDefault(m => m.Partner.Id == partnerId);
+                    if (match != null)
+                    {
+                        SelectedMatch = match;
+                    }
+                }
+            }
+        }
+        catch {}
     }
 }

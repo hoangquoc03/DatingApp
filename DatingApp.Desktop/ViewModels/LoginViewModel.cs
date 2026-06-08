@@ -18,6 +18,7 @@ public partial class LoginViewModel : ObservableObject
 
     [ObservableProperty]
     private string _password = "123456";
+    private string _tempPassword = "";
 
     [ObservableProperty]
     private bool _isBusy;
@@ -50,6 +51,34 @@ public partial class LoginViewModel : ObservableObject
     [ObservableProperty]
     private int _registerGender = 1; // 0: Nam, 1: Nữ, 2: Khác
 
+    [ObservableProperty]
+    private bool _isForgotPasswordVisible = false;
+
+    [ObservableProperty]
+    private bool _isResetPasswordVisible = false;
+
+    [ObservableProperty]
+    private bool _isOtpVerificationVisible = false;
+
+    // Forgot / Reset / OTP Properties
+    [ObservableProperty]
+    private string _forgotEmail = "";
+
+    [ObservableProperty]
+    private string _resetToken = "";
+
+    [ObservableProperty]
+    private string _resetNewPassword = "";
+
+    [ObservableProperty]
+    private string _resetConfirmPassword = "";
+
+    [ObservableProperty]
+    private string _otpVerificationCode = "";
+
+    [ObservableProperty]
+    private string _otpTargetEmail = "";
+
     public LoginViewModel(AuthService authService)
     {
         _authService = authService;
@@ -75,7 +104,7 @@ public partial class LoginViewModel : ObservableObject
                 {
                     nextViewModel = app.Services.GetService(typeof(AdminViewModel));
                 }
-                else if (_authService.CurrentUser?.IsOnboarded == false && _isNewUserSession)
+                else if (_authService.CurrentUser?.IsOnboarded == false)
                 {
                     nextViewModel = app.Services.GetService(typeof(OnboardingViewModel));
                 }
@@ -97,7 +126,25 @@ public partial class LoginViewModel : ObservableObject
         }
         catch (System.Exception ex)
         {
-            ErrorMessage = "Lỗi kết nối: " + ex.Message;
+            if (ex.Message == "EMAIL_NOT_VERIFIED")
+            {
+                // Người dùng chưa xác thực email -> Chuyển sang màn hình xác minh OTP
+                _tempPassword = Password;
+                OtpTargetEmail = Email;
+                OtpVerificationCode = "";
+                ErrorMessage = "";
+                IsLoginPanelVisible = false;
+                IsRegisterStep1Visible = false;
+                IsRegisterStep2Visible = false;
+                IsForgotPasswordVisible = false;
+                IsResetPasswordVisible = false;
+                IsOtpVerificationVisible = true;
+                System.Windows.MessageBox.Show("Email của bạn chưa được xác thực. Chúng tôi đã gửi một mã OTP mới đến email của bạn.", "Xác thực Email", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Warning);
+            }
+            else
+            {
+                ErrorMessage = "Lỗi kết nối: " + ex.Message;
+            }
         }
         finally
         {
@@ -111,6 +158,9 @@ public partial class LoginViewModel : ObservableObject
         IsLoginPanelVisible = false;
         IsRegisterStep1Visible = true;
         IsRegisterStep2Visible = false;
+        IsForgotPasswordVisible = false;
+        IsResetPasswordVisible = false;
+        IsOtpVerificationVisible = false;
         ErrorMessage = "";
     }
 
@@ -125,6 +175,9 @@ public partial class LoginViewModel : ObservableObject
         IsLoginPanelVisible = false;
         IsRegisterStep1Visible = false;
         IsRegisterStep2Visible = true;
+        IsForgotPasswordVisible = false;
+        IsResetPasswordVisible = false;
+        IsOtpVerificationVisible = false;
         ErrorMessage = "";
     }
 
@@ -134,6 +187,9 @@ public partial class LoginViewModel : ObservableObject
         IsLoginPanelVisible = true;
         IsRegisterStep1Visible = false;
         IsRegisterStep2Visible = false;
+        IsForgotPasswordVisible = false;
+        IsResetPasswordVisible = false;
+        IsOtpVerificationVisible = false;
         ErrorMessage = "";
     }
 
@@ -162,10 +218,20 @@ public partial class LoginViewModel : ObservableObject
             var success = await _authService.RegisterAsync(dto);
             if (success)
             {
-                System.Windows.MessageBox.Show("Đăng ký thành công! Hãy đăng nhập.", "Thông báo", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Information);
+                System.Windows.MessageBox.Show("Đăng ký thành công! Hãy nhập mã xác thực OTP đã được gửi tới email của bạn.", "Thông báo", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Information);
                 _isNewUserSession = true;
-                BackToLogin();
-                Email = RegisterEmail; // Autofill email for user
+                _tempPassword = RegisterPassword;
+                
+                // Chuyển sang OTP panel
+                OtpTargetEmail = RegisterEmail;
+                OtpVerificationCode = "";
+                
+                IsLoginPanelVisible = false;
+                IsRegisterStep1Visible = false;
+                IsRegisterStep2Visible = false;
+                IsForgotPasswordVisible = false;
+                IsResetPasswordVisible = false;
+                IsOtpVerificationVisible = true;
             }
             else
             {
@@ -175,6 +241,207 @@ public partial class LoginViewModel : ObservableObject
         catch (System.Exception ex)
         {
             ErrorMessage = "Lỗi kết nối: " + ex.Message;
+        }
+        finally
+        {
+            IsBusy = false;
+        }
+    }
+
+    [RelayCommand]
+    private void ShowForgotPassword()
+    {
+        IsLoginPanelVisible = false;
+        IsRegisterStep1Visible = false;
+        IsRegisterStep2Visible = false;
+        IsForgotPasswordVisible = true;
+        IsResetPasswordVisible = false;
+        IsOtpVerificationVisible = false;
+        ForgotEmail = Email; // Autofill email if they had typed one
+        ErrorMessage = "";
+    }
+
+    [RelayCommand]
+    private async Task SendResetLinkAsync()
+    {
+        if (string.IsNullOrWhiteSpace(ForgotEmail))
+        {
+            ErrorMessage = "Vui lòng nhập Email!";
+            return;
+        }
+
+        ErrorMessage = "";
+        IsBusy = true;
+        try
+        {
+            var success = await _authService.ForgotPasswordAsync(ForgotEmail);
+            if (success)
+            {
+                System.Windows.MessageBox.Show("Yêu cầu đặt lại mật khẩu đã được xử lý. Vui lòng lấy mã phục hồi từ email/log hệ thống để tiếp tục.", "Thành công");
+                // Chuyển sang màn Đặt lại mật khẩu
+                ResetToken = "";
+                ResetNewPassword = "";
+                ResetConfirmPassword = "";
+                IsLoginPanelVisible = false;
+                IsRegisterStep1Visible = false;
+                IsRegisterStep2Visible = false;
+                IsForgotPasswordVisible = false;
+                IsResetPasswordVisible = true;
+                IsOtpVerificationVisible = false;
+            }
+            else
+            {
+                ErrorMessage = "Không thể gửi yêu cầu đặt lại mật khẩu.";
+            }
+        }
+        catch (Exception ex)
+        {
+            ErrorMessage = "Lỗi: " + ex.Message;
+        }
+        finally
+        {
+            IsBusy = false;
+        }
+    }
+
+    [RelayCommand]
+    private async Task ResetPasswordAsync()
+    {
+        if (string.IsNullOrWhiteSpace(ResetToken))
+        {
+            ErrorMessage = "Vui lòng nhập Mã phục hồi (Token)!";
+            return;
+        }
+        if (string.IsNullOrWhiteSpace(ResetNewPassword))
+        {
+            ErrorMessage = "Vui lòng nhập mật khẩu mới!";
+            return;
+        }
+        if (ResetNewPassword != ResetConfirmPassword)
+        {
+            ErrorMessage = "Mật khẩu xác nhận không khớp!";
+            return;
+        }
+
+        ErrorMessage = "";
+        IsBusy = true;
+        try
+        {
+            var success = await _authService.ResetPasswordAsync(ResetToken, ResetNewPassword);
+            if (success)
+            {
+                System.Windows.MessageBox.Show("Đặt lại mật khẩu thành công! Vui lòng đăng nhập bằng mật khẩu mới.", "Thành công");
+                Email = ForgotEmail; // Autofill the email
+                BackToLogin();
+            }
+            else
+            {
+                ErrorMessage = "Mã phục hồi không hợp lệ hoặc đã hết hạn.";
+            }
+        }
+        catch (Exception ex)
+        {
+            ErrorMessage = "Lỗi: " + ex.Message;
+        }
+        finally
+        {
+            IsBusy = false;
+        }
+    }
+
+    [RelayCommand]
+    private async Task VerifyOtpAsync()
+    {
+        if (string.IsNullOrWhiteSpace(OtpVerificationCode) || OtpVerificationCode.Length != 6)
+        {
+            ErrorMessage = "Vui lòng nhập mã OTP gồm 6 chữ số!";
+            return;
+        }
+
+        ErrorMessage = "";
+        IsBusy = true;
+        try
+        {
+            var success = await _authService.VerifyEmailAsync(OtpTargetEmail, OtpVerificationCode);
+            if (success)
+            {
+                // Auto login if tempPassword is set
+                if (!string.IsNullOrEmpty(_tempPassword))
+                {
+                    var loginSuccess = await _authService.LoginAsync(OtpTargetEmail, _tempPassword);
+                    _tempPassword = ""; // clear
+                    if (loginSuccess)
+                    {
+                        var app = (App)System.Windows.Application.Current;
+                        object? nextViewModel;
+                        if (_authService.CurrentUser?.IsAdmin == true)
+                        {
+                            nextViewModel = app.Services.GetService(typeof(AdminViewModel));
+                        }
+                        else if (_authService.CurrentUser?.IsOnboarded == false)
+                        {
+                            nextViewModel = app.Services.GetService(typeof(OnboardingViewModel));
+                        }
+                        else
+                        {
+                            nextViewModel = app.Services.GetService(typeof(DashboardViewModel));
+                        }
+
+                        _isNewUserSession = false;
+
+                        CommunityToolkit.Mvvm.Messaging.WeakReferenceMessenger.Default.Send(
+                            new DatingApp.Desktop.Messages.NavigationMessage(nextViewModel!)
+                        );
+                        return;
+                    }
+                }
+
+                System.Windows.MessageBox.Show("Xác minh Email thành công! Bạn có thể đăng nhập ngay bây giờ.", "Thành công");
+                Email = OtpTargetEmail;
+                BackToLogin();
+            }
+            else
+            {
+                ErrorMessage = "Mã OTP không chính xác hoặc đã hết hạn!";
+            }
+        }
+        catch (Exception ex)
+        {
+            ErrorMessage = "Lỗi: " + ex.Message;
+        }
+        finally
+        {
+            IsBusy = false;
+        }
+    }
+
+    [RelayCommand]
+    private async Task ResendOtpAsync()
+    {
+        ErrorMessage = "";
+        IsBusy = true;
+        try
+        {
+            var pwd = !string.IsNullOrEmpty(Password) ? Password : RegisterPassword;
+            if (string.IsNullOrEmpty(pwd))
+            {
+                ErrorMessage = "Không có mật khẩu trong phiên làm việc để gửi lại OTP. Vui lòng quay lại màn đăng nhập.";
+                return;
+            }
+
+            try
+            {
+                await _authService.LoginAsync(OtpTargetEmail, pwd);
+                ErrorMessage = "Đã gửi lại mã OTP mới. Vui lòng kiểm tra email/log!";
+            }
+            catch (Exception ex) when (ex.Message == "EMAIL_NOT_VERIFIED")
+            {
+                ErrorMessage = "Đã gửi lại mã OTP mới. Vui lòng kiểm tra email/log!";
+            }
+            catch (Exception ex)
+            {
+                ErrorMessage = "Lỗi gửi lại mã: " + ex.Message;
+            }
         }
         finally
         {

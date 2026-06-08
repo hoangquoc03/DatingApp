@@ -271,6 +271,12 @@ namespace DatingApp.Migrations
                         .IsRequired()
                         .HasColumnType("text");
 
+                    b.Property<string>("EmailVerificationOtp")
+                        .HasColumnType("text");
+
+                    b.Property<DateTime?>("EmailVerificationOtpExpiresAt")
+                        .HasColumnType("timestamp without time zone");
+
                     b.Property<string>("FullName")
                         .IsRequired()
                         .HasColumnType("text");

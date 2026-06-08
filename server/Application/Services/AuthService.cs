@@ -1,4 +1,5 @@
 using DatingApp.Data;
+using DatingApp.Enums;
 using DatingApp.DTOs;
 using DatingApp.Helpers;
 using DatingApp.Models;
@@ -37,6 +38,8 @@ namespace DatingApp.Services
                 var exists = await _context.Users.AnyAsync(x => x.Email == email);
                 if (exists) return ServiceResult.BadRequest("Email already exists");
 
+                var otp = Random.Shared.Next(100000, 999999).ToString();
+
                 var user = new User
                 {
                     Id = Guid.NewGuid(),
@@ -51,6 +54,8 @@ namespace DatingApp.Services
                     AvatarUrl = "",
                     Location = "",
                     IsVerified = false,
+                    EmailVerificationOtp = otp,
+                    EmailVerificationOtpExpiresAt = DateTime.UtcNow.AddMinutes(10),
                     CreatedAt = DateTime.UtcNow,
                     Status = Enums.UserStatus.Active
                 };
@@ -58,7 +63,9 @@ namespace DatingApp.Services
                 _context.Users.Add(user);
                 await _context.SaveChangesAsync();
 
-                return ServiceResult.Ok(new { message = "Register success" });
+                await _emailService.SendEmailVerificationOtpAsync(email, otp);
+
+                return ServiceResult.Ok(new { message = "Register success", email = email });
             }
             catch (Exception ex)
             {
@@ -80,6 +87,19 @@ namespace DatingApp.Services
 
             if (!user.IsActive)
                 return ServiceResult.Unauthorized("Tài khoản của bạn đã bị khóa.");
+
+            // Kiểm tra kích hoạt Email (Ngoại trừ Admin)
+            if (!user.IsVerified && user.Role != Role.Admin)
+            {
+                // Gửi lại mã OTP mới để kích hoạt
+                var otp = Random.Shared.Next(100000, 999999).ToString();
+                user.EmailVerificationOtp = otp;
+                user.EmailVerificationOtpExpiresAt = DateTime.UtcNow.AddMinutes(10);
+                await _context.SaveChangesAsync();
+                await _emailService.SendEmailVerificationOtpAsync(user.Email, otp);
+
+                return ServiceResult.Error("EMAIL_NOT_VERIFIED", 403);
+            }
 
             var token = _jwt.GenerateToken(user.Id, user.Email, user.Role);
             var refreshToken = GenerateRefreshToken();
@@ -247,6 +267,33 @@ namespace DatingApp.Services
             await _context.SaveChangesAsync();
 
             return ServiceResult.Ok(new { message = "Đặt lại mật khẩu thành công." });
+        }
+
+        public async Task<ServiceResult> VerifyEmailAsync(VerifyEmailDto dto)
+        {
+            var emailClean = dto.Email.Trim().ToLower();
+            var user = await _context.Users.FirstOrDefaultAsync(x => x.Email == emailClean);
+
+            if (user == null)
+                return ServiceResult.NotFound("Không tìm thấy người dùng.");
+
+            if (user.IsVerified)
+                return ServiceResult.BadRequest("Email đã được xác thực trước đó.");
+
+            if (user.EmailVerificationOtp != dto.Otp)
+                return ServiceResult.BadRequest("Mã OTP không chính xác.");
+
+            if (!user.EmailVerificationOtpExpiresAt.HasValue || user.EmailVerificationOtpExpiresAt < DateTime.UtcNow)
+                return ServiceResult.BadRequest("Mã OTP đã hết hạn.");
+
+            // Xác thực thành công
+            user.IsVerified = true;
+            user.EmailVerificationOtp = null;
+            user.EmailVerificationOtpExpiresAt = null;
+            user.UpdatedAt = DateTime.UtcNow;
+            await _context.SaveChangesAsync();
+
+            return ServiceResult.Ok(new { message = "Xác thực email thành công." });
         }
 
         private static string GenerateRefreshToken()

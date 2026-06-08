@@ -68,6 +68,9 @@ namespace DatingApp.Models
         public string? PasswordResetTokenHash { get; set; }
         public DateTime? PasswordResetTokenExpiresAt { get; set; }
 
+        public string? EmailVerificationOtp { get; set; }
+        public DateTime? EmailVerificationOtpExpiresAt { get; set; }
+
         public ICollection<Photo> Photos { get; set; } = new List<Photo>();
 
         public ICollection<Swipe> SwipesSent { get; set; }
