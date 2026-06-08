@@ -242,6 +242,7 @@ namespace DatingApp.Services
                     Photos = x.Photos.Select(p => new { p.Id, p.Url, p.IsMain }).ToList(),
                     x.Location,
                     x.Gender,
+                    x.IsVerified,
                     Age = x.DateOfBirth.HasValue
                         ? (int)((DateTime.UtcNow - x.DateOfBirth.Value).TotalDays / 365.25)
                         : (int?)null

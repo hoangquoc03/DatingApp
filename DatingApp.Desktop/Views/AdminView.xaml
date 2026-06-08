@@ -14,6 +14,7 @@
         <converters:ToggleStatusConverter x:Key="ToggleStatusConverter"/>
         <converters:ToggleColorConverter x:Key="ToggleColorConverter"/>
         <converters:InitialsConverter x:Key="InitialsConverter"/>
+        <converters:NullOrEmptyToVisibilityConverter x:Key="NullOrEmptyToVisibilityConverter"/>
     </UserControl.Resources>
 
     <Grid Background="White">
@@ -24,14 +25,46 @@
         </Grid.RowDefinitions>
 
         <!-- Header -->
-        <Border Grid.Row="0" Background="#FFF5F8" Padding="24,16">
-            <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-                <materialDesign:PackIcon Kind="Security" Width="32" Height="32" Foreground="#E6005C" Margin="0,0,16,0"/>
-                <TextBlock Text="Quản trị Hệ thống" FontSize="24" FontWeight="Bold" Foreground="#1F2937"/>
-                <Button Command="{Binding LoadUsersCommand}" Style="{StaticResource MaterialDesignIconButton}" ToolTip="Làm mới" Margin="20,0,0,0">
-                    <materialDesign:PackIcon Kind="Refresh" Foreground="#6B7280"/>
+        <Border Grid.Row="0" Background="#FFF5F8" Padding="24,16" BorderBrush="#FFD6E7" BorderThickness="0,0,0,1">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+                
+                <StackPanel Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center">
+                    <materialDesign:PackIcon Kind="Security" Width="32" Height="32" Foreground="#E6005C" Margin="0,0,16,0"/>
+                    <TextBlock Text="Quản trị Hệ thống" FontSize="24" FontWeight="Bold" Foreground="#1F2937" VerticalAlignment="Center"/>
+                    <Button Command="{Binding LoadUsersCommand}" Style="{StaticResource MaterialDesignIconButton}" ToolTip="Làm mới" Margin="20,0,0,0" VerticalAlignment="Center" Visibility="{Binding IsUserTabSelected, Converter={StaticResource BooleanToVisibilityConverter}}">
+                        <materialDesign:PackIcon Kind="Refresh" Foreground="#6B7280"/>
+                    </Button>
+                    <Button Command="{Binding LoadReportsCommand}" Style="{StaticResource MaterialDesignIconButton}" ToolTip="Làm mới" Margin="20,0,0,0" VerticalAlignment="Center" Visibility="{Binding IsReportTabSelected, Converter={StaticResource BooleanToVisibilityConverter}}">
+                        <materialDesign:PackIcon Kind="Refresh" Foreground="#6B7280"/>
+                    </Button>
+                </StackPanel>
+
+                <!-- Navigation Tabs -->
+                <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
+                    <RadioButton Style="{StaticResource MaterialDesignTabRadioButton}" 
+                                 IsChecked="{Binding IsUserTabSelected}"
+                                 Command="{Binding SelectUserTabCommand}"
+                                 Content="Người dùng" 
+                                 Margin="0,0,10,0"/>
+                    <RadioButton Style="{StaticResource MaterialDesignTabRadioButton}" 
+                                 IsChecked="{Binding IsReportTabSelected}"
+                                 Command="{Binding SelectReportTabCommand}"
+                                 Content="Báo cáo vi phạm"/>
+                </StackPanel>
+
+                <!-- Logout Button -->
+                <Button Grid.Column="2" Command="{Binding LogoutCommand}" Style="{StaticResource MaterialDesignFlatButton}" Foreground="#EF4444" Margin="20,0,0,0" VerticalAlignment="Center">
+                    <StackPanel Orientation="Horizontal">
+                        <materialDesign:PackIcon Kind="Logout" Width="20" Height="20" Margin="0,0,8,0" VerticalAlignment="Center"/>
+                        <TextBlock Text="Đăng xuất" FontSize="15" FontWeight="SemiBold" VerticalAlignment="Center"/>
+                    </StackPanel>
                 </Button>
-            </StackPanel>
+            </Grid>
         </Border>
 
         <!-- STATS DASHBOARD -->
@@ -39,7 +72,7 @@
             <Border.Effect>
                 <DropShadowEffect BlurRadius="20" ShadowDepth="5" Opacity="0.05" Color="Black"/>
             </Border.Effect>
-            <UniformGrid Columns="5">
+            <UniformGrid Columns="6">
                 <StackPanel>
                     <TextBlock Text="Tổng Users" Foreground="Gray" FontSize="14" HorizontalAlignment="Center"/>
                     <TextBlock Text="{Binding TotalUsers}" FontSize="24" FontWeight="Bold" Foreground="#1F2937" HorizontalAlignment="Center" Margin="0,5,0,0"/>
@@ -47,6 +80,10 @@
                 <StackPanel>
                     <TextBlock Text="Đang hoạt động" Foreground="Gray" FontSize="14" HorizontalAlignment="Center"/>
                     <TextBlock Text="{Binding ActiveUsers}" FontSize="24" FontWeight="Bold" Foreground="#10B981" HorizontalAlignment="Center" Margin="0,5,0,0"/>
+                </StackPanel>
+                <StackPanel>
+                    <TextBlock Text="Đã xác thực" Foreground="Gray" FontSize="14" HorizontalAlignment="Center"/>
+                    <TextBlock Text="{Binding VerifiedUsers}" FontSize="24" FontWeight="Bold" Foreground="#3B82F6" HorizontalAlignment="Center" Margin="0,5,0,0"/>
                 </StackPanel>
                 <StackPanel>
                     <TextBlock Text="Số lượt Match" Foreground="Gray" FontSize="14" HorizontalAlignment="Center"/>
@@ -66,22 +103,36 @@
         <!-- Loading Indicator -->
         <ProgressBar Grid.Row="2" IsIndeterminate="True" Visibility="{Binding IsLoading, Converter={StaticResource BooleanToVisibilityConverter}}" VerticalAlignment="Top" Foreground="#E6005C"/>
 
-        <!-- Data Grid -->
+        <!-- Users Data Grid -->
         <DataGrid Grid.Row="2" Margin="24" ItemsSource="{Binding Users}" AutoGenerateColumns="False" 
                   CanUserAddRows="False" CanUserDeleteRows="False" IsReadOnly="True" 
-                  Style="{StaticResource MaterialDesignDataGrid}" Background="White">
+                  Style="{StaticResource MaterialDesignDataGrid}" Background="White"
+                  Visibility="{Binding IsUserTabSelected, Converter={StaticResource BooleanToVisibilityConverter}}">
             <DataGrid.Columns>
                 <!-- Avatar -->
                 <DataGridTemplateColumn Header="Avatar">
                     <DataGridTemplateColumn.CellTemplate>
                         <DataTemplate>
                             <Grid Width="40" Height="40" Margin="4">
-                                <!-- Nền màu hồng hiển thị khi không có ảnh -->
+                                <!-- Fallback initials background -->
                                 <Ellipse Fill="#FFD6E7"/>
-                                <!-- Chữ viết tắt hiển thị trên nền -->
                                 <TextBlock Text="{Binding FullName, Converter={StaticResource InitialsConverter}}"
                                            HorizontalAlignment="Center" VerticalAlignment="Center"
                                            FontWeight="Bold" FontSize="14" Foreground="#E6005C"/>
+                                
+                                <!-- Real Avatar Image -->
+                                <Ellipse x:Name="AvatarEllipse" Width="40" Height="40" Visibility="{Binding AvatarUrl, Converter={StaticResource NullOrEmptyToVisibilityConverter}}">
+                                    <Ellipse.Fill>
+                                        <ImageBrush ImageSource="{Binding AvatarUrl, TargetNullValue={x:Null}}" Stretch="UniformToFill"/>
+                                    </Ellipse.Fill>
+                                </Ellipse>
+
+                                <!-- Online Status Badge -->
+                                <Ellipse Width="10" Height="10" Fill="#10B981" 
+                                         Stroke="White" StrokeThickness="1.5"
+                                         HorizontalAlignment="Right" VerticalAlignment="Bottom"
+                                         Margin="0,0,1,1"
+                                         Visibility="{Binding IsOnline, Converter={StaticResource BooleanToVisibilityConverter}}"/>
                             </Grid>
                         </DataTemplate>
                     </DataGridTemplateColumn.CellTemplate>
@@ -91,10 +142,32 @@
                 <DataGridTextColumn Header="Email" Binding="{Binding Email}" Width="*" />
                 <DataGridTextColumn Header="Vai trò" Binding="{Binding RoleDisplay}" Width="100"/>
                 <DataGridTextColumn Header="Trạng thái" Binding="{Binding StatusDisplay}" Width="100"/>
-                <DataGridTextColumn Header="Ngày tham gia" Binding="{Binding CreatedAt, StringFormat=dd/MM/yyyy}" Width="150"/>
+                
+                <DataGridTemplateColumn Header="Xác thực" Width="100">
+                    <DataGridTemplateColumn.CellTemplate>
+                        <DataTemplate>
+                            <materialDesign:PackIcon Width="20" Height="20" HorizontalAlignment="Center" VerticalAlignment="Center">
+                                <materialDesign:PackIcon.Style>
+                                    <Style TargetType="materialDesign:PackIcon">
+                                        <Setter Property="Kind" Value="DecagramOutline"/>
+                                        <Setter Property="Foreground" Value="Gray"/>
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding IsVerified}" Value="True">
+                                                <Setter Property="Kind" Value="CheckDecagram"/>
+                                                <Setter Property="Foreground" Value="#3B82F6"/>
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </materialDesign:PackIcon.Style>
+                            </materialDesign:PackIcon>
+                        </DataTemplate>
+                    </DataGridTemplateColumn.CellTemplate>
+                </DataGridTemplateColumn>
+
+                <DataGridTextColumn Header="Ngày tham gia" Binding="{Binding CreatedAt, StringFormat={}{0:dd/MM/yyyy}}" Width="120"/>
                 
                 <!-- Actions -->
-                <DataGridTemplateColumn Header="Thao tác" Width="200">
+                <DataGridTemplateColumn Header="Thao tác" Width="240">
                     <DataGridTemplateColumn.CellTemplate>
                         <DataTemplate>
                             <StackPanel Orientation="Horizontal">
@@ -104,10 +177,39 @@
                                         Style="{StaticResource MaterialDesignFlatButton}"
                                         Foreground="{Binding IsActive, Converter={StaticResource ToggleColorConverter}}"
                                         Padding="4" Margin="0,0,5,0"/>
+
+                                <Button Command="{Binding DataContext.ToggleUserVerifyCommand, RelativeSource={RelativeSource AncestorType=DataGrid}}"
+                                        CommandParameter="{Binding}"
+                                        Width="28" Height="28" Margin="0,0,5,0">
+                                    <Button.Style>
+                                        <Style TargetType="Button" BasedOn="{StaticResource MaterialDesignIconButton}">
+                                            <Setter Property="ToolTip" Value="Cấp tích xanh"/>
+                                            <Style.Triggers>
+                                                <DataTrigger Binding="{Binding IsVerified}" Value="True">
+                                                    <Setter Property="ToolTip" Value="Hủy tích xanh"/>
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </Button.Style>
+                                    <materialDesign:PackIcon Width="18" Height="18">
+                                        <materialDesign:PackIcon.Style>
+                                            <Style TargetType="materialDesign:PackIcon">
+                                                <Setter Property="Kind" Value="DecagramOutline"/>
+                                                <Setter Property="Foreground" Value="Gray"/>
+                                                <Style.Triggers>
+                                                    <DataTrigger Binding="{Binding IsVerified}" Value="True">
+                                                        <Setter Property="Kind" Value="CheckDecagram"/>
+                                                        <Setter Property="Foreground" Value="#3B82F6"/>
+                                                    </DataTrigger>
+                                                </Style.Triggers>
+                                            </Style>
+                                        </materialDesign:PackIcon.Style>
+                                    </materialDesign:PackIcon>
+                                </Button>
                                 
                                 <Button Command="{Binding DataContext.EditUserCommand, RelativeSource={RelativeSource AncestorType=DataGrid}}"
                                         CommandParameter="{Binding}"
-                                        Style="{StaticResource MaterialDesignIconButton}" ToolTip="Sửa" Width="28" Height="28">
+                                        Style="{StaticResource MaterialDesignIconButton}" ToolTip="Sửa" Width="28" Height="28" Margin="0,0,5,0">
                                     <materialDesign:PackIcon Kind="Pencil" Foreground="#3B82F6"/>
                                 </Button>
 
@@ -116,6 +218,107 @@
                                         Style="{StaticResource MaterialDesignIconButton}" ToolTip="Xóa" Width="28" Height="28">
                                     <materialDesign:PackIcon Kind="Delete" Foreground="#EF4444"/>
                                 </Button>
+                            </StackPanel>
+                        </DataTemplate>
+                    </DataGridTemplateColumn.CellTemplate>
+                </DataGridTemplateColumn>
+            </DataGrid.Columns>
+        </DataGrid>
+
+        <!-- Reports Data Grid -->
+        <DataGrid Grid.Row="2" Margin="24" ItemsSource="{Binding Reports}" AutoGenerateColumns="False" 
+                  CanUserAddRows="False" CanUserDeleteRows="False" IsReadOnly="True" 
+                  Style="{StaticResource MaterialDesignDataGrid}" Background="White"
+                  Visibility="{Binding IsReportTabSelected, Converter={StaticResource BooleanToVisibilityConverter}}">
+            <DataGrid.Columns>
+                <DataGridTextColumn Header="Mã" Binding="{Binding Id}" Width="60"/>
+                
+                <!-- Reporter -->
+                <DataGridTemplateColumn Header="Người báo cáo" Width="*">
+                    <DataGridTemplateColumn.CellTemplate>
+                        <DataTemplate>
+                            <StackPanel Orientation="Horizontal" Margin="4">
+                                <Grid Width="30" Height="30" Margin="0,0,10,0">
+                                    <Ellipse Fill="#E2E8F0"/>
+                                    <TextBlock Text="{Binding Reporter.FullName, Converter={StaticResource InitialsConverter}}"
+                                               HorizontalAlignment="Center" VerticalAlignment="Center"
+                                               FontWeight="Bold" FontSize="11" Foreground="#475569"/>
+                                    
+                                    <!-- Real Avatar Image -->
+                                    <Ellipse Width="30" Height="30" Visibility="{Binding Reporter.AvatarUrl, Converter={StaticResource NullOrEmptyToVisibilityConverter}}">
+                                        <Ellipse.Fill>
+                                            <ImageBrush ImageSource="{Binding Reporter.AvatarUrl, TargetNullValue={x:Null}}" Stretch="UniformToFill"/>
+                                        </Ellipse.Fill>
+                                    </Ellipse>
+
+                                    <!-- Online Status Badge -->
+                                    <Ellipse Width="8" Height="8" Fill="#10B981" 
+                                             Stroke="White" StrokeThickness="1"
+                                             HorizontalAlignment="Right" VerticalAlignment="Bottom"
+                                             Visibility="{Binding Reporter.IsOnline, Converter={StaticResource BooleanToVisibilityConverter}}"/>
+                                </Grid>
+                                <TextBlock Text="{Binding Reporter.FullName}" VerticalAlignment="Center" FontWeight="SemiBold" Foreground="#1F2937"/>
+                            </StackPanel>
+                        </DataTemplate>
+                    </DataGridTemplateColumn.CellTemplate>
+                </DataGridTemplateColumn>
+
+                <!-- Reported User -->
+                <DataGridTemplateColumn Header="Người bị báo cáo" Width="*">
+                    <DataGridTemplateColumn.CellTemplate>
+                        <DataTemplate>
+                            <StackPanel Orientation="Horizontal" Margin="4">
+                                <Grid Width="30" Height="30" Margin="0,0,10,0">
+                                    <Ellipse Fill="#FEE2E2"/>
+                                    <TextBlock Text="{Binding ReportedUser.FullName, Converter={StaticResource InitialsConverter}}"
+                                               HorizontalAlignment="Center" VerticalAlignment="Center"
+                                               FontWeight="Bold" FontSize="11" Foreground="#EF4444"/>
+                                    
+                                    <!-- Real Avatar Image -->
+                                    <Ellipse Width="30" Height="30" Visibility="{Binding ReportedUser.AvatarUrl, Converter={StaticResource NullOrEmptyToVisibilityConverter}}">
+                                        <Ellipse.Fill>
+                                            <ImageBrush ImageSource="{Binding ReportedUser.AvatarUrl, TargetNullValue={x:Null}}" Stretch="UniformToFill"/>
+                                        </Ellipse.Fill>
+                                    </Ellipse>
+
+                                    <!-- Online Status Badge -->
+                                    <Ellipse Width="8" Height="8" Fill="#10B981" 
+                                             Stroke="White" StrokeThickness="1"
+                                             HorizontalAlignment="Right" VerticalAlignment="Bottom"
+                                             Visibility="{Binding ReportedUser.IsOnline, Converter={StaticResource BooleanToVisibilityConverter}}"/>
+                                </Grid>
+                                <TextBlock Text="{Binding ReportedUser.FullName}" VerticalAlignment="Center" FontWeight="SemiBold" Foreground="#1F2937"/>
+                            </StackPanel>
+                        </DataTemplate>
+                    </DataGridTemplateColumn.CellTemplate>
+                </DataGridTemplateColumn>
+
+                <DataGridTextColumn Header="Lý do" Binding="{Binding ReasonDisplay}" Width="130"/>
+                <DataGridTextColumn Header="Chi tiết" Binding="{Binding Description}" Width="*"/>
+                <DataGridTextColumn Header="Trạng thái" Binding="{Binding StatusDisplay}" Width="100"/>
+                <DataGridTextColumn Header="Ngày báo cáo" Binding="{Binding CreatedAt, StringFormat={}{0:dd/MM/yyyy HH:mm}}" Width="150"/>
+
+                <!-- Actions -->
+                <DataGridTemplateColumn Header="Thao tác" Width="220">
+                    <DataGridTemplateColumn.CellTemplate>
+                        <DataTemplate>
+                            <StackPanel Orientation="Horizontal">
+                                <!-- Resolve Button -->
+                                <Button Content="Giải quyết"
+                                        Command="{Binding DataContext.ResolveReportCommand, RelativeSource={RelativeSource AncestorType=DataGrid}}"
+                                        CommandParameter="{Binding}"
+                                        IsEnabled="{Binding IsPending}"
+                                        Style="{StaticResource MaterialDesignFlatButton}"
+                                        Foreground="#10B981"
+                                        Padding="4" Margin="0,0,5,0"/>
+
+                                <!-- Ban/Unban Reported User Button -->
+                                <Button Content="Khóa/Mở khóa"
+                                        Command="{Binding DataContext.ToggleReportedUserActiveCommand, RelativeSource={RelativeSource AncestorType=DataGrid}}"
+                                        CommandParameter="{Binding}"
+                                        Style="{StaticResource MaterialDesignFlatButton}"
+                                        Foreground="#EF4444"
+                                        Padding="4"/>
                             </StackPanel>
                         </DataTemplate>
                     </DataGridTemplateColumn.CellTemplate>

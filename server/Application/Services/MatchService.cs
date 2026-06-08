@@ -70,6 +70,7 @@ namespace DatingApp.Services
                         partner.FullName,
                         partner.AvatarUrl,
                         partner.Bio,
+                        partner.IsVerified,
                         IsOnline = ChatHub.IsUserOnline(partner.Id.ToString())
                     },
                     LastMessage = lastMessage,

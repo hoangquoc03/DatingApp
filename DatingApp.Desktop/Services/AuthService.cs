@@ -36,12 +36,41 @@ public class AuthService
                 return true;
             }
         }
+        else
+        {
+            var content = await response.Content.ReadAsStringAsync();
+            if (content.Contains("EMAIL_NOT_VERIFIED"))
+            {
+                throw new Exception("EMAIL_NOT_VERIFIED");
+            }
+        }
         return false;
     }
 
     public async Task<bool> RegisterAsync(RegisterDto dto)
     {
         var response = await _httpClient.PostAsJsonAsync("/api/Auth/register", dto);
+        return response.IsSuccessStatusCode;
+    }
+
+    public async Task<bool> VerifyEmailAsync(string email, string otp)
+    {
+        var request = new { Email = email, Otp = otp };
+        var response = await _httpClient.PostAsJsonAsync("/api/Auth/verify-email", request);
+        return response.IsSuccessStatusCode;
+    }
+
+    public async Task<bool> ForgotPasswordAsync(string email)
+    {
+        var request = new { Email = email };
+        var response = await _httpClient.PostAsJsonAsync("/api/Auth/forgot-password", request);
+        return response.IsSuccessStatusCode;
+    }
+
+    public async Task<bool> ResetPasswordAsync(string token, string newPassword)
+    {
+        var request = new { Token = token, NewPassword = newPassword };
+        var response = await _httpClient.PostAsJsonAsync("/api/Auth/reset-password", request);
         return response.IsSuccessStatusCode;
     }
 

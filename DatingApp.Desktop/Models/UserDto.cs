@@ -15,6 +15,8 @@ public class UserDto
     }
     public int Role { get; set; }
     public bool IsActive { get; set; }
+    public bool IsVerified { get; set; }
+    public bool IsOnline { get; set; }
     public DateTime CreatedAt { get; set; }
     public bool IsOnboarded { get; set; }
     public int ProfileCompletionScore { get; set; }

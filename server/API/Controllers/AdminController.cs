@@ -59,6 +59,7 @@ namespace DatingApp.Controllers
             var totalMatches = await _context.Matches.CountAsync();
             var totalReports = await _context.Reports.CountAsync();
             var unresolvedReports = await _context.Reports.CountAsync(r => r.Status == "pending");
+            var verifiedUsers = await _context.Users.CountAsync(u => u.IsVerified);
 
             return Ok(new
             {
@@ -66,7 +67,8 @@ namespace DatingApp.Controllers
                 activeUsers,
                 totalMatches,
                 totalReports,
-                unresolvedReports
+                unresolvedReports,
+                verifiedUsers
             });
         }
 
@@ -84,12 +86,26 @@ namespace DatingApp.Controllers
                     u.AvatarUrl,
                     u.Role,
                     u.IsActive,
+                    u.IsVerified,
                     u.CreatedAt
                 })
                 .OrderByDescending(u => u.CreatedAt)
                 .ToListAsync();
 
-            return Ok(users);
+            var result = users.Select(u => new
+            {
+                u.Id,
+                u.Email,
+                u.FullName,
+                u.AvatarUrl,
+                u.Role,
+                u.IsActive,
+                u.IsVerified,
+                u.CreatedAt,
+                IsOnline = DatingApp.Hubs.ChatHub.IsUserOnline(u.Id.ToString())
+            });
+
+            return Ok(result);
         }
 
         [HttpPost("users/{id}/toggle-active")]
@@ -106,6 +122,20 @@ namespace DatingApp.Controllers
             await _context.SaveChangesAsync();
 
             return Ok(new { message = $"Đã {(user.IsActive ? "mở khóa" : "khóa")} tài khoản thành công." });
+        }
+
+        [HttpPost("users/{id}/toggle-verify")]
+        public async Task<IActionResult> ToggleUserVerify(Guid id)
+        {
+            if (!IsAdmin()) return Forbid();
+
+            var user = await _context.Users.FindAsync(id);
+            if (user == null) return NotFound();
+
+            user.IsVerified = !user.IsVerified;
+            await _context.SaveChangesAsync();
+
+            return Ok(new { message = $"Đã {(user.IsVerified ? "xác thực" : "hủy xác thực")} tài khoản thành công." });
         }
 
         [HttpGet("reports")]
@@ -129,11 +159,32 @@ namespace DatingApp.Controllers
                 .OrderByDescending(r => r.CreatedAt)
                 .ToListAsync();
 
-            return Ok(reports);
+            var result = reports.Select(r => new
+            {
+                r.Id,
+                r.Reason,
+                r.Description,
+                r.Status,
+                r.CreatedAt,
+                Reporter = new { 
+                    r.Reporter.Id, 
+                    r.Reporter.FullName, 
+                    r.Reporter.AvatarUrl,
+                    IsOnline = DatingApp.Hubs.ChatHub.IsUserOnline(r.Reporter.Id.ToString())
+                },
+                ReportedUser = new { 
+                    r.ReportedUser.Id, 
+                    r.ReportedUser.FullName, 
+                    r.ReportedUser.AvatarUrl,
+                    IsOnline = DatingApp.Hubs.ChatHub.IsUserOnline(r.ReportedUser.Id.ToString())
+                }
+            });
+
+            return Ok(result);
         }
 
         [HttpPost("reports/{id}/resolve")]
-        public async Task<IActionResult> ResolveReport(Guid id)
+        public async Task<IActionResult> ResolveReport(int id)
         {
             if (!IsAdmin()) return Forbid();
 
