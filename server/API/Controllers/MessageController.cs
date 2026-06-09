@@ -197,6 +197,61 @@ namespace DatingApp.Controllers
             return Ok(new { seenCount = messages.Count });
         }
 
+        [HttpDelete("{messageId}")]
+        public async Task<IActionResult> Delete(Guid messageId)
+        {
+            var myId = GetUserId();
+            if (myId == null) return Unauthorized();
+
+            var message = await _context.Messages.FirstOrDefaultAsync(m => m.Id == messageId);
+            if (message == null) return NotFound(new { message = "Tin nhắn không tồn tại" });
+
+            if (message.SenderId != myId)
+                return Forbid(); // Chỉ người gửi mới được thu hồi
+
+            // Soft delete tin nhắn
+            message.Content = "Tin nhắn đã bị thu hồi";
+            message.ImageUrl = null;
+            await _context.SaveChangesAsync();
+
+            // Broadcast realtime cho cả 2 phía
+            var partnerId = message.SenderId == myId ? message.ReceiverId : message.SenderId;
+            var payload = new { messageId = message.Id };
+            
+            await _hub.Clients.Group(partnerId.ToString()).SendAsync("MessageDeleted", payload);
+            await _hub.Clients.Group(myId.ToString()).SendAsync("MessageDeleted", payload);
+
+            return Ok(payload);
+        }
+
+        [HttpPut("{messageId}")]
+        public async Task<IActionResult> Edit(Guid messageId, [FromBody] EditMessageDto dto)
+        {
+            var myId = GetUserId();
+            if (myId == null) return Unauthorized();
+
+            var message = await _context.Messages.FirstOrDefaultAsync(m => m.Id == messageId);
+            if (message == null) return NotFound(new { message = "Tin nhắn không tồn tại" });
+
+            if (message.SenderId != myId)
+                return Forbid(); // Chỉ người gửi mới được chỉnh sửa
+
+            if (!string.IsNullOrEmpty(message.ImageUrl))
+                return BadRequest(new { message = "Không thể chỉnh sửa tin nhắn ảnh" });
+
+            message.Content = dto.Content?.Trim() ?? "";
+            await _context.SaveChangesAsync();
+
+            // Broadcast realtime cho cả 2 phía
+            var partnerId = message.SenderId == myId ? message.ReceiverId : message.SenderId;
+            var payload = new { messageId = message.Id, content = message.Content };
+            
+            await _hub.Clients.Group(partnerId.ToString()).SendAsync("MessageEdited", payload);
+            await _hub.Clients.Group(myId.ToString()).SendAsync("MessageEdited", payload);
+
+            return Ok(payload);
+        }
+
         // ── Helpers ───────────────────────────────────────────────────────────
         private Guid? GetUserId()
         {
@@ -223,5 +278,10 @@ namespace DatingApp.Controllers
             msg.SeenAt,
             msg.SentAt
         };
+    }
+
+    public class EditMessageDto
+    {
+        public string Content { get; set; } = string.Empty;
     }
 }

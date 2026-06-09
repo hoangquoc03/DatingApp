@@ -8,14 +8,13 @@ public partial class MessageDto : ObservableObject
     public Guid Id { get; set; }
     public Guid SenderId { get; set; }
     public Guid ReceiverId { get; set; }
-    public string Content { get; set; } = string.Empty;
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(HasContent))]
+    private string _content = string.Empty;
     
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(HasImage))]
     private string? _imageUrl;
-    public string? ImageUrl 
-    { 
-        get => _imageUrl; 
-        set => _imageUrl = string.IsNullOrWhiteSpace(value) ? null : value; 
-    }
 
     [ObservableProperty]
     private bool _isSeen;
