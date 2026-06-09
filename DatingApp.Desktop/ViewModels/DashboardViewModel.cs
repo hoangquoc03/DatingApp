@@ -217,6 +217,12 @@ public partial class DashboardViewModel : ObservableObject
     private string _messageDraft = "";
 
     [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(IsEditingMessage))]
+    private MessageDto? _editingMessage;
+
+    public bool IsEditingMessage => EditingMessage != null;
+
+    [ObservableProperty]
     private bool _isPartnerTyping;
 
     private System.Threading.CancellationTokenSource? _typingResetTokenSource;
@@ -655,6 +661,42 @@ public partial class DashboardViewModel : ObservableObject
             _ = LoadMatchesAsync(); // Làm mới danh sách match để hiển thị last message
         });
 
+        _hubConnection.On<System.Text.Json.JsonElement>("MessageDeleted", payload =>
+        {
+            if (payload.TryGetProperty("messageId", out var idProp))
+            {
+                var msgId = idProp.GetGuid();
+                Application.Current.Dispatcher.Invoke(() =>
+                {
+                    var msg = CurrentMessages.FirstOrDefault(m => m.Id == msgId);
+                    if (msg != null)
+                    {
+                        msg.Content = "Tin nhắn đã bị thu hồi";
+                        msg.ImageUrl = null;
+                    }
+                });
+                _ = LoadMatchesAsync();
+            }
+        });
+
+        _hubConnection.On<System.Text.Json.JsonElement>("MessageEdited", payload =>
+        {
+            if (payload.TryGetProperty("messageId", out var idProp) && payload.TryGetProperty("content", out var contentProp))
+            {
+                var msgId = idProp.GetGuid();
+                var newContent = contentProp.GetString() ?? "";
+                Application.Current.Dispatcher.Invoke(() =>
+                {
+                    var msg = CurrentMessages.FirstOrDefault(m => m.Id == msgId);
+                    if (msg != null)
+                    {
+                        msg.Content = newContent;
+                    }
+                });
+                _ = LoadMatchesAsync();
+            }
+        });
+
         _hubConnection.On<System.Text.Json.JsonElement>("ReceiveNotification", notif =>
         {
             Application.Current.Dispatcher.Invoke(() =>
@@ -835,42 +877,70 @@ public partial class DashboardViewModel : ObservableObject
     {
         if (string.IsNullOrWhiteSpace(MessageDraft) || SelectedMatch == null) return;
 
-        var dto = new { ReceiverId = SelectedMatch.Partner.Id, Content = MessageDraft };
         var draft = MessageDraft;
         MessageDraft = "";
 
-        try
+        if (EditingMessage != null)
         {
-            var response = await _httpClient.PostAsJsonAsync("/api/Messages", dto);
-            if (response.IsSuccessStatusCode)
+            // Edit Mode
+            var msgId = EditingMessage.Id;
+            var dto = new { Content = draft };
+            try
             {
-                var result = await response.Content.ReadFromJsonAsync<System.Text.Json.JsonElement>();
-                var msgDto = new MessageDto
+                var response = await _httpClient.PutAsJsonAsync($"/api/Messages/{msgId}", dto);
+                if (response.IsSuccessStatusCode)
                 {
-                    Id = result.GetProperty("id").GetGuid(),
-                    SenderId = result.GetProperty("senderId").GetGuid(),
-                    ReceiverId = result.GetProperty("receiverId").GetGuid(),
-                    Content = result.GetProperty("content").GetString() ?? "",
-                    IsSeen = result.GetProperty("isSeen").GetBoolean(),
-                    SentAt = result.GetProperty("sentAt").GetDateTime(),
-                    IsMine = true
-                };
-
-                Application.Current.Dispatcher.Invoke(() =>
+                    EditingMessage.Content = draft;
+                    EditingMessage = null;
+                    _ = LoadMatchesAsync();
+                }
+                else
                 {
-                    CurrentMessages.Add(msgDto);
-                });
-                
-                _ = LoadMatchesAsync();
+                    MessageDraft = draft; // Revert
+                }
             }
-            else
+            catch
             {
                 MessageDraft = draft; // Revert
             }
         }
-        catch
+        else
         {
-            MessageDraft = draft; // Revert
+            // Send Mode
+            var dto = new { ReceiverId = SelectedMatch.Partner.Id, Content = draft };
+            try
+            {
+                var response = await _httpClient.PostAsJsonAsync("/api/Messages", dto);
+                if (response.IsSuccessStatusCode)
+                {
+                    var result = await response.Content.ReadFromJsonAsync<System.Text.Json.JsonElement>();
+                    var msgDto = new MessageDto
+                    {
+                        Id = result.GetProperty("id").GetGuid(),
+                        SenderId = result.GetProperty("senderId").GetGuid(),
+                        ReceiverId = result.GetProperty("receiverId").GetGuid(),
+                        Content = result.GetProperty("content").GetString() ?? "",
+                        IsSeen = result.GetProperty("isSeen").GetBoolean(),
+                        SentAt = result.GetProperty("sentAt").GetDateTime(),
+                        IsMine = true
+                    };
+
+                    Application.Current.Dispatcher.Invoke(() =>
+                    {
+                        CurrentMessages.Add(msgDto);
+                    });
+                    
+                    _ = LoadMatchesAsync();
+                }
+                else
+                {
+                    MessageDraft = draft; // Revert
+                }
+            }
+            catch
+            {
+                MessageDraft = draft; // Revert
+            }
         }
     }
 
@@ -971,6 +1041,42 @@ public partial class DashboardViewModel : ObservableObject
             }
         }
         catch { }
+    }
+
+    [RelayCommand]
+    private async Task RecallMessageAsync(MessageDto msg)
+    {
+        if (msg == null) return;
+        
+        var confirm = System.Windows.MessageBox.Show("Bạn có chắc chắn muốn thu hồi tin nhắn này không?", "Xác nhận", System.Windows.MessageBoxButton.YesNo);
+        if (confirm != System.Windows.MessageBoxResult.Yes) return;
+
+        try
+        {
+            var response = await _httpClient.DeleteAsync($"/api/Messages/{msg.Id}");
+            if (response.IsSuccessStatusCode)
+            {
+                msg.Content = "Tin nhắn đã bị thu hồi";
+                msg.ImageUrl = null;
+                _ = LoadMatchesAsync();
+            }
+        }
+        catch { }
+    }
+
+    [RelayCommand]
+    private void StartEditMessage(MessageDto msg)
+    {
+        if (msg == null) return;
+        EditingMessage = msg;
+        MessageDraft = msg.Content;
+    }
+
+    [RelayCommand]
+    private void CancelEditMessage()
+    {
+        EditingMessage = null;
+        MessageDraft = "";
     }
 
     private async Task LoadUnreadNotificationCountAsync()
