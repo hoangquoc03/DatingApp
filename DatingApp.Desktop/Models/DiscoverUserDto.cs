@@ -13,6 +13,7 @@ public class DiscoverUserDto
     public string? Mbti { get; set; }
     public System.Collections.Generic.List<string> Interests { get; set; } = new();
     public int CompatibilityScore { get; set; }
+    public bool IsSuperLikedBy { get; set; }
 }
 
 public class DiscoverResponse

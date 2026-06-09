@@ -33,12 +33,18 @@ namespace DatingApp.Services
             if (alreadySwiped)
                 return ServiceResult.Error("Bạn đã swipe người này rồi", 409); // 409 Conflict
 
+            if (dto.IsSuperLike)
+            {
+                dto.IsLike = true;
+            }
+
             var swipe = new Swipe
             {
                 Id = Guid.NewGuid(),
                 FromUserId = myId,
                 ToUserId = dto.ToUserId,
                 IsLike = dto.IsLike,
+                IsSuperLike = dto.IsSuperLike,
                 CreatedAt = DateTime.UtcNow
             };
             _context.Swipes.Add(swipe);
@@ -47,6 +53,9 @@ namespace DatingApp.Services
             {
                 var partnerLikedMe = await _context.Swipes
                     .AnyAsync(x => x.FromUserId == dto.ToUserId && x.ToUserId == myId && x.IsLike);
+
+                var user1 = await _context.Users.FirstOrDefaultAsync(u => u.Id == myId);
+                var user2 = await _context.Users.FirstOrDefaultAsync(u => u.Id == dto.ToUserId);
 
                 if (partnerLikedMe)
                 {
@@ -75,10 +84,22 @@ namespace DatingApp.Services
 
                         // Realtime push
                         await _hubContext.Clients.Group(myId.ToString()).SendAsync("ReceiveNotification", new {
-                            notif1.Id, notif1.Content, notif1.Type, notif1.RelatedUserId, notif1.CreatedAt, notif1.IsRead
+                            notif1.Id, 
+                            notif1.Content, 
+                            notif1.Type, 
+                            notif1.RelatedUserId, 
+                            notif1.CreatedAt, 
+                            notif1.IsRead,
+                            RelatedUser = user2 != null ? new { user2.Id, user2.FullName, user2.AvatarUrl } : null
                         });
                         await _hubContext.Clients.Group(dto.ToUserId.ToString()).SendAsync("ReceiveNotification", new {
-                            notif2.Id, notif2.Content, notif2.Type, notif2.RelatedUserId, notif2.CreatedAt, notif2.IsRead
+                            notif2.Id, 
+                            notif2.Content, 
+                            notif2.Type, 
+                            notif2.RelatedUserId, 
+                            notif2.CreatedAt, 
+                            notif2.IsRead,
+                            RelatedUser = user1 != null ? new { user1.Id, user1.FullName, user1.AvatarUrl } : null
                         });
                     }
                     else
@@ -87,10 +108,120 @@ namespace DatingApp.Services
                     }
                     return ServiceResult.Ok(new { message = "Swipe success", isMatch = true });
                 }
+                else
+                {
+                    // Tạo thông báo NewLike / NewSuperLike
+                    var notifContent = dto.IsSuperLike 
+                        ? $"{user1?.FullName ?? "Ai đó"} đã Super Like bạn! ⭐" 
+                        : $"{user1?.FullName ?? "Ai đó"} đã thích bạn! 😍";
+
+                    var notif = new Notification 
+                    { 
+                        UserId = dto.ToUserId, 
+                        Content = notifContent, 
+                        Type = "NewLike", 
+                        RelatedUserId = myId 
+                    };
+                    _context.Notifications.Add(notif);
+                    await _context.SaveChangesAsync();
+
+                    // Realtime push
+                    await _hubContext.Clients.Group(dto.ToUserId.ToString()).SendAsync("ReceiveNotification", new {
+                        notif.Id, 
+                        notif.Content, 
+                        notif.Type, 
+                        notif.RelatedUserId, 
+                        notif.CreatedAt, 
+                        notif.IsRead,
+                        RelatedUser = user1 != null ? new { user1.Id, user1.FullName, user1.AvatarUrl } : null
+                    });
+
+                    return ServiceResult.Ok(new { message = "Swipe success", isMatch = false });
+                }
             }
 
             await _context.SaveChangesAsync();
             return ServiceResult.Ok(new { message = "Swipe success", isMatch = false });
+        }
+
+        public async Task<ServiceResult> GetLikesReceivedAsync(Guid myId)
+        {
+            var swipedUserIds = await _context.Swipes
+                .Where(s => s.FromUserId == myId)
+                .Select(s => s.ToUserId)
+                .ToListAsync();
+
+            var likes = await _context.Swipes
+                .Include(s => s.FromUser)
+                .Where(s => s.ToUserId == myId && s.IsLike && !swipedUserIds.Contains(s.FromUserId))
+                .OrderByDescending(s => s.CreatedAt)
+                .Select(s => s.FromUser)
+                .Select(x => new
+                {
+                    x.Id,
+                    x.FullName,
+                    x.Bio,
+                    x.AvatarUrl,
+                    x.Location,
+                    x.Zodiac,
+                    x.Mbti,
+                    x.Interests,
+                    x.IsVerified,
+                    Age = x.DateOfBirth.HasValue
+                        ? (int)((DateTime.UtcNow - x.DateOfBirth.Value).TotalDays / 365.25)
+                        : (int?)null
+                })
+                .ToListAsync();
+
+            var currentUser = await _context.Users.FirstOrDefaultAsync(u => u.Id == myId);
+            if (currentUser == null) return ServiceResult.NotFound("User not found");
+
+            var result = likes.Select(x => new
+            {
+                x.Id,
+                x.FullName,
+                x.Bio,
+                x.AvatarUrl,
+                x.Location,
+                x.IsVerified,
+                x.Zodiac,
+                x.Mbti,
+                x.Interests,
+                x.Age,
+                CompatibilityScore = UserService.CalculateCompatibility(currentUser, x.Interests, x.Zodiac, x.Mbti, x.Age)
+            }).ToList();
+
+            return ServiceResult.Ok(result);
+        }
+
+        public async Task<ServiceResult> ResetSwipesAsync(Guid myId)
+        {
+            // Xóa swipes từ mình
+            var swipes = await _context.Swipes
+                .Where(s => s.FromUserId == myId)
+                .ToListAsync();
+            _context.Swipes.RemoveRange(swipes);
+
+            // Xóa matches liên quan đến mình
+            var matches = await _context.Matches
+                .Where(m => m.User1Id == myId || m.User2Id == myId)
+                .ToListAsync();
+            _context.Matches.RemoveRange(matches);
+
+            // Xóa tin nhắn liên quan đến mình
+            var messages = await _context.Messages
+                .Where(m => m.SenderId == myId || m.ReceiverId == myId)
+                .ToListAsync();
+            _context.Messages.RemoveRange(messages);
+
+            // Xóa thông báo liên quan đến mình
+            var notifications = await _context.Notifications
+                .Where(n => n.UserId == myId || n.RelatedUserId == myId)
+                .ToListAsync();
+            _context.Notifications.RemoveRange(notifications);
+
+            await _context.SaveChangesAsync();
+            return ServiceResult.Ok(new { message = "Reset swipes thành công." });
         }
     }
 }

@@ -4,5 +4,6 @@ namespace DatingApp.DTOs
     {
         public Guid ToUserId { get; set; }
         public bool IsLike { get; set; }
+        public bool IsSuperLike { get; set; } = false;
     }
 }

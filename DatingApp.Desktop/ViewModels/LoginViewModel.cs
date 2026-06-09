@@ -21,6 +21,9 @@ public partial class LoginViewModel : ObservableObject
     private string _tempPassword = "";
 
     [ObservableProperty]
+    private bool _isRememberMe = true;
+
+    [ObservableProperty]
     private bool _isBusy;
 
     [ObservableProperty]
@@ -94,6 +97,15 @@ public partial class LoginViewModel : ObservableObject
             var success = await _authService.LoginAsync(Email, Password);
             if (success)
             {
+                if (IsRememberMe)
+                {
+                    await _authService.SaveSessionAsync(_authService.CurrentToken!, _authService.CurrentUser!);
+                }
+                else
+                {
+                    _authService.ClearSession();
+                }
+
                 var app = (App)System.Windows.Application.Current;
 
                 // Admin → AdminViewModel

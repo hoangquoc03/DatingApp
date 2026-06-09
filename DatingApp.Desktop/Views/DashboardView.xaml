@@ -73,6 +73,31 @@
                             <TextBlock Text="Tin nhắn" FontSize="18" FontWeight="SemiBold"/>
                         </StackPanel>
                     </Button>
+                    <Button Command="{Binding ShowLikesCommand}" Style="{StaticResource MaterialDesignFlatButton}" Foreground="{Binding LikesTabColor}" HorizontalContentAlignment="Stretch" Padding="15,12" Margin="0,0,0,10" Height="Auto" MinHeight="50">
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="Auto"/>
+                            </Grid.ColumnDefinitions>
+                            <StackPanel Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center">
+                                <materialDesign:PackIcon Kind="Heart" Width="26" Height="26" Margin="0,0,16,0"/>
+                                <TextBlock Text="Thích bạn" FontSize="18" FontWeight="SemiBold"/>
+                            </StackPanel>
+                            <Border Grid.Column="1" Background="#EF4444" CornerRadius="10" MinWidth="20" Height="20" HorizontalAlignment="Right" VerticalAlignment="Center">
+                                <Border.Style>
+                                    <Style TargetType="Border">
+                                        <Setter Property="Visibility" Value="Visible"/>
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding LikesReceivedCount}" Value="0">
+                                                <Setter Property="Visibility" Value="Collapsed"/>
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </Border.Style>
+                                <TextBlock Text="{Binding LikesReceivedCount}" Foreground="White" FontSize="11" FontWeight="Bold" HorizontalAlignment="Center" VerticalAlignment="Center" Margin="5,0"/>
+                            </Border>
+                        </Grid>
+                    </Button>
                     <Button Command="{Binding ShowProfileCommand}" Style="{StaticResource MaterialDesignFlatButton}" Foreground="{Binding ProfileTabColor}" HorizontalContentAlignment="Left" Padding="15,12" Margin="0,0,0,10" Height="Auto" MinHeight="50">
                         <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
                             <materialDesign:PackIcon Kind="Account" Width="26" Height="26" Margin="0,0,16,0"/>
@@ -94,6 +119,7 @@
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="Auto"/>
                             <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="Auto"/>
                         </Grid.ColumnDefinitions>
                         <!-- Fake Avatar -->
                         <Ellipse Width="40" Height="40" Fill="#FF5C9A" Grid.Column="0" Margin="0,0,12,0"/>
@@ -101,6 +127,10 @@
                             <TextBlock Text="Tài khoản của bạn" FontSize="14" FontWeight="Bold" Foreground="#1F2937"/>
                             <TextBlock Text="Chỉnh sửa thông tin" FontSize="12" Foreground="#E6005C" Margin="0,2,0,0" Cursor="Hand"/>
                         </StackPanel>
+                        <!-- Logout Button -->
+                        <Button Grid.Column="2" Command="{Binding LogoutCommand}" Style="{StaticResource MaterialDesignIconButton}" Width="36" Height="36" Padding="0" ToolTip="Đăng xuất">
+                            <materialDesign:PackIcon Kind="Logout" Width="20" Height="20" Foreground="#EF4444"/>
+                        </Button>
                     </Grid>
                 </Border>
             </Grid>
@@ -281,6 +311,43 @@
 
             <!-- Card Stack (Tinder Style) -->
             <Grid Grid.Row="1" Width="400" Height="600" HorizontalAlignment="Center" VerticalAlignment="Center">
+                <!-- Discover Queue Empty Overlay -->
+                <Border Width="380" Height="600" CornerRadius="28" Background="#FDF2F8" BorderBrush="#FFF0F6" BorderThickness="1.5"
+                        Visibility="{Binding IsDiscoverQueueEmpty, Converter={StaticResource BoolToVis}}" Panel.ZIndex="10">
+                    <Border.Effect>
+                        <DropShadowEffect BlurRadius="45" ShadowDepth="12" Opacity="0.1" Color="#E6005C"/>
+                    </Border.Effect>
+                    <Grid>
+                        <!-- Soft glowing background circles -->
+                        <Canvas ClipToBounds="True">
+                            <Ellipse Fill="#FCE7F3" Width="320" Height="320" Canvas.Left="-80" Canvas.Top="-80" Opacity="0.6"/>
+                            <Ellipse Fill="#FAE8FF" Width="280" Height="280" Canvas.Right="-80" Canvas.Bottom="-80" Opacity="0.5"/>
+                        </Canvas>
+
+                        <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center" Margin="30">
+                            <!-- Premium Heart Icon with a subtle glow -->
+                            <Grid HorizontalAlignment="Center" Margin="0,0,0,24">
+                                <Ellipse Fill="#FFF0F6" Width="100" Height="100"/>
+                                <materialDesign:PackIcon Kind="HeartBreakOutline" Width="52" Height="52" Foreground="#E6005C" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                            </Grid>
+                            
+                            <TextBlock Text="Đã hết người khám phá!" FontSize="22" FontWeight="Black" Foreground="#1F2937" HorizontalAlignment="Center" TextAlignment="Center" Margin="0,0,0,12"/>
+                            <TextBlock Text="Không tìm thấy ai xung quanh bạn phù hợp với bộ lọc hiện tại. Hãy thay đổi bộ lọc hoặc làm mới lượt vuốt của bạn để bắt đầu lại." 
+                                       FontSize="14" Foreground="#4B5563" HorizontalAlignment="Center" TextAlignment="Center" TextWrapping="Wrap" LineHeight="20" Margin="0,0,0,36"/>
+
+                            <Button Command="{Binding ResetSwipesCommand}" 
+                                    Style="{StaticResource MaterialDesignRaisedButton}"
+                                    Background="#E6005C" BorderBrush="Transparent" Height="50" materialDesign:ButtonAssist.CornerRadius="25"
+                                    Foreground="White" FontSize="15" FontWeight="Bold" Width="230">
+                                <StackPanel Orientation="Horizontal">
+                                    <materialDesign:PackIcon Kind="Refresh" Width="20" Height="20" Margin="0,0,8,0" VerticalAlignment="Center"/>
+                                    <TextBlock Text="Làm mới lượt vuốt" VerticalAlignment="Center"/>
+                                </StackPanel>
+                            </Button>
+                        </StackPanel>
+                    </Grid>
+                </Border>
+
                 <Border x:Name="SwipeCard" Width="380" Height="600" CornerRadius="28" Background="White" 
                     HorizontalAlignment="Center" VerticalAlignment="Center"
                     MouseLeftButtonDown="SwipeCard_MouseLeftButtonDown"
@@ -297,6 +364,10 @@
                     <DropShadowEffect BlurRadius="60" ShadowDepth="20" Opacity="0.12" Color="#111827"/>
                 </Border.Effect>
                 <Grid>
+                    <!-- Super Like Highlight Border -->
+                    <Border BorderBrush="#3B82F6" BorderThickness="4" CornerRadius="28" IsHitTestVisible="False" Panel.ZIndex="5"
+                            Visibility="{Binding IsSuperLikedBy, Converter={StaticResource BoolToVis}}"/>
+
                     <!-- Background Image -->
                     <Border CornerRadius="28" ClipToBounds="True">
                         <Image Source="{Binding CurrentUserImage, TargetNullValue={x:Null}}" Stretch="UniformToFill"/>
@@ -328,6 +399,18 @@
                             <materialDesign:PackIcon Kind="HeartFlash" Foreground="White" Width="18" Height="18" Margin="0,0,6,0" VerticalAlignment="Center"/>
                             <TextBlock Text="{Binding CurrentUserCompatibilityScore, StringFormat='Tương hợp AI: {0}%'}" 
                                        Foreground="White" FontWeight="Bold" FontSize="13" VerticalAlignment="Center"/>
+                        </StackPanel>
+                    </Border>
+
+                    <!-- Super Like Badge -->
+                    <Border VerticalAlignment="Top" HorizontalAlignment="Left" Margin="20" CornerRadius="16" Padding="12,6" Background="#3B82F6" Panel.ZIndex="6"
+                            Visibility="{Binding IsSuperLikedBy, Converter={StaticResource BoolToVis}}">
+                        <Border.Effect>
+                            <DropShadowEffect BlurRadius="12" ShadowDepth="3" Opacity="0.3" Color="#3B82F6"/>
+                        </Border.Effect>
+                        <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                            <materialDesign:PackIcon Kind="Star" Foreground="White" Width="18" Height="18" Margin="0,0,6,0" VerticalAlignment="Center"/>
+                            <TextBlock Text="Đã Super Like bạn! ⭐" Foreground="White" FontWeight="Bold" FontSize="13" VerticalAlignment="Center"/>
                         </StackPanel>
                     </Border>
 
@@ -390,21 +473,31 @@
                         <!-- PASS Button -->
                         <Button x:Name="BtnPass" Command="{Binding PassCommand}" 
                                 Style="{StaticResource MaterialDesignFloatingActionLightButton}" 
-                                Background="White" BorderBrush="White" Width="72" Height="72" Margin="0,0,30,0">
+                                Background="White" BorderBrush="White" Width="68" Height="68" Margin="0,0,20,0">
                             <Button.Effect>
                                 <DropShadowEffect BlurRadius="25" ShadowDepth="8" Opacity="0.15" Color="Black"/>
                             </Button.Effect>
-                            <materialDesign:PackIcon Kind="Close" Width="42" Height="42" Foreground="#4B5563"/>
+                            <materialDesign:PackIcon Kind="Close" Width="38" Height="38" Foreground="#4B5563"/>
+                        </Button>
+
+                        <!-- SUPER LIKE Button -->
+                        <Button x:Name="BtnSuperLike" Command="{Binding SuperLikeCommand}" 
+                                Style="{StaticResource MaterialDesignFloatingActionLightButton}" 
+                                Background="White" BorderBrush="White" Width="60" Height="60" Margin="0,0,20,0">
+                            <Button.Effect>
+                                <DropShadowEffect BlurRadius="25" ShadowDepth="8" Opacity="0.15" Color="Black"/>
+                            </Button.Effect>
+                            <materialDesign:PackIcon Kind="Star" Width="32" Height="32" Foreground="#3B82F6"/>
                         </Button>
 
                         <!-- LIKE Button -->
                         <Button x:Name="BtnLike" Command="{Binding LikeCommand}" 
                                 Style="{StaticResource MaterialDesignFloatingActionLightButton}" 
-                                Background="White" BorderBrush="White" Width="72" Height="72">
+                                Background="White" BorderBrush="White" Width="68" Height="68">
                             <Button.Effect>
                                 <DropShadowEffect BlurRadius="25" ShadowDepth="8" Opacity="0.15" Color="Black"/>
                             </Button.Effect>
-                            <materialDesign:PackIcon Kind="Heart" Width="40" Height="40" Foreground="#E6005C"/>
+                            <materialDesign:PackIcon Kind="Heart" Width="36" Height="36" Foreground="#E6005C"/>
                         </Button>
                     </StackPanel>
                 </Grid>
@@ -633,7 +726,122 @@
                 </StackPanel>
             </ScrollViewer>
         </Grid>
-        
+
+        <!-- LIKES RECEIVED AREA -->
+        <Grid Grid.Column="1" Visibility="{Binding IsLikesVisible, Converter={StaticResource BoolToVis}}" Background="#FFF5F8">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="*"/>
+            </Grid.RowDefinitions>
+            
+            <TextBlock Grid.Row="0" Text="Những người thích bạn" FontSize="28" FontWeight="Bold" Foreground="#1F2937" Margin="40,40,0,10"/>
+            
+            <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled" Margin="40,10,40,40">
+                <ItemsControl ItemsSource="{Binding LikesReceived}">
+                    <ItemsControl.ItemsPanel>
+                        <ItemsPanelTemplate>
+                            <WrapPanel Orientation="Horizontal"/>
+                        </ItemsPanelTemplate>
+                    </ItemsControl.ItemsPanel>
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate>
+                            <Border Width="220" Height="330" CornerRadius="16" Background="White" Margin="0,0,20,20">
+                                <Border.Effect>
+                                    <DropShadowEffect BlurRadius="20" ShadowDepth="4" Opacity="0.06" Color="Black"/>
+                                </Border.Effect>
+                                <Grid>
+                                    <!-- Background Image -->
+                                    <Border CornerRadius="16" ClipToBounds="True">
+                                        <Image Source="{Binding AvatarUrl, TargetNullValue='pack://application:,,,/Resources/default-avatar.jpg'}" Stretch="UniformToFill"/>
+                                    </Border>
+                                    
+                                    <!-- Gradient Overlay -->
+                                    <Border CornerRadius="16">
+                                        <Border.Background>
+                                            <LinearGradientBrush StartPoint="0,0.4" EndPoint="0,1">
+                                                <GradientStop Color="Transparent" Offset="0"/>
+                                                <GradientStop Color="#CC000000" Offset="1"/>
+                                            </LinearGradientBrush>
+                                        </Border.Background>
+                                    </Border>
+
+                                    <!-- AI Compatibility Badge -->
+                                    <Border VerticalAlignment="Top" HorizontalAlignment="Right" Margin="10" CornerRadius="10" Padding="8,4" Background="#E6005C">
+                                        <Border.Style>
+                                            <Style TargetType="Border">
+                                                <Setter Property="Visibility" Value="Visible"/>
+                                                <Style.Triggers>
+                                                    <DataTrigger Binding="{Binding CompatibilityScore}" Value="0">
+                                                        <Setter Property="Visibility" Value="Collapsed"/>
+                                                    </DataTrigger>
+                                                </Style.Triggers>
+                                            </Style>
+                                        </Border.Style>
+                                        <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                            <materialDesign:PackIcon Kind="HeartFlash" Foreground="White" Width="12" Height="12" Margin="0,0,4,0" VerticalAlignment="Center"/>
+                                            <TextBlock Text="{Binding CompatibilityScore, StringFormat={}{0}%}" Foreground="White" FontWeight="Bold" FontSize="11" VerticalAlignment="Center"/>
+                                        </StackPanel>
+                                    </Border>
+
+                                    <!-- Info & Action Buttons -->
+                                    <Grid VerticalAlignment="Bottom" Margin="12">
+                                        <Grid.RowDefinitions>
+                                            <RowDefinition Height="Auto"/>
+                                            <RowDefinition Height="Auto"/>
+                                            <RowDefinition Height="Auto"/>
+                                        </Grid.RowDefinitions>
+                                        
+                                        <!-- Name & Age -->
+                                        <TextBlock Grid.Row="0" Text="{Binding FullName}" FontSize="18" FontWeight="Bold" Foreground="White" TextTrimming="CharacterEllipsis"/>
+                                        <StackPanel Grid.Row="1" Orientation="Horizontal" Margin="0,2,0,0">
+                                            <TextBlock Text="{Binding Age, StringFormat={}{0} tuổi}" FontSize="12" Foreground="#E5E7EB" FontWeight="Medium"/>
+                                            <TextBlock Text=" • " FontSize="12" Foreground="#E5E7EB" Visibility="{Binding Location, Converter={StaticResource NullOrEmptyToVisibilityConverter}}"/>
+                                            <TextBlock Text="{Binding Location}" FontSize="12" Foreground="#E5E7EB" FontWeight="Medium" MaxWidth="100" TextTrimming="CharacterEllipsis" Visibility="{Binding Location, Converter={StaticResource NullOrEmptyToVisibilityConverter}}"/>
+                                        </StackPanel>
+
+                                        <!-- Action Buttons -->
+                                        <StackPanel Grid.Row="2" Orientation="Horizontal" HorizontalAlignment="Center" Margin="0,12,0,0">
+                                            <!-- Dislike/Pass Button -->
+                                            <Button Command="{Binding DataContext.PassLikeCommand, RelativeSource={RelativeSource AncestorType=UserControl}}" 
+                                                    CommandParameter="{Binding}"
+                                                    Style="{StaticResource MaterialDesignFloatingActionLightButton}" 
+                                                    Background="#4DFFFFFF" BorderBrush="Transparent" Width="36" Height="36" Margin="0,0,16,0" Padding="0">
+                                                <materialDesign:PackIcon Kind="Close" Width="20" Height="20" Foreground="White"/>
+                                            </Button>
+
+                                            <!-- Like back Button -->
+                                            <Button Command="{Binding DataContext.AcceptLikeCommand, RelativeSource={RelativeSource AncestorType=UserControl}}" 
+                                                    CommandParameter="{Binding}"
+                                                    Style="{StaticResource MaterialDesignFloatingActionLightButton}" 
+                                                    Background="#E6005C" BorderBrush="Transparent" Width="36" Height="36" Padding="0">
+                                                <materialDesign:PackIcon Kind="Heart" Width="18" Height="18" Foreground="White"/>
+                                            </Button>
+                                        </StackPanel>
+                                    </Grid>
+                                </Grid>
+                            </Border>
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+            </ScrollViewer>
+
+            <!-- Empty State Placeholder when no likes -->
+            <StackPanel Grid.Row="1" VerticalAlignment="Center" HorizontalAlignment="Center">
+                <StackPanel.Style>
+                    <Style TargetType="StackPanel">
+                        <Setter Property="Visibility" Value="Collapsed"/>
+                        <Style.Triggers>
+                            <DataTrigger Binding="{Binding LikesReceivedCount}" Value="0">
+                                <Setter Property="Visibility" Value="Visible"/>
+                            </DataTrigger>
+                        </Style.Triggers>
+                    </Style>
+                </StackPanel.Style>
+                <materialDesign:PackIcon Kind="HeartBreakOutline" Width="100" Height="100" Foreground="#E5E7EB" HorizontalAlignment="Center"/>
+                <TextBlock Text="Chưa có ai thích bạn gần đây" FontSize="18" Foreground="#9CA3AF" FontWeight="Medium" Margin="0,20,0,0"/>
+            </StackPanel>
+        </Grid>
+
         <!-- MESSAGES AREA -->
         <Grid Grid.Column="1" Visibility="{Binding IsMessagesVisible, Converter={StaticResource BoolToVis}}" Background="White">
             <Grid.ColumnDefinitions>
@@ -918,12 +1126,13 @@
                         </Grid.RowDefinitions>
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="Auto"/>
+                            <ColumnDefinition Width="Auto"/>
                             <ColumnDefinition Width="*"/>
                             <ColumnDefinition Width="Auto"/>
                         </Grid.ColumnDefinitions>
                         
                         <!-- Info Bars (Typing and Editing) -->
-                        <Grid Grid.Row="0" Grid.Column="0" Grid.ColumnSpan="3" Margin="10,0,10,5">
+                        <Grid Grid.Row="0" Grid.Column="0" Grid.ColumnSpan="4" Margin="10,0,10,5">
                             <!-- Typing Indicator -->
                             <StackPanel Orientation="Horizontal" Margin="45,0,0,0" Visibility="{Binding IsPartnerTyping, Converter={StaticResource BoolToVis}}">
                                 <TextBlock Text="{Binding SelectedMatch.Partner.FullName}" FontSize="12" FontWeight="SemiBold" Foreground="#E6005C"/>
@@ -948,17 +1157,71 @@
                             </Border>
                         </Grid>
                         
-                        <Button Grid.Row="1" Grid.Column="0" Command="{Binding SendImageCommand}" Style="{StaticResource MaterialDesignFlatButton}" Foreground="#6B7280" Width="45" Height="45" Margin="0,0,10,0">
-                            <materialDesign:PackIcon Kind="ImageOutline" Width="24" Height="24"/>
+                        <Button Grid.Row="1" Grid.Column="0" Command="{Binding SendImageCommand}" Style="{StaticResource MaterialDesignFlatButton}" Foreground="#6B7280" Width="40" Height="40" Margin="0,0,5,0">
+                            <materialDesign:PackIcon Kind="ImageOutline" Width="22" Height="22"/>
                         </Button>
                         
-                        <TextBox Grid.Row="1" Grid.Column="1" Text="{Binding MessageDraft, UpdateSourceTrigger=PropertyChanged}" materialDesign:HintAssist.Hint="Nhập tin nhắn..." Style="{StaticResource MaterialDesignOutlinedTextBox}" Height="45" VerticalContentAlignment="Center" Background="#F9FAFB">
+                        <!-- Emoji Button and Popup -->
+                        <Grid Grid.Row="1" Grid.Column="1">
+                            <Button x:Name="BtnEmoji" Command="{Binding ToggleEmojiPopupCommand}" Style="{StaticResource MaterialDesignFlatButton}" Foreground="#6B7280" Width="40" Height="40" Margin="0,0,5,0">
+                                <materialDesign:PackIcon Kind="EmoticonOutline" Width="22" Height="22"/>
+                            </Button>
+                            <Popup IsOpen="{Binding IsEmojiPopupOpen}" PlacementTarget="{Binding ElementName=BtnEmoji}" Placement="Top" StaysOpen="False">
+                                <Border Background="White" CornerRadius="12" BorderBrush="#E5E7EB" BorderThickness="1" Padding="8" Width="250">
+                                    <Border.Effect>
+                                        <DropShadowEffect BlurRadius="15" ShadowDepth="5" Opacity="0.1" Color="Black"/>
+                                    </Border.Effect>
+                                    <Grid>
+                                        <Grid.RowDefinitions>
+                                            <RowDefinition Height="Auto"/>
+                                            <RowDefinition Height="*"/>
+                                        </Grid.RowDefinitions>
+                                        <TextBlock Text="Biểu tượng cảm xúc" FontSize="11" FontWeight="SemiBold" Foreground="#9CA3AF" Margin="4,0,0,8"/>
+                                        <UniformGrid Grid.Row="1" Columns="6" Rows="4">
+                                            <!-- Hàng 1 -->
+                                            <Button Content="😀" Command="{Binding AddEmojiCommand}" CommandParameter="😀" Style="{StaticResource MaterialDesignFlatButton}" Padding="0" FontSize="18" Height="32" Width="32"/>
+                                            <Button Content="😂" Command="{Binding AddEmojiCommand}" CommandParameter="😂" Style="{StaticResource MaterialDesignFlatButton}" Padding="0" FontSize="18" Height="32" Width="32"/>
+                                            <Button Content="😍" Command="{Binding AddEmojiCommand}" CommandParameter="😍" Style="{StaticResource MaterialDesignFlatButton}" Padding="0" FontSize="18" Height="32" Width="32"/>
+                                            <Button Content="😘" Command="{Binding AddEmojiCommand}" CommandParameter="😘" Style="{StaticResource MaterialDesignFlatButton}" Padding="0" FontSize="18" Height="32" Width="32"/>
+                                            <Button Content="👍" Command="{Binding AddEmojiCommand}" CommandParameter="👍" Style="{StaticResource MaterialDesignFlatButton}" Padding="0" FontSize="18" Height="32" Width="32"/>
+                                            <Button Content="🔥" Command="{Binding AddEmojiCommand}" CommandParameter="🔥" Style="{StaticResource MaterialDesignFlatButton}" Padding="0" FontSize="18" Height="32" Width="32"/>
+                                            
+                                            <!-- Hàng 2 -->
+                                            <Button Content="😊" Command="{Binding AddEmojiCommand}" CommandParameter="😊" Style="{StaticResource MaterialDesignFlatButton}" Padding="0" FontSize="18" Height="32" Width="32"/>
+                                            <Button Content="😭" Command="{Binding AddEmojiCommand}" CommandParameter="😭" Style="{StaticResource MaterialDesignFlatButton}" Padding="0" FontSize="18" Height="32" Width="32"/>
+                                            <Button Content="🥺" Command="{Binding AddEmojiCommand}" CommandParameter="🥺" Style="{StaticResource MaterialDesignFlatButton}" Padding="0" FontSize="18" Height="32" Width="32"/>
+                                            <Button Content="💖" Command="{Binding AddEmojiCommand}" CommandParameter="💖" Style="{StaticResource MaterialDesignFlatButton}" Padding="0" FontSize="18" Height="32" Width="32"/>
+                                            <Button Content="🙌" Command="{Binding AddEmojiCommand}" CommandParameter="🙌" Style="{StaticResource MaterialDesignFlatButton}" Padding="0" FontSize="18" Height="32" Width="32"/>
+                                            <Button Content="🎉" Command="{Binding AddEmojiCommand}" CommandParameter="🎉" Style="{StaticResource MaterialDesignFlatButton}" Padding="0" FontSize="18" Height="32" Width="32"/>
+
+                                            <!-- Hàng 3 -->
+                                            <Button Content="😎" Command="{Binding AddEmojiCommand}" CommandParameter="😎" Style="{StaticResource MaterialDesignFlatButton}" Padding="0" FontSize="18" Height="32" Width="32"/>
+                                            <Button Content="🤔" Command="{Binding AddEmojiCommand}" CommandParameter="🤔" Style="{StaticResource MaterialDesignFlatButton}" Padding="0" FontSize="18" Height="32" Width="32"/>
+                                            <Button Content="😜" Command="{Binding AddEmojiCommand}" CommandParameter="😜" Style="{StaticResource MaterialDesignFlatButton}" Padding="0" FontSize="18" Height="32" Width="32"/>
+                                            <Button Content="✨" Command="{Binding AddEmojiCommand}" CommandParameter="✨" Style="{StaticResource MaterialDesignFlatButton}" Padding="0" FontSize="18" Height="32" Width="32"/>
+                                            <Button Content="👏" Command="{Binding AddEmojiCommand}" CommandParameter="👏" Style="{StaticResource MaterialDesignFlatButton}" Padding="0" FontSize="18" Height="32" Width="32"/>
+                                            <Button Content="🎂" Command="{Binding AddEmojiCommand}" CommandParameter="🎂" Style="{StaticResource MaterialDesignFlatButton}" Padding="0" FontSize="18" Height="32" Width="32"/>
+
+                                            <!-- Hàng 4 -->
+                                            <Button Content="😉" Command="{Binding AddEmojiCommand}" CommandParameter="😉" Style="{StaticResource MaterialDesignFlatButton}" Padding="0" FontSize="18" Height="32" Width="32"/>
+                                            <Button Content="😡" Command="{Binding AddEmojiCommand}" CommandParameter="😡" Style="{StaticResource MaterialDesignFlatButton}" Padding="0" FontSize="18" Height="32" Width="32"/>
+                                            <Button Content="😴" Command="{Binding AddEmojiCommand}" CommandParameter="😴" Style="{StaticResource MaterialDesignFlatButton}" Padding="0" FontSize="18" Height="32" Width="32"/>
+                                            <Button Content="⭐" Command="{Binding AddEmojiCommand}" CommandParameter="⭐" Style="{StaticResource MaterialDesignFlatButton}" Padding="0" FontSize="18" Height="32" Width="32"/>
+                                            <Button Content="🙏" Command="{Binding AddEmojiCommand}" CommandParameter="🙏" Style="{StaticResource MaterialDesignFlatButton}" Padding="0" FontSize="18" Height="32" Width="32"/>
+                                            <Button Content="☕" Command="{Binding AddEmojiCommand}" CommandParameter="☕" Style="{StaticResource MaterialDesignFlatButton}" Padding="0" FontSize="18" Height="32" Width="32"/>
+                                        </UniformGrid>
+                                    </Grid>
+                                </Border>
+                            </Popup>
+                        </Grid>
+                        
+                        <TextBox Grid.Row="1" Grid.Column="2" Text="{Binding MessageDraft, UpdateSourceTrigger=PropertyChanged}" materialDesign:HintAssist.Hint="Nhập tin nhắn..." Style="{StaticResource MaterialDesignOutlinedTextBox}" Height="45" VerticalContentAlignment="Center" Background="#F9FAFB">
                             <TextBox.InputBindings>
                                 <KeyBinding Key="Enter" Command="{Binding SendMessageCommand}"/>
                             </TextBox.InputBindings>
                         </TextBox>
                         
-                        <Button Grid.Row="1" Grid.Column="2" Command="{Binding SendMessageCommand}" Style="{StaticResource MaterialDesignFloatingActionLightButton}" Width="45" Height="45" Background="#E6005C" BorderBrush="#E6005C" Margin="10,0,0,0" Foreground="White">
+                        <Button Grid.Row="1" Grid.Column="3" Command="{Binding SendMessageCommand}" Style="{StaticResource MaterialDesignFloatingActionLightButton}" Width="45" Height="45" Background="#E6005C" BorderBrush="#E6005C" Margin="10,0,0,0" Foreground="White">
                             <materialDesign:PackIcon Kind="Send" Width="20" Height="20"/>
                         </Button>
                     </Grid>

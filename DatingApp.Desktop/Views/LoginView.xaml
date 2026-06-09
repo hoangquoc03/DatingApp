@@ -41,12 +41,19 @@
                                  Margin="0,0,0,10" FontSize="16"
                                  PasswordChanged="PasswordBox_PasswordChanged"/>
 
-                    <!-- Link Quên mật khẩu -->
-                    <Button Command="{Binding ShowForgotPasswordCommand}" 
-                            Content="Quên mật khẩu?" 
-                            Style="{StaticResource MaterialDesignFlatButton}" 
-                            Foreground="Gray" FontSize="13" 
-                            HorizontalAlignment="Right" Padding="0" Height="25" Margin="0,0,0,10"/>
+                    <!-- Remember Me & Forgot Password Grid -->
+                    <Grid Margin="0,5,0,10">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="Auto"/>
+                        </Grid.ColumnDefinitions>
+                        <CheckBox Grid.Column="0" IsChecked="{Binding IsRememberMe}" Content="Ghi nhớ đăng nhập" Foreground="Gray" FontSize="13" VerticalAlignment="Center"/>
+                        <Button Grid.Column="1" Command="{Binding ShowForgotPasswordCommand}" 
+                                Content="Quên mật khẩu?" 
+                                Style="{StaticResource MaterialDesignFlatButton}" 
+                                Foreground="Gray" FontSize="13" 
+                                HorizontalAlignment="Right" Padding="0" Height="25" VerticalAlignment="Center"/>
+                    </Grid>
 
                     <TextBlock Text="{Binding ErrorMessage}" Foreground="Red" TextWrapping="Wrap" HorizontalAlignment="Center" Margin="0,5,0,15"/>
 

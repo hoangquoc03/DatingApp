@@ -12,6 +12,8 @@ namespace DatingApp.Models
 
         public bool IsLike { get; set; }
 
+        public bool IsSuperLike { get; set; } = false;
+
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
     }
 }
