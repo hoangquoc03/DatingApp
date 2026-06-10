@@ -8,98 +8,59 @@
              d:DataContext="{d:DesignInstance Type=viewmodels:OnboardingViewModel}"
              mc:Ignorable="d" 
              d:DesignHeight="800" d:DesignWidth="1200"
-             Background="#09090B">
+             Background="#F0F2F5">
 
-    <!-- Premium Aura Taste Styles -->
     <UserControl.Resources>
-        <Style x:Key="PremiumCardStyle" TargetType="Border">
-            <Setter Property="Background" Value="#18181B"/>
+        <!-- Premium Onboarding Card Style -->
+        <Style x:Key="OnboardingCardStyle" TargetType="Border">
+            <Setter Property="Background" Value="White"/>
             <Setter Property="CornerRadius" Value="24"/>
             <Setter Property="Padding" Value="40"/>
             <Setter Property="BorderThickness" Value="1"/>
-            <Setter Property="BorderBrush" Value="#27272A"/>
+            <Setter Property="BorderBrush" Value="#E4E6EB"/>
             <Setter Property="Effect">
                 <Setter.Value>
-                    <DropShadowEffect BlurRadius="40" ShadowDepth="0" Color="#000000" Opacity="0.4"/>
+                    <DropShadowEffect BlurRadius="45" ShadowDepth="10" Color="Black" Opacity="0.04"/>
                 </Setter.Value>
             </Setter>
         </Style>
 
         <Style TargetType="TextBlock" x:Key="HeadingStyle">
-            <Setter Property="FontFamily" Value="Inter, Segoe UI, sans-serif"/>
-            <Setter Property="FontSize" Value="36"/>
-            <Setter Property="FontWeight" Value="SemiBold"/>
-            <Setter Property="Foreground" Value="#FAFAFA"/>
+            <Setter Property="FontFamily" Value="Segoe UI, Arial, sans-serif"/>
+            <Setter Property="FontSize" Value="32"/>
+            <Setter Property="FontWeight" Value="Black"/>
+            <Setter Property="Foreground" Value="#1C1E21"/>
             <Setter Property="Margin" Value="0,0,0,8"/>
         </Style>
         
         <Style TargetType="TextBlock" x:Key="SubHeadingStyle">
-            <Setter Property="FontFamily" Value="Inter, Segoe UI, sans-serif"/>
-            <Setter Property="FontSize" Value="16"/>
-            <Setter Property="Foreground" Value="#A1A1AA"/>
-            <Setter Property="Margin" Value="0,0,0,40"/>
-        </Style>
-
-        <Style TargetType="Button" x:Key="PrimaryButtonStyle">
-            <Setter Property="Background" Value="#E6005C"/>
-            <Setter Property="Foreground" Value="White"/>
-            <Setter Property="FontFamily" Value="Inter, Segoe UI, sans-serif"/>
-            <Setter Property="FontWeight" Value="SemiBold"/>
-            <Setter Property="FontSize" Value="16"/>
-            <Setter Property="Height" Value="56"/>
-            <Setter Property="Template">
-                <Setter.Value>
-                    <ControlTemplate TargetType="Button">
-                        <Border Background="{TemplateBinding Background}" CornerRadius="28">
-                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
-                        </Border>
-                    </ControlTemplate>
-                </Setter.Value>
-            </Setter>
-            <Style.Triggers>
-                <Trigger Property="IsMouseOver" Value="True">
-                    <Setter Property="Background" Value="#FF1A75"/>
-                </Trigger>
-            </Style.Triggers>
-        </Style>
-
-        <Style TargetType="Button" x:Key="OutlineButtonStyle">
-            <Setter Property="Background" Value="Transparent"/>
-            <Setter Property="Foreground" Value="#E6005C"/>
-            <Setter Property="FontFamily" Value="Inter, Segoe UI, sans-serif"/>
-            <Setter Property="FontWeight" Value="SemiBold"/>
-            <Setter Property="FontSize" Value="16"/>
-            <Setter Property="Height" Value="56"/>
-            <Setter Property="Template">
-                <Setter.Value>
-                    <ControlTemplate TargetType="Button">
-                        <Border Background="{TemplateBinding Background}" CornerRadius="28" BorderBrush="#E6005C" BorderThickness="1">
-                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
-                        </Border>
-                    </ControlTemplate>
-                </Setter.Value>
-            </Setter>
-        </Style>
-
-        <!-- Toggle Button for Selections -->
-        <Style TargetType="ToggleButton" x:Key="ChipToggleButton">
-            <Setter Property="Background" Value="#27272A"/>
-            <Setter Property="Foreground" Value="#A1A1AA"/>
-            <Setter Property="FontFamily" Value="Inter, Segoe UI, sans-serif"/>
+            <Setter Property="FontFamily" Value="Segoe UI, Arial, sans-serif"/>
             <Setter Property="FontSize" Value="15"/>
-            <Setter Property="Height" Value="48"/>
-            <Setter Property="Margin" Value="0,0,12,12"/>
-            <Setter Property="Padding" Value="24,0"/>
+            <Setter Property="Foreground" Value="#65676B"/>
+            <Setter Property="Margin" Value="0,0,0,32"/>
+        </Style>
+
+        <!-- Toggle Button for Selections (Chips) -->
+        <Style TargetType="ToggleButton" x:Key="ChipToggleButton">
+            <Setter Property="Background" Value="#F0F2F5"/>
+            <Setter Property="Foreground" Value="#65676B"/>
+            <Setter Property="BorderBrush" Value="#E4E6EB"/>
+            <Setter Property="FontFamily" Value="Segoe UI, sans-serif"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="FontSize" Value="14"/>
+            <Setter Property="Height" Value="42"/>
+            <Setter Property="Margin" Value="0,0,10,10"/>
+            <Setter Property="Padding" Value="18,0"/>
             <Setter Property="Template">
                 <Setter.Value>
                     <ControlTemplate TargetType="ToggleButton">
-                        <Border Background="{TemplateBinding Background}" CornerRadius="24" BorderThickness="1" BorderBrush="{TemplateBinding BorderBrush}">
+                        <Border Background="{TemplateBinding Background}" CornerRadius="21" BorderThickness="1" BorderBrush="{TemplateBinding BorderBrush}">
                             <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" Margin="{TemplateBinding Padding}"/>
                         </Border>
                         <ControlTemplate.Triggers>
                             <Trigger Property="IsChecked" Value="True">
-                                <Setter Property="Background" Value="#E6005C"/>
-                                <Setter Property="Foreground" Value="White"/>
+                                <Setter Property="Background" Value="#FFF0F5"/>
+                                <Setter Property="Foreground" Value="#E6005C"/>
                                 <Setter Property="BorderBrush" Value="#E6005C"/>
                             </Trigger>
                             <MultiTrigger>
@@ -107,8 +68,8 @@
                                     <Condition Property="IsMouseOver" Value="True"/>
                                     <Condition Property="IsChecked" Value="False"/>
                                 </MultiTrigger.Conditions>
-                                <Setter Property="Background" Value="#3F3F46"/>
-                                <Setter Property="Foreground" Value="#FAFAFA"/>
+                                <Setter Property="Background" Value="#E4E6EB"/>
+                                <Setter Property="Foreground" Value="#1C1E21"/>
                             </MultiTrigger>
                         </ControlTemplate.Triggers>
                     </ControlTemplate>
@@ -116,225 +77,220 @@
             </Setter>
         </Style>
 
-        <!-- Value Converters for Steps -->
         <BooleanToVisibilityConverter x:Key="BoolToVis"/>
     </UserControl.Resources>
 
     <Grid>
-        <!-- Background Decor -->
-        <Ellipse Width="800" Height="800" Fill="#E6005C" Opacity="0.05" HorizontalAlignment="Right" VerticalAlignment="Top" Margin="0,-200,-200,0">
+        <!-- Mesh background glows -->
+        <Ellipse Width="800" Height="800" Fill="#FF1A75" Opacity="0.05" HorizontalAlignment="Right" VerticalAlignment="Top" Margin="0,-200,-200,0">
             <Ellipse.Effect>
-                <BlurEffect Radius="200"/>
+                <BlurEffect Radius="180"/>
             </Ellipse.Effect>
         </Ellipse>
-        <Ellipse Width="600" Height="600" Fill="#7C3AED" Opacity="0.05" HorizontalAlignment="Left" VerticalAlignment="Bottom" Margin="-150,0,0,-150">
+        <Ellipse Width="600" Height="600" Fill="#FF6EA7" Opacity="0.05" HorizontalAlignment="Left" VerticalAlignment="Bottom" Margin="-150,0,0,-150">
             <Ellipse.Effect>
-                <BlurEffect Radius="200"/>
+                <BlurEffect Radius="150"/>
             </Ellipse.Effect>
         </Ellipse>
 
         <!-- Progress Bar at Top -->
-        <ProgressBar Value="{Binding CurrentProgress}" Height="4" VerticalAlignment="Top" Background="#27272A" Foreground="#E6005C" BorderThickness="0" Minimum="0" Maximum="100"/>
+        <ProgressBar Value="{Binding CurrentProgress}" Height="5" VerticalAlignment="Top" Background="#E4E6EB" Foreground="{StaticResource FbBrandGradient}" BorderThickness="0" Minimum="0" Maximum="100"/>
 
         <!-- Main Content -->
-        <Grid HorizontalAlignment="Center" VerticalAlignment="Center" Width="600">
-            <Border Style="{StaticResource PremiumCardStyle}">
-                <Grid>
-                    <!-- STEP 1: GENDER & PREFERENCE -->
-                    <StackPanel>
-                        <StackPanel.Style>
-                            <Style TargetType="StackPanel">
-                                <Setter Property="Visibility" Value="Collapsed"/>
-                                <Style.Triggers>
-                                    <DataTrigger Binding="{Binding CurrentStep}" Value="1">
-                                        <Setter Property="Visibility" Value="Visible"/>
-                                    </DataTrigger>
-                                </Style.Triggers>
-                            </Style>
-                        </StackPanel.Style>
-                        
-                        <TextBlock Text="Bạn là ai?" Style="{StaticResource HeadingStyle}"/>
-                        <TextBlock Text="Hãy chia sẻ thêm về bản thân để có những gợi ý tốt nhất." Style="{StaticResource SubHeadingStyle}"/>
-                        
-                        <TextBlock Text="Giới tính của bạn" Foreground="#FAFAFA" FontSize="15" FontWeight="Medium" Margin="0,0,0,16"/>
-                        <ComboBox SelectedIndex="{Binding SelectedGenderIndex}" 
-                                  materialDesign:HintAssist.Hint="Chọn giới tính"
-                                  Style="{StaticResource MaterialDesignOutlinedComboBox}"
-                                  Foreground="White" BorderBrush="#3F3F46" Margin="0,0,0,32" Height="56" FontSize="16">
-                            <ComboBoxItem Content="Nam"/>
-                            <ComboBoxItem Content="Nữ"/>
-                            <ComboBoxItem Content="Khác"/>
-                        </ComboBox>
-
-                        <TextBlock Text="Bạn muốn tìm kiếm?" Foreground="#FAFAFA" FontSize="15" FontWeight="Medium" Margin="0,0,0,16"/>
-                        <ComboBox SelectedIndex="{Binding SelectedInterestedInIndex}" 
-                                  materialDesign:HintAssist.Hint="Gu của bạn"
-                                  Style="{StaticResource MaterialDesignOutlinedComboBox}"
-                                  Foreground="White" BorderBrush="#3F3F46" Margin="0,0,0,32" Height="56" FontSize="16">
-                            <ComboBoxItem Content="Nam"/>
-                            <ComboBoxItem Content="Nữ"/>
-                            <ComboBoxItem Content="Mọi người"/>
-                        </ComboBox>
-                        
-                        <Button Content="Tiếp tục" Command="{Binding NextStepCommand}" Style="{StaticResource PrimaryButtonStyle}" Margin="0,20,0,0"/>
-                    </StackPanel>
-
-                    <!-- STEP 2: DETAILS -->
-                    <StackPanel>
-                        <StackPanel.Style>
-                            <Style TargetType="StackPanel">
-                                <Setter Property="Visibility" Value="Collapsed"/>
-                                <Style.Triggers>
-                                    <DataTrigger Binding="{Binding CurrentStep}" Value="2">
-                                        <Setter Property="Visibility" Value="Visible"/>
-                                    </DataTrigger>
-                                </Style.Triggers>
-                            </Style>
-                        </StackPanel.Style>
-
-                        <TextBlock Text="Ngoại hình &amp; Lối sống" Style="{StaticResource HeadingStyle}"/>
-                        <TextBlock Text="Điền thông tin này giúp hồ sơ bạn hoàn thiện hơn." Style="{StaticResource SubHeadingStyle}"/>
-
-                        <Grid Margin="0,0,0,24">
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="*"/>
-                                <ColumnDefinition Width="20"/>
-                                <ColumnDefinition Width="*"/>
-                            </Grid.ColumnDefinitions>
+        <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled" Margin="0,15,0,0">
+            <Grid HorizontalAlignment="Center" VerticalAlignment="Center" Width="600" Margin="0,30">
+                <Border Style="{StaticResource OnboardingCardStyle}">
+                    <Grid>
+                        <!-- STEP 1: GENDER & PREFERENCE -->
+                        <StackPanel>
+                            <StackPanel.Style>
+                                <Style TargetType="StackPanel">
+                                    <Setter Property="Visibility" Value="Collapsed"/>
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding CurrentStep}" Value="1">
+                                            <Setter Property="Visibility" Value="Visible"/>
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </StackPanel.Style>
                             
-                            <StackPanel Grid.Column="0">
-                                <TextBlock Text="Chiều cao (cm)" Foreground="#FAFAFA" FontSize="15" FontWeight="Medium" Margin="0,0,0,12"/>
-                                <TextBox Text="{Binding Height}" Style="{StaticResource MaterialDesignOutlinedTextBox}"
-                                         Foreground="White" BorderBrush="#3F3F46" Height="56" FontSize="16"/>
-                            </StackPanel>
+                            <TextBlock Text="Bạn là ai?" Style="{StaticResource HeadingStyle}"/>
+                            <TextBlock Text="Hãy chia sẻ thêm về bản thân để có những gợi ý tốt nhất." Style="{StaticResource SubHeadingStyle}"/>
+                            
+                            <TextBlock Text="Giới tính của bạn" Foreground="#1C1E21" FontSize="15" FontWeight="SemiBold" Margin="0,0,0,12"/>
+                            <ComboBox SelectedIndex="{Binding SelectedGenderIndex}" 
+                                      materialDesign:HintAssist.Hint="Chọn giới tính"
+                                      Style="{StaticResource PremiumComboBox}"
+                                      Margin="0,0,0,28" Height="50" FontSize="15"/>
 
-                            <StackPanel Grid.Column="2">
-                                <TextBlock Text="Học vấn / Nghề nghiệp" Foreground="#FAFAFA" FontSize="15" FontWeight="Medium" Margin="0,0,0,12"/>
-                                <TextBox Text="{Binding Education}" Style="{StaticResource MaterialDesignOutlinedTextBox}"
-                                         materialDesign:HintAssist.Hint="VD: Sinh viên, IT..."
-                                         Foreground="White" BorderBrush="#3F3F46" Height="56" FontSize="16"/>
-                            </StackPanel>
-                        </Grid>
+                            <TextBlock Text="Bạn muốn tìm kiếm?" Foreground="#1C1E21" FontSize="15" FontWeight="SemiBold" Margin="0,0,0,12"/>
+                            <ComboBox SelectedIndex="{Binding SelectedInterestedInIndex}" 
+                                      materialDesign:HintAssist.Hint="Gu của bạn"
+                                      Style="{StaticResource PremiumComboBox}"
+                                      Margin="0,0,0,28" Height="50" FontSize="15">
+                                <ComboBoxItem Content="Nam"/>
+                                <ComboBoxItem Content="Nữ"/>
+                                <ComboBoxItem Content="Mọi người"/>
+                            </ComboBox>
+                            
+                            <Button Content="Tiếp tục" Command="{Binding NextStepCommand}" Style="{StaticResource PremiumButton}" Margin="0,16,0,0"/>
+                        </StackPanel>
 
-                        <TextBlock Text="Bạn có hút thuốc không?" Foreground="#FAFAFA" FontSize="15" FontWeight="Medium" Margin="0,0,0,16"/>
-                        <ComboBox SelectedIndex="{Binding SmokingIndex}" 
-                                  Style="{StaticResource MaterialDesignOutlinedComboBox}"
-                                  Foreground="White" BorderBrush="#3F3F46" Margin="0,0,0,24" Height="56" FontSize="16">
-                            <ComboBoxItem Content="Không bao giờ"/>
-                            <ComboBoxItem Content="Thỉnh thoảng"/>
-                            <ComboBoxItem Content="Thường xuyên"/>
-                        </ComboBox>
+                        <!-- STEP 2: DETAILS -->
+                        <StackPanel>
+                            <StackPanel.Style>
+                                <Style TargetType="StackPanel">
+                                    <Setter Property="Visibility" Value="Collapsed"/>
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding CurrentStep}" Value="2">
+                                            <Setter Property="Visibility" Value="Visible"/>
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </StackPanel.Style>
 
-                        <TextBlock Text="Bạn có hay nhậu nhẹt?" Foreground="#FAFAFA" FontSize="15" FontWeight="Medium" Margin="0,0,0,16"/>
-                        <ComboBox SelectedIndex="{Binding DrinkingIndex}" 
-                                  Style="{StaticResource MaterialDesignOutlinedComboBox}"
-                                  Foreground="White" BorderBrush="#3F3F46" Margin="0,0,0,32" Height="56" FontSize="16">
-                            <ComboBoxItem Content="Không uống"/>
-                            <ComboBoxItem Content="Xã giao"/>
-                            <ComboBoxItem Content="Thường xuyên"/>
-                        </ComboBox>
+                            <TextBlock Text="Ngoại hình &amp; Lối sống" Style="{StaticResource HeadingStyle}"/>
+                            <TextBlock Text="Điền thông tin này giúp hồ sơ bạn hoàn thiện hơn." Style="{StaticResource SubHeadingStyle}"/>
 
-                        <Grid>
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="*"/>
-                                <ColumnDefinition Width="16"/>
-                                <ColumnDefinition Width="*"/>
-                            </Grid.ColumnDefinitions>
-                            <Button Grid.Column="0" Content="Quay lại" Command="{Binding PrevStepCommand}" Style="{StaticResource OutlineButtonStyle}"/>
-                            <Button Grid.Column="2" Content="Tiếp tục" Command="{Binding NextStepCommand}" Style="{StaticResource PrimaryButtonStyle}"/>
-                        </Grid>
-                    </StackPanel>
+                            <Grid Margin="0,0,0,24">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="20"/>
+                                    <ColumnDefinition Width="*"/>
+                                </Grid.ColumnDefinitions>
+                                
+                                <StackPanel Grid.Column="0">
+                                    <TextBlock Text="Chiều cao (cm)" Foreground="#1C1E21" FontSize="15" FontWeight="SemiBold" Margin="0,0,0,12"/>
+                                    <TextBox Text="{Binding Height}" Style="{StaticResource PremiumTextBox}" Height="50" FontSize="15"/>
+                                </StackPanel>
 
-                    <!-- STEP 3: INTERESTS & BIO -->
-                    <StackPanel>
-                        <StackPanel.Style>
-                            <Style TargetType="StackPanel">
-                                <Setter Property="Visibility" Value="Collapsed"/>
-                                <Style.Triggers>
-                                    <DataTrigger Binding="{Binding CurrentStep}" Value="3">
-                                        <Setter Property="Visibility" Value="Visible"/>
-                                    </DataTrigger>
-                                </Style.Triggers>
-                            </Style>
-                        </StackPanel.Style>
+                                <StackPanel Grid.Column="2">
+                                    <TextBlock Text="Học vấn / Nghề nghiệp" Foreground="#1C1E21" FontSize="15" FontWeight="SemiBold" Margin="0,0,0,12"/>
+                                    <TextBox Text="{Binding Education}" Style="{StaticResource PremiumTextBox}"
+                                             materialDesign:HintAssist.Hint="VD: Sinh viên, IT..." Height="50" FontSize="15"/>
+                                </StackPanel>
+                            </Grid>
 
-                        <TextBlock Text="Sở thích của bạn" Style="{StaticResource HeadingStyle}"/>
-                        <TextBlock Text="Một chút thông tin về điều bạn yêu thích." Style="{StaticResource SubHeadingStyle}"/>
+                            <TextBlock Text="Bạn có hút thuốc không?" Foreground="#1C1E21" FontSize="15" FontWeight="SemiBold" Margin="0,0,0,12"/>
+                            <ComboBox SelectedIndex="{Binding SmokingIndex}" 
+                                      Style="{StaticResource PremiumComboBox}"
+                                      Margin="0,0,0,24" Height="50" FontSize="15">
+                                <ComboBoxItem Content="Không bao giờ"/>
+                                <ComboBoxItem Content="Thỉnh thoảng"/>
+                                <ComboBoxItem Content="Thường xuyên"/>
+                            </ComboBox>
 
-                        <TextBlock Text="Bio (Giới thiệu bản thân)" Foreground="#FAFAFA" FontSize="15" FontWeight="Medium" Margin="0,0,0,16"/>
-                        <TextBox Text="{Binding Bio}" 
-                                 Style="{StaticResource MaterialDesignOutlinedTextBox}"
-                                 TextWrapping="Wrap" AcceptsReturn="True"
-                                 Height="100" Foreground="White" BorderBrush="#3F3F46" Margin="0,0,0,32" FontSize="16"/>
+                            <TextBlock Text="Bạn có hay nhậu nhẹt?" Foreground="#1C1E21" FontSize="15" FontWeight="SemiBold" Margin="0,0,0,12"/>
+                            <ComboBox SelectedIndex="{Binding DrinkingIndex}" 
+                                      Style="{StaticResource PremiumComboBox}"
+                                      Margin="0,0,0,28" Height="50" FontSize="15">
+                                <ComboBoxItem Content="Không uống"/>
+                                <ComboBoxItem Content="Xã giao"/>
+                                <ComboBoxItem Content="Thường xuyên"/>
+                            </ComboBox>
 
-                        <TextBlock Text="Chọn các Tag sở thích" Foreground="#FAFAFA" FontSize="15" FontWeight="Medium" Margin="0,0,0,16"/>
-                        <ItemsControl ItemsSource="{Binding AvailableInterests}" Margin="0,0,0,32">
-                            <ItemsControl.ItemsPanel>
-                                <ItemsPanelTemplate>
-                                    <WrapPanel/>
-                                </ItemsPanelTemplate>
-                            </ItemsControl.ItemsPanel>
-                            <ItemsControl.ItemTemplate>
-                                <DataTemplate>
-                                    <ToggleButton IsChecked="{Binding IsSelected}" Content="{Binding Name}" Style="{StaticResource ChipToggleButton}"/>
-                                </DataTemplate>
-                            </ItemsControl.ItemTemplate>
-                        </ItemsControl>
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="16"/>
+                                    <ColumnDefinition Width="*"/>
+                                </Grid.ColumnDefinitions>
+                                <Button Grid.Column="0" Content="Quay lại" Command="{Binding PrevStepCommand}" Style="{StaticResource PremiumOutlineButton}"/>
+                                <Button Grid.Column="2" Content="Tiếp tục" Command="{Binding NextStepCommand}" Style="{StaticResource PremiumButton}"/>
+                            </Grid>
+                        </StackPanel>
 
-                        <Grid>
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="*"/>
-                                <ColumnDefinition Width="16"/>
-                                <ColumnDefinition Width="*"/>
-                            </Grid.ColumnDefinitions>
-                            <Button Grid.Column="0" Content="Quay lại" Command="{Binding PrevStepCommand}" Style="{StaticResource OutlineButtonStyle}"/>
-                            <Button Grid.Column="2" Content="Tiếp tục" Command="{Binding NextStepCommand}" Style="{StaticResource PrimaryButtonStyle}"/>
-                        </Grid>
-                    </StackPanel>
+                        <!-- STEP 3: INTERESTS & BIO -->
+                        <StackPanel>
+                            <StackPanel.Style>
+                                <Style TargetType="StackPanel">
+                                    <Setter Property="Visibility" Value="Collapsed"/>
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding CurrentStep}" Value="3">
+                                            <Setter Property="Visibility" Value="Visible"/>
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </StackPanel.Style>
 
-                    <!-- STEP 4: FINISH -->
-                    <StackPanel>
-                        <StackPanel.Style>
-                            <Style TargetType="StackPanel">
-                                <Setter Property="Visibility" Value="Collapsed"/>
-                                <Style.Triggers>
-                                    <DataTrigger Binding="{Binding CurrentStep}" Value="4">
-                                        <Setter Property="Visibility" Value="Visible"/>
-                                    </DataTrigger>
-                                </Style.Triggers>
-                            </Style>
-                        </StackPanel.Style>
+                            <TextBlock Text="Sở thích của bạn" Style="{StaticResource HeadingStyle}"/>
+                            <TextBlock Text="Một chút thông tin về điều bạn yêu thích." Style="{StaticResource SubHeadingStyle}"/>
 
-                        <materialDesign:PackIcon Kind="CheckCircleOutline" Width="80" Height="80" Foreground="#E6005C" HorizontalAlignment="Center" Margin="0,0,0,24"/>
-                        <TextBlock Text="Sẵn sàng ghép đôi!" Style="{StaticResource HeadingStyle}" HorizontalAlignment="Center"/>
-                        <TextBlock Text="Hồ sơ của bạn đã hoàn thiện. Hãy tải lên Avatar ở phần Profile để tăng 100% khả năng hiển thị nhé." 
-                                   TextWrapping="Wrap" TextAlignment="Center" Style="{StaticResource SubHeadingStyle}"/>
+                            <TextBlock Text="Bio (Giới thiệu bản thân)" Foreground="#1C1E21" FontSize="15" FontWeight="SemiBold" Margin="0,0,0,12"/>
+                            <TextBox Text="{Binding Bio}" 
+                                     Style="{StaticResource PremiumTextBox}"
+                                     TextWrapping="Wrap" AcceptsReturn="True"
+                                     Height="90" Margin="0,0,0,28" FontSize="15"/>
 
-                        <TextBlock Text="{Binding ErrorMessage}" Foreground="#EF4444" HorizontalAlignment="Center" Margin="0,0,0,16"/>
+                            <TextBlock Text="Chọn các Tag sở thích" Foreground="#1C1E21" FontSize="15" FontWeight="SemiBold" Margin="0,0,0,12"/>
+                            <ItemsControl ItemsSource="{Binding AvailableInterests}" Margin="0,0,0,28">
+                                <ItemsControl.ItemsPanel>
+                                    <ItemsPanelTemplate>
+                                        <WrapPanel/>
+                                    </ItemsPanelTemplate>
+                                </ItemsControl.ItemsPanel>
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate>
+                                        <ToggleButton IsChecked="{Binding IsSelected}" Content="{Binding Name}" Style="{StaticResource ChipToggleButton}"/>
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
 
-                        <Grid>
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="*"/>
-                                <ColumnDefinition Width="16"/>
-                                <ColumnDefinition Width="*"/>
-                            </Grid.ColumnDefinitions>
-                            <Button Grid.Column="0" Content="Quay lại" Command="{Binding PrevStepCommand}" Style="{StaticResource OutlineButtonStyle}"/>
-                            <Button Grid.Column="2" Content="Bắt đầu ngay" Command="{Binding CompleteOnboardingCommand}">
-                                <Button.Style>
-                                    <Style TargetType="Button" BasedOn="{StaticResource PrimaryButtonStyle}">
-                                        <Style.Triggers>
-                                            <DataTrigger Binding="{Binding IsBusy}" Value="True">
-                                                <Setter Property="IsEnabled" Value="False"/>
-                                                <Setter Property="Content" Value="Đang lưu..."/>
-                                            </DataTrigger>
-                                        </Style.Triggers>
-                                    </Style>
-                                </Button.Style>
-                            </Button>
-                        </Grid>
-                    </StackPanel>
-                </Grid>
-            </Border>
-        </Grid>
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="16"/>
+                                    <ColumnDefinition Width="*"/>
+                                </Grid.ColumnDefinitions>
+                                <Button Grid.Column="0" Content="Quay lại" Command="{Binding PrevStepCommand}" Style="{StaticResource PremiumOutlineButton}"/>
+                                <Button Grid.Column="2" Content="Tiếp tục" Command="{Binding NextStepCommand}" Style="{StaticResource PremiumButton}"/>
+                            </Grid>
+                        </StackPanel>
+
+                        <!-- STEP 4: FINISH -->
+                        <StackPanel>
+                            <StackPanel.Style>
+                                <Style TargetType="StackPanel">
+                                    <Setter Property="Visibility" Value="Collapsed"/>
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding CurrentStep}" Value="4">
+                                            <Setter Property="Visibility" Value="Visible"/>
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </StackPanel.Style>
+
+                            <materialDesign:PackIcon Kind="CheckCircleOutline" Width="80" Height="80" Foreground="#E6005C" HorizontalAlignment="Center" Margin="0,0,0,20"/>
+                            <TextBlock Text="Sẵn sàng ghép đôi!" Style="{StaticResource HeadingStyle}" HorizontalAlignment="Center"/>
+                            <TextBlock Text="Hồ sơ của bạn đã hoàn thiện. Hãy tải lên Avatar ở phần Profile để tăng 100% khả năng hiển thị nhé." 
+                                       TextWrapping="Wrap" TextAlignment="Center" Style="{StaticResource SubHeadingStyle}"/>
+
+                            <TextBlock Text="{Binding ErrorMessage}" Foreground="#EF4444" HorizontalAlignment="Center" Margin="0,0,0,16" FontSize="13" FontWeight="SemiBold"/>
+
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="16"/>
+                                    <ColumnDefinition Width="*"/>
+                                </Grid.ColumnDefinitions>
+                                <Button Grid.Column="0" Content="Quay lại" Command="{Binding PrevStepCommand}" Style="{StaticResource PremiumOutlineButton}"/>
+                                <Button Grid.Column="2" Content="Bắt đầu ngay" Command="{Binding CompleteOnboardingCommand}">
+                                    <Button.Style>
+                                        <Style TargetType="Button" BasedOn="{StaticResource PremiumButton}">
+                                            <Style.Triggers>
+                                                <DataTrigger Binding="{Binding IsBusy}" Value="True">
+                                                    <Setter Property="IsEnabled" Value="False"/>
+                                                    <Setter Property="Content" Value="Đang lưu..."/>
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </Button.Style>
+                                </Button>
+                            </Grid>
+                        </StackPanel>
+                    </Grid>
+                </Border>
+            </Grid>
+        </ScrollViewer>
     </Grid>
 </UserControl>

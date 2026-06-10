@@ -28,6 +28,26 @@ namespace DatingApp.Controllers
             return result.Success ? Ok(result.Data) : StatusCode(result.StatusCode, new { message = result.Message });
         }
 
+        [HttpGet("likes")]
+        public async Task<IActionResult> GetLikesReceived()
+        {
+            var myId = GetUserId();
+            if (myId == null) return Unauthorized();
+
+            var result = await _swipeService.GetLikesReceivedAsync(myId.Value);
+            return result.Success ? Ok(result.Data) : StatusCode(result.StatusCode, new { message = result.Message });
+        }
+
+        [HttpPost("reset")]
+        public async Task<IActionResult> ResetSwipes()
+        {
+            var myId = GetUserId();
+            if (myId == null) return Unauthorized();
+
+            var result = await _swipeService.ResetSwipesAsync(myId.Value);
+            return result.Success ? Ok(result.Data) : StatusCode(result.StatusCode, new { message = result.Message });
+        }
+
         private Guid? GetUserId()
         {
             var value = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;

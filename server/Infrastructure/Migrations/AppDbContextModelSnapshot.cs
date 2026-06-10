@@ -229,6 +229,9 @@ namespace DatingApp.Migrations
                     b.Property<bool>("IsLike")
                         .HasColumnType("boolean");
 
+                    b.Property<bool>("IsSuperLike")
+                        .HasColumnType("boolean");
+
                     b.Property<Guid>("ToUserId")
                         .HasColumnType("uuid");
 

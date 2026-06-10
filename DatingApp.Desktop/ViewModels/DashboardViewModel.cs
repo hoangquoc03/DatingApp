@@ -51,7 +51,37 @@ public partial class DashboardViewModel : ObservableObject
     private bool _isCompatibilityVisible;
 
     [ObservableProperty]
+    private bool _isSuperLikedBy;
+
+    [ObservableProperty]
     private ObservableCollection<string> _currentUserInterests = new();
+
+    [ObservableProperty]
+    private bool _isDiscoverQueueEmpty = false;
+
+    [ObservableProperty]
+    private bool _isEmojiPopupOpen = false;
+
+    [ObservableProperty]
+    private bool _isUserDetailVisible = false;
+
+    [ObservableProperty]
+    private ObservableCollection<PhotoDto> _currentUserPhotos = new();
+
+    [ObservableProperty]
+    private int? _currentUserHeight;
+
+    [ObservableProperty]
+    private string _currentUserOccupation = "";
+
+    [ObservableProperty]
+    private string _currentUserEducation = "";
+
+    [ObservableProperty]
+    private string _currentUserSmoking = "";
+
+    [ObservableProperty]
+    private string _currentUserDrinking = "";
 
     // --- Tabs ---
     [ObservableProperty]
@@ -64,6 +94,9 @@ public partial class DashboardViewModel : ObservableObject
     private bool _isMessagesVisible = false;
 
     [ObservableProperty]
+    private bool _isLikesVisible = false;
+
+    [ObservableProperty]
     private string _discoverTabColor = "#E6005C";
 
     [ObservableProperty]
@@ -71,6 +104,15 @@ public partial class DashboardViewModel : ObservableObject
 
     [ObservableProperty]
     private string _messagesTabColor = "#6B7280";
+
+    [ObservableProperty]
+    private string _likesTabColor = "#6B7280";
+
+    [ObservableProperty]
+    private ObservableCollection<DiscoverUserDto> _likesReceived = new();
+
+    [ObservableProperty]
+    private int _likesReceivedCount = 0;
 
     [ObservableProperty]
     private int _unreadNotificationCount;
@@ -257,6 +299,10 @@ public partial class DashboardViewModel : ObservableObject
         _authService = authService;
         _httpClient = httpClientFactory.CreateClient("ApiClient");
         IsAdmin = _authService.CurrentUser?.IsAdmin == true;
+        
+        ProfileAvatarUrl = string.IsNullOrEmpty(_authService.CurrentUser?.AvatarUrl) 
+            ? "pack://application:,,,/Resources/default-avatar.jpg" 
+            : _authService.CurrentUser!.AvatarUrl;
 
         // Set token trực tiếp — đảm bảo luôn có Bearer token
         if (!string.IsNullOrEmpty(_authService.CurrentToken))
@@ -268,6 +314,7 @@ public partial class DashboardViewModel : ObservableObject
         _ = LoadDiscoverUsersAsync();
         _ = InitializeSignalRAsync();
         _ = LoadUnreadNotificationCountAsync();
+        _ = LoadLikesReceivedCountAsync();
     }
 
     [RelayCommand]
@@ -301,6 +348,7 @@ public partial class DashboardViewModel : ObservableObject
             if (response != null && response.Data.Count > 0)
             {
                 _discoverQueue = response.Data;
+                IsDiscoverQueueEmpty = false;
                 NextProfile();
             }
             else
@@ -309,6 +357,7 @@ public partial class DashboardViewModel : ObservableObject
                 CurrentUserBio = "Hãy thử lại sau nhé.";
                 CurrentUserImage = "https://via.placeholder.com/600x800/FFF5F8/E6005C?text=No+more+profiles"; 
                 _currentUserDto = null;
+                IsDiscoverQueueEmpty = true;
             }
         }
         catch (Exception ex)
@@ -342,6 +391,30 @@ public partial class DashboardViewModel : ObservableObject
     }
 
     [RelayCommand]
+    public async Task SuperLikeAsync()
+    {
+        if (_currentUserDto == null) return;
+
+        try
+        {
+            var dto = new { ToUserId = _currentUserDto.Id, IsLike = true, IsSuperLike = true };
+            var response = await _httpClient.PostAsJsonAsync("/api/Swipe", dto);
+            if (response.IsSuccessStatusCode)
+            {
+                var result = await response.Content.ReadFromJsonAsync<System.Text.Json.JsonElement>();
+                if (result.TryGetProperty("isMatch", out var isMatchProp) && isMatchProp.GetBoolean())
+                {
+                    IsMatchPopupVisible = true;
+                    _ = LoadMatchesAsync();
+                }
+            }
+        }
+        catch {}
+
+        NextProfile();
+    }
+
+    [RelayCommand]
     public async Task PassAsync()
     {
         if (_currentUserDto == null) return;
@@ -361,7 +434,7 @@ public partial class DashboardViewModel : ObservableObject
     {
         // Navigate to AdminView
         CommunityToolkit.Mvvm.Messaging.WeakReferenceMessenger.Default.Send(
-            new DatingApp.Desktop.Messages.NavigationMessage(((App)System.Windows.Application.Current).Services.GetService(typeof(AdminViewModel)))
+            new DatingApp.Desktop.Messages.NavigationMessage(((App)System.Windows.Application.Current).Services.GetService(typeof(AdminViewModel))!)
         );
     }
 
@@ -383,6 +456,14 @@ public partial class DashboardViewModel : ObservableObject
             CurrentUserMbti = _currentUserDto.Mbti ?? string.Empty;
             CurrentUserCompatibilityScore = _currentUserDto.CompatibilityScore;
             IsCompatibilityVisible = _currentUserDto.CompatibilityScore > 0;
+            IsSuperLikedBy = _currentUserDto.IsSuperLikedBy;
+            CurrentUserHeight = _currentUserDto.Height;
+            CurrentUserOccupation = _currentUserDto.Occupation ?? string.Empty;
+            CurrentUserEducation = _currentUserDto.Education ?? string.Empty;
+            CurrentUserSmoking = _currentUserDto.Smoking ?? string.Empty;
+            CurrentUserDrinking = _currentUserDto.Drinking ?? string.Empty;
+            IsDiscoverQueueEmpty = false;
+            IsUserDetailVisible = false; // Reset view when next profile loads
 
             CurrentUserInterests.Clear();
             if (_currentUserDto.Interests != null)
@@ -392,6 +473,20 @@ public partial class DashboardViewModel : ObservableObject
                     CurrentUserInterests.Add(interest);
                 }
             }
+
+            CurrentUserPhotos.Clear();
+            if (_currentUserDto.Photos != null && _currentUserDto.Photos.Count > 0)
+            {
+                foreach (var photo in _currentUserDto.Photos)
+                {
+                    CurrentUserPhotos.Add(photo);
+                }
+            }
+            else if (!string.IsNullOrEmpty(_currentUserDto.AvatarUrl))
+            {
+                CurrentUserPhotos.Add(new PhotoDto { Url = _currentUserDto.AvatarUrl, IsMain = true });
+            }
+
         }
         else
         {
@@ -405,7 +500,16 @@ public partial class DashboardViewModel : ObservableObject
             CurrentUserMbti = string.Empty;
             CurrentUserCompatibilityScore = 0;
             IsCompatibilityVisible = false;
+            IsSuperLikedBy = false;
+            CurrentUserHeight = null;
+            CurrentUserOccupation = string.Empty;
+            CurrentUserEducation = string.Empty;
+            CurrentUserSmoking = string.Empty;
+            CurrentUserDrinking = string.Empty;
             CurrentUserInterests.Clear();
+            CurrentUserPhotos.Clear();
+            IsDiscoverQueueEmpty = true;
+            IsUserDetailVisible = false;
         }
     }
 
@@ -413,6 +517,56 @@ public partial class DashboardViewModel : ObservableObject
     private void CloseMatchPopup()
     {
         IsMatchPopupVisible = false;
+    }
+
+    [RelayCommand]
+    private void OpenUserDetail()
+    {
+        if (_currentUserDto != null)
+            IsUserDetailVisible = true;
+    }
+
+    [RelayCommand]
+    private void CloseUserDetail()
+    {
+        IsUserDetailVisible = false;
+    }
+
+    [RelayCommand]
+    private async Task ResetSwipesAsync()
+    {
+        try
+        {
+            var response = await _httpClient.PostAsync("/api/Swipe/reset", null);
+            if (response.IsSuccessStatusCode)
+            {
+                IsDiscoverQueueEmpty = false;
+                await LoadDiscoverUsersAsync();
+                System.Windows.MessageBox.Show("Đã làm mới lượt vuốt của bạn! Hãy bắt đầu khám phá lại nhé.", "Thành công", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Information);
+            }
+            else
+            {
+                System.Windows.MessageBox.Show("Có lỗi xảy ra khi làm mới lượt vuốt.", "Lỗi", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Error);
+            }
+        }
+        catch (Exception ex)
+        {
+            System.Windows.MessageBox.Show("Lỗi kết nối: " + ex.Message, "Lỗi", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Error);
+        }
+    }
+
+    [RelayCommand]
+    private void ToggleEmojiPopup()
+    {
+        IsEmojiPopupOpen = !IsEmojiPopupOpen;
+    }
+
+    [RelayCommand]
+    private void AddEmoji(string emoji)
+    {
+        if (emoji == null) return;
+        MessageDraft += emoji;
+        IsEmojiPopupOpen = false;
     }
 
     // --- TABS & PROFILE COMMANDS ---
@@ -423,9 +577,11 @@ public partial class DashboardViewModel : ObservableObject
         IsDiscoverVisible = true;
         IsProfileVisible = false;
         IsMessagesVisible = false;
+        IsLikesVisible = false;
         DiscoverTabColor = "#E6005C";
         ProfileTabColor = "#6B7280";
         MessagesTabColor = "#6B7280";
+        LikesTabColor = "#6B7280";
     }
 
     [RelayCommand]
@@ -434,11 +590,28 @@ public partial class DashboardViewModel : ObservableObject
         IsDiscoverVisible = false;
         IsProfileVisible = false;
         IsMessagesVisible = true;
+        IsLikesVisible = false;
         DiscoverTabColor = "#6B7280";
         ProfileTabColor = "#6B7280";
         MessagesTabColor = "#E6005C";
+        LikesTabColor = "#6B7280";
 
         _ = LoadMatchesAsync();
+    }
+
+    [RelayCommand]
+    private void ShowLikes()
+    {
+        IsDiscoverVisible = false;
+        IsProfileVisible = false;
+        IsMessagesVisible = false;
+        IsLikesVisible = true;
+        DiscoverTabColor = "#6B7280";
+        ProfileTabColor = "#6B7280";
+        MessagesTabColor = "#6B7280";
+        LikesTabColor = "#E6005C";
+
+        _ = LoadLikesReceivedAsync();
     }
 
     [RelayCommand]
@@ -446,8 +619,12 @@ public partial class DashboardViewModel : ObservableObject
     {
         IsDiscoverVisible = false;
         IsProfileVisible = true;
+        IsMessagesVisible = false;
+        IsLikesVisible = false;
         DiscoverTabColor = "#6B7280";
         ProfileTabColor = "#E6005C";
+        MessagesTabColor = "#6B7280";
+        LikesTabColor = "#6B7280";
 
         try
         {
@@ -559,7 +736,7 @@ public partial class DashboardViewModel : ObservableObject
                         var result = await response.Content.ReadFromJsonAsync<System.Text.Json.JsonElement>();
                         if (result.TryGetProperty("avatarUrl", out var avatarUrlProp))
                         {
-                            ProfileAvatarUrl = avatarUrlProp.GetString() ?? ProfileAvatarUrl;
+                            ProfileAvatarUrl = avatarUrlProp.GetString() ?? ProfileAvatarUrl ?? string.Empty;
                             _authService.CurrentUser!.AvatarUrl = ProfileAvatarUrl;
                         }
                         System.Windows.MessageBox.Show("Cập nhật Avatar thành công!", "Thành công");
@@ -626,7 +803,7 @@ public partial class DashboardViewModel : ObservableObject
         if (string.IsNullOrEmpty(baseUrl)) return;
 
         _hubConnection = new HubConnectionBuilder()
-            .WithUrl($"{baseUrl}/hubs/chat", options =>
+            .WithUrl($"{baseUrl}/chatHub", options =>
             {
                 options.AccessTokenProvider = () => Task.FromResult(_authService.CurrentToken)!;
             })
@@ -716,9 +893,21 @@ public partial class DashboardViewModel : ObservableObject
                 catch {}
             });
 
-            if (notif.TryGetProperty("type", out var type) && type.GetString() == "NewMatch")
+            if (notif.TryGetProperty("type", out var typeProp))
             {
-                _ = LoadMatchesAsync();
+                var type = typeProp.GetString();
+                if (type == "NewMatch")
+                {
+                    _ = LoadMatchesAsync();
+                }
+                else if (type == "NewLike")
+                {
+                    _ = LoadLikesReceivedCountAsync();
+                    if (IsLikesVisible)
+                    {
+                        _ = LoadLikesReceivedAsync();
+                    }
+                }
             }
         });
 
@@ -1178,4 +1367,112 @@ public partial class DashboardViewModel : ObservableObject
         }
         catch {}
     }
+
+    public async Task LoadLikesReceivedAsync()
+    {
+        try
+        {
+            var likes = await _httpClient.GetFromJsonAsync<List<DiscoverUserDto>>("/api/Swipe/likes");
+            if (likes != null)
+            {
+                Application.Current.Dispatcher.Invoke(() =>
+                {
+                    LikesReceived.Clear();
+                    foreach (var like in likes)
+                    {
+                        LikesReceived.Add(like);
+                    }
+                    LikesReceivedCount = LikesReceived.Count;
+                });
+            }
+        }
+        catch { }
+    }
+
+    private async Task LoadLikesReceivedCountAsync()
+    {
+        try
+        {
+            var likes = await _httpClient.GetFromJsonAsync<List<DiscoverUserDto>>("/api/Swipe/likes");
+            if (likes != null)
+            {
+                Application.Current.Dispatcher.Invoke(() =>
+                {
+                    LikesReceivedCount = likes.Count;
+                });
+            }
+        }
+        catch { }
+    }
+
+    [RelayCommand]
+    private async Task AcceptLikeAsync(DiscoverUserDto user)
+    {
+        if (user == null) return;
+        try
+        {
+            var dto = new { ToUserId = user.Id, IsLike = true };
+            var response = await _httpClient.PostAsJsonAsync("/api/Swipe", dto);
+            if (response.IsSuccessStatusCode)
+            {
+                var result = await response.Content.ReadFromJsonAsync<System.Text.Json.JsonElement>();
+                if (result.TryGetProperty("isMatch", out var isMatchProp) && isMatchProp.GetBoolean())
+                {
+                    IsMatchPopupVisible = true;
+                    _ = LoadMatchesAsync();
+                }
+                
+                Application.Current.Dispatcher.Invoke(() =>
+                {
+                    LikesReceived.Remove(user);
+                    LikesReceivedCount = LikesReceived.Count;
+                });
+            }
+        }
+        catch {}
+    }
+
+    [RelayCommand]
+    private async Task PassLikeAsync(DiscoverUserDto user)
+    {
+        if (user == null) return;
+        try
+        {
+            var dto = new { ToUserId = user.Id, IsLike = false };
+            var response = await _httpClient.PostAsJsonAsync("/api/Swipe", dto);
+            if (response.IsSuccessStatusCode)
+            {
+                Application.Current.Dispatcher.Invoke(() =>
+                {
+                    LikesReceived.Remove(user);
+                    LikesReceivedCount = LikesReceived.Count;
+                });
+            }
+        }
+        catch {}
+    }
+
+    [RelayCommand]
+    private void Logout()
+    {
+        var loggedOutEmail = _authService.CurrentUser?.Email;
+
+        _authService.Logout();
+
+        var app = (App)System.Windows.Application.Current;
+        if (app.Services.GetService(typeof(LoginViewModel)) is LoginViewModel loginVm)
+        {
+            if (!string.IsNullOrEmpty(loggedOutEmail))
+            {
+                loginVm.Email = loggedOutEmail;
+            }
+            loginVm.Password = "";
+            loginVm.ErrorMessage = "";
+
+            CommunityToolkit.Mvvm.Messaging.WeakReferenceMessenger.Default.Send(
+                new DatingApp.Desktop.Messages.NavigationMessage(loginVm)
+            );
+        }
+    }
 }
+

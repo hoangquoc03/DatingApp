@@ -365,6 +365,43 @@
   },
   {
     "ContainingType": "DatingApp.Controllers.MessagesController",
+    "Method": "Delete",
+    "RelativePath": "api/Messages/{messageId}",
+    "HttpMethod": "DELETE",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "messageId",
+        "Type": "System.Guid",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "DatingApp.Controllers.MessagesController",
+    "Method": "Edit",
+    "RelativePath": "api/Messages/{messageId}",
+    "HttpMethod": "PUT",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "messageId",
+        "Type": "System.Guid",
+        "IsRequired": true
+      },
+      {
+        "Name": "dto",
+        "Type": "DatingApp.Controllers.EditMessageDto",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "DatingApp.Controllers.MessagesController",
     "Method": "GetChat",
     "RelativePath": "api/Messages/{userId}",
     "HttpMethod": "GET",
@@ -492,6 +529,26 @@
         "IsRequired": true
       }
     ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "DatingApp.Controllers.SwipeController",
+    "Method": "GetLikesReceived",
+    "RelativePath": "api/Swipe/likes",
+    "HttpMethod": "GET",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "DatingApp.Controllers.SwipeController",
+    "Method": "ResetSwipes",
+    "RelativePath": "api/Swipe/reset",
+    "HttpMethod": "POST",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [],
     "ReturnTypes": []
   },
   {

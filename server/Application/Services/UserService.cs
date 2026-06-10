@@ -279,9 +279,15 @@ namespace DatingApp.Services
                     x.Zodiac,
                     x.Mbti,
                     x.Interests,
+                    x.Height,
+                    x.Occupation,
+                    x.Education,
+                    x.Smoking,
+                    x.Drinking,
                     Age = x.DateOfBirth.HasValue
                         ? (int)((DateTime.UtcNow - x.DateOfBirth.Value).TotalDays / 365.25)
-                        : (int?)null
+                        : (int?)null,
+                    IsSuperLikedBy = _context.Swipes.Any(s => s.FromUserId == x.Id && s.ToUserId == userId && s.IsSuperLike)
                 })
                 .ToListAsync();
 
@@ -299,6 +305,12 @@ namespace DatingApp.Services
                 x.Mbti,
                 x.Interests,
                 x.Age,
+                x.IsSuperLikedBy,
+                x.Height,
+                x.Occupation,
+                x.Education,
+                x.Smoking,
+                x.Drinking,
                 CompatibilityScore = CalculateCompatibility(currentUser, x.Interests, x.Zodiac, x.Mbti, x.Age)
             }).ToList();
 
@@ -456,7 +468,7 @@ namespace DatingApp.Services
             user.ProfileCompletionScore = Math.Min(100, score);
         }
 
-        private int CalculateCompatibility(User currentUser, List<string>? targetInterests, string? targetZodiac, string? targetMbti, int? targetAge)
+        public static int CalculateCompatibility(User currentUser, List<string>? targetInterests, string? targetZodiac, string? targetMbti, int? targetAge)
         {
             double totalScore = 10; // Base score out of 100
 
@@ -563,7 +575,7 @@ namespace DatingApp.Services
             return (int)Math.Clamp(totalScore, 0, 100);
         }
 
-        private bool IsGoldenPair(string m1, string m2)
+        public static bool IsGoldenPair(string m1, string m2)
         {
             var goldenPairs = new (string, string)[]
             {
@@ -584,7 +596,7 @@ namespace DatingApp.Services
             return goldenPairs.Any(p => (p.Item1 == m1 && p.Item2 == m2) || (p.Item1 == m2 && p.Item2 == m1));
         }
 
-        private string GetZodiacElement(string zodiac)
+        public static string GetZodiacElement(string zodiac)
         {
             zodiac = zodiac.Trim().ToLower();
             if (zodiac == "aries" || zodiac == "leo" || zodiac == "sagittarius" ||
@@ -603,7 +615,7 @@ namespace DatingApp.Services
             return "Unknown";
         }
 
-        private bool AreElementsCompatible(string e1, string e2)
+        public static bool AreElementsCompatible(string e1, string e2)
         {
             if (e1 == "Fire" && e2 == "Air") return true;
             if (e1 == "Air" && e2 == "Fire") return true;

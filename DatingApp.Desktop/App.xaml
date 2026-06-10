@@ -9,6 +9,162 @@
                 <materialDesign:BundledTheme BaseTheme="Light" PrimaryColor="Pink" SecondaryColor="DeepPurple" />
                 <ResourceDictionary Source="pack://application:,,,/MaterialDesignThemes.Wpf;component/Themes/MaterialDesign3.Defaults.xaml" />
             </ResourceDictionary.MergedDictionaries>
+
+            <!-- Custom Brushes -->
+            <LinearGradientBrush x:Key="FbBrandGradient" StartPoint="0,0" EndPoint="1,1">
+                <GradientStop Color="#FF6EA7" Offset="0"/>
+                <GradientStop Color="#E6005C" Offset="1"/>
+            </LinearGradientBrush>
+            <SolidColorBrush x:Key="FbBrandSolid" Color="#E6005C"/>
+            <SolidColorBrush x:Key="FbBrandLight" Color="#FFF0F5"/>
+            <SolidColorBrush x:Key="FbBackground" Color="#F0F2F5"/>
+            <SolidColorBrush x:Key="FbCardBackground" Color="#FFFFFF"/>
+            <SolidColorBrush x:Key="FbBorder" Color="#E4E6EB"/>
+            <SolidColorBrush x:Key="FbTextPrimary" Color="#1C1E21"/>
+            <SolidColorBrush x:Key="FbTextSecondary" Color="#65676B"/>
+            <SolidColorBrush x:Key="FbAccentBlue" Color="#1877F2"/>
+            <SolidColorBrush x:Key="FbSuccessGreen" Color="#31A24C"/>
+
+            <!-- Premium TextBox Style -->
+            <Style x:Key="PremiumTextBox" TargetType="TextBox" BasedOn="{StaticResource MaterialDesignOutlinedTextBox}">
+                <Setter Property="BorderBrush" Value="#E4E6EB"/>
+                <Setter Property="materialDesign:HintAssist.Foreground" Value="#65676B"/>
+                <Setter Property="Background" Value="White"/>
+                <Setter Property="Padding" Value="16,14"/>
+                <Setter Property="Height" Value="50"/>
+                <Setter Property="FontSize" Value="15"/>
+                <Setter Property="Foreground" Value="#1C1E21"/>
+                <Style.Resources>
+                    <SolidColorBrush x:Key="PrimaryHueMidBrush" Color="#E6005C"/>
+                </Style.Resources>
+            </Style>
+
+            <!-- Premium PasswordBox Style -->
+            <Style x:Key="PremiumPasswordBox" TargetType="PasswordBox" BasedOn="{StaticResource MaterialDesignOutlinedPasswordBox}">
+                <Setter Property="BorderBrush" Value="#E4E6EB"/>
+                <Setter Property="materialDesign:HintAssist.Foreground" Value="#65676B"/>
+                <Setter Property="Background" Value="White"/>
+                <Setter Property="Padding" Value="16,14"/>
+                <Setter Property="Height" Value="50"/>
+                <Setter Property="FontSize" Value="15"/>
+                <Setter Property="Foreground" Value="#1C1E21"/>
+                <Style.Resources>
+                    <SolidColorBrush x:Key="PrimaryHueMidBrush" Color="#E6005C"/>
+                </Style.Resources>
+            </Style>
+
+            <!-- Premium ComboBox Style -->
+            <Style x:Key="PremiumComboBox" TargetType="ComboBox" BasedOn="{StaticResource MaterialDesignOutlinedComboBox}">
+                <Setter Property="BorderBrush" Value="#E4E6EB"/>
+                <Setter Property="materialDesign:HintAssist.Foreground" Value="#65676B"/>
+                <Setter Property="Background" Value="White"/>
+                <Setter Property="Padding" Value="16,14"/>
+                <Setter Property="Height" Value="50"/>
+                <Setter Property="FontSize" Value="15"/>
+                <Setter Property="Foreground" Value="#1C1E21"/>
+                <Style.Resources>
+                    <SolidColorBrush x:Key="PrimaryHueMidBrush" Color="#E6005C"/>
+                </Style.Resources>
+            </Style>
+
+            <!-- Premium DatePicker Style -->
+            <Style x:Key="PremiumDatePicker" TargetType="DatePicker" BasedOn="{StaticResource MaterialDesignOutlinedDatePicker}">
+                <Setter Property="BorderBrush" Value="#E4E6EB"/>
+                <Setter Property="materialDesign:HintAssist.Foreground" Value="#65676B"/>
+                <Setter Property="Background" Value="White"/>
+                <Setter Property="Padding" Value="16,14"/>
+                <Setter Property="Height" Value="50"/>
+                <Setter Property="FontSize" Value="15"/>
+                <Setter Property="Foreground" Value="#1C1E21"/>
+                <Style.Resources>
+                    <SolidColorBrush x:Key="PrimaryHueMidBrush" Color="#E6005C"/>
+                </Style.Resources>
+            </Style>
+
+            <!-- Premium Floating Card Style -->
+            <Style x:Key="PremiumCard" TargetType="Border">
+                <Setter Property="Background" Value="White"/>
+                <Setter Property="CornerRadius" Value="24"/>
+                <Setter Property="Padding" Value="32"/>
+                <Setter Property="BorderThickness" Value="1"/>
+                <Setter Property="BorderBrush" Value="#E4E6EB"/>
+                <Setter Property="Effect">
+                    <Setter.Value>
+                        <DropShadowEffect BlurRadius="45" ShadowDepth="8" Color="Black" Opacity="0.04"/>
+                    </Setter.Value>
+                </Setter>
+            </Style>
+
+            <!-- Premium Primary Button (Gradient) -->
+            <Style x:Key="PremiumButton" TargetType="Button">
+                <Setter Property="Background" Value="{StaticResource FbBrandGradient}"/>
+                <Setter Property="Foreground" Value="White"/>
+                <Setter Property="FontWeight" Value="SemiBold"/>
+                <Setter Property="FontSize" Value="16"/>
+                <Setter Property="Height" Value="50"/>
+                <Setter Property="BorderThickness" Value="0"/>
+                <Setter Property="Template">
+                    <Setter.Value>
+                        <ControlTemplate TargetType="Button">
+                            <Border x:Name="border" Background="{TemplateBinding Background}" CornerRadius="25">
+                                <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                            </Border>
+                            <ControlTemplate.Triggers>
+                                <Trigger Property="IsMouseOver" Value="True">
+                                    <Setter Property="Opacity" Value="0.9"/>
+                                </Trigger>
+                                <Trigger Property="IsPressed" Value="True">
+                                    <Setter Property="RenderTransform">
+                                        <Setter.Value>
+                                            <ScaleTransform ScaleX="0.97" ScaleY="0.97" CenterX="100" CenterY="25"/>
+                                        </Setter.Value>
+                                    </Setter>
+                                </Trigger>
+                                <Trigger Property="IsEnabled" Value="False">
+                                    <Setter Property="Background" Value="#E4E6EB"/>
+                                    <Setter Property="Foreground" Value="#B0B3B8"/>
+                                </Trigger>
+                            </ControlTemplate.Triggers>
+                        </ControlTemplate>
+                    </Setter.Value>
+                </Setter>
+            </Style>
+
+            <!-- Premium Outline Button -->
+            <Style x:Key="PremiumOutlineButton" TargetType="Button">
+                <Setter Property="Background" Value="Transparent"/>
+                <Setter Property="BorderBrush" Value="#E6005C"/>
+                <Setter Property="BorderThickness" Value="1.5"/>
+                <Setter Property="Foreground" Value="#E6005C"/>
+                <Setter Property="FontWeight" Value="SemiBold"/>
+                <Setter Property="FontSize" Value="15"/>
+                <Setter Property="Height" Value="50"/>
+                <Setter Property="Template">
+                    <Setter.Value>
+                        <ControlTemplate TargetType="Button">
+                            <Border x:Name="border" Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}" CornerRadius="25">
+                                <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                            </Border>
+                            <ControlTemplate.Triggers>
+                                <Trigger Property="IsMouseOver" Value="True">
+                                    <Setter Property="Background" Value="#FFF0F5"/>
+                                </Trigger>
+                                <Trigger Property="IsPressed" Value="True">
+                                    <Setter Property="RenderTransform">
+                                        <Setter.Value>
+                                            <ScaleTransform ScaleX="0.97" ScaleY="0.97" CenterX="100" CenterY="25"/>
+                                        </Setter.Value>
+                                    </Setter>
+                                </Trigger>
+                                <Trigger Property="IsEnabled" Value="False">
+                                    <Setter Property="BorderBrush" Value="#E4E6EB"/>
+                                    <Setter Property="Foreground" Value="#B0B3B8"/>
+                                </Trigger>
+                            </ControlTemplate.Triggers>
+                        </ControlTemplate>
+                    </Setter.Value>
+                </Setter>
+            </Style>
         </ResourceDictionary>
     </Application.Resources>
 </Application>
