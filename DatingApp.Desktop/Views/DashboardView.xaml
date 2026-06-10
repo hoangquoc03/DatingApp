@@ -9,24 +9,118 @@
              d:DataContext="{d:DesignInstance Type=viewmodels:DashboardViewModel}"
              mc:Ignorable="d" 
              d:DesignHeight="700" d:DesignWidth="1000">
+    
     <UserControl.Resources>
         <BooleanToVisibilityConverter x:Key="BoolToVis"/>
         <converters:NullOrEmptyToVisibilityConverter x:Key="NullOrEmptyToVisibilityConverter"/>
+
+        <!-- Sidebar Tab Button Style -->
+        <Style x:Key="SidebarTabButtonStyle" TargetType="Button" BasedOn="{StaticResource MaterialDesignFlatButton}">
+            <Setter Property="Height" Value="50"/>
+            <Setter Property="Margin" Value="0,0,0,6"/>
+            <Setter Property="materialDesign:ButtonAssist.CornerRadius" Value="12"/>
+            <Setter Property="HorizontalContentAlignment" Value="Left"/>
+            <Setter Property="Padding" Value="16,12"/>
+            <Setter Property="Background" Value="Transparent"/>
+            <Style.Triggers>
+                <Trigger Property="IsMouseOver" Value="True">
+                    <Setter Property="Background" Value="#F2F3F5"/>
+                </Trigger>
+            </Style.Triggers>
+        </Style>
+
+        <!-- Round Action Buttons Style (Tinder/FB Dating style) -->
+        <Style x:Key="RoundActionButtonStyle" TargetType="Button">
+            <Setter Property="Background" Value="White"/>
+            <Setter Property="BorderBrush" Value="#E4E6EB"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="Width" Value="66"/>
+            <Setter Property="Height" Value="66"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border x:Name="border" Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}" CornerRadius="33">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter Property="Background" Value="#F2F3F5"/>
+                                <Setter Property="BorderBrush" Value="#D8DADF"/>
+                                <Setter Property="RenderTransform">
+                                    <Setter.Value>
+                                        <ScaleTransform ScaleX="1.05" ScaleY="1.05" CenterX="33" CenterY="33"/>
+                                    </Setter.Value>
+                                </Setter>
+                            </Trigger>
+                            <Trigger Property="IsPressed" Value="True">
+                                <Setter Property="RenderTransform">
+                                    <Setter.Value>
+                                        <ScaleTransform ScaleX="0.95" ScaleY="0.95" CenterX="33" CenterY="33"/>
+                                    </Setter.Value>
+                                </Setter>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <!-- Round Pass Button Style -->
+        <Style x:Key="PassRoundButtonStyle" TargetType="Button" BasedOn="{StaticResource RoundActionButtonStyle}">
+            <Setter Property="Foreground" Value="#1C1E21"/>
+            <Setter Property="Effect">
+                <Setter.Value>
+                    <DropShadowEffect BlurRadius="20" ShadowDepth="4" Opacity="0.08" Color="Black"/>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <!-- Round Super Like Button Style -->
+        <Style x:Key="SuperLikeRoundButtonStyle" TargetType="Button" BasedOn="{StaticResource RoundActionButtonStyle}">
+            <Setter Property="Width" Value="58"/>
+            <Setter Property="Height" Value="58"/>
+            <Setter Property="Foreground" Value="White"/>
+            <Setter Property="Background" Value="#FFB300"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="Effect">
+                <Setter.Value>
+                    <DropShadowEffect BlurRadius="18" ShadowDepth="4" Color="#FFB300" Opacity="0.3"/>
+                </Setter.Value>
+            </Setter>
+            <Style.Triggers>
+                <Trigger Property="IsMouseOver" Value="True">
+                    <Setter Property="Opacity" Value="0.9"/>
+                </Trigger>
+            </Style.Triggers>
+        </Style>
+
+        <!-- Round Like Button Style -->
+        <Style x:Key="LikeRoundButtonStyle" TargetType="Button" BasedOn="{StaticResource RoundActionButtonStyle}">
+            <Setter Property="Foreground" Value="White"/>
+            <Setter Property="Background" Value="{StaticResource FbBrandGradient}"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="Effect">
+                <Setter.Value>
+                    <DropShadowEffect BlurRadius="20" ShadowDepth="4" Color="#FF1A75" Opacity="0.3"/>
+                </Setter.Value>
+            </Setter>
+            <Style.Triggers>
+                <Trigger Property="IsMouseOver" Value="True">
+                    <Setter Property="Opacity" Value="0.9"/>
+                </Trigger>
+            </Style.Triggers>
+        </Style>
     </UserControl.Resources>
 
-    <Grid Background="#FFF5F8"> <!-- Soft Pinkish White Background -->
+    <Grid Background="#F0F2F5">
         <Grid.ColumnDefinitions>
             <ColumnDefinition Width="280"/>
             <ColumnDefinition Width="*"/>
         </Grid.ColumnDefinitions>
 
         <!-- SIDEBAR -->
-        <Border Grid.Column="0" Background="White" CornerRadius="0,20,20,0">
-            <Border.Effect>
-                <DropShadowEffect BlurRadius="40" ShadowDepth="5" Opacity="0.05" Color="Black"/>
-            </Border.Effect>
-            
-            <Grid Margin="24">
+        <Border Grid.Column="0" Background="White" BorderThickness="0,0,1,0" BorderBrush="#E4E6EB">
+            <Grid Margin="20,24">
                 <Grid.RowDefinitions>
                     <RowDefinition Height="Auto"/>
                     <RowDefinition Height="*"/>
@@ -34,12 +128,16 @@
                 </Grid.RowDefinitions>
 
                 <!-- Header / Logo -->
-                <Grid Grid.Row="0" Margin="0,0,0,40">
+                <Grid Grid.Row="0" Margin="0,0,0,32">
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="*"/>
                         <ColumnDefinition Width="Auto"/>
                     </Grid.ColumnDefinitions>
-                    <TextBlock Grid.Column="0" Text="Aura Premium" FontSize="26" FontWeight="ExtraBold" Foreground="#E6005C" FontFamily="Segoe UI" VerticalAlignment="Center"/>
+                    
+                    <StackPanel Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center">
+                        <materialDesign:PackIcon Kind="HeartMultiple" Width="26" Height="26" Foreground="{StaticResource FbBrandSolid}" VerticalAlignment="Center" Margin="0,0,8,0"/>
+                        <TextBlock Text="Aura Dating" FontSize="26" FontWeight="Black" Foreground="{StaticResource FbBrandSolid}" FontFamily="Segoe UI, sans-serif" VerticalAlignment="Center"/>
+                    </StackPanel>
                     
                     <!-- Bell Button with Badge -->
                     <materialDesign:Badged Grid.Column="1" Badge="{Binding UnreadNotificationCount}" BadgeBackground="#EF4444" BadgeForeground="White" VerticalAlignment="Center" Margin="5,0,0,0">
@@ -53,35 +151,67 @@
                                 </Style.Triggers>
                             </Style>
                         </materialDesign:Badged.Style>
-                        <Button Command="{Binding ToggleNotificationPanelCommand}" Style="{StaticResource MaterialDesignIconButton}" Width="36" Height="36" Padding="0">
-                            <materialDesign:PackIcon Kind="Bell" Width="24" Height="24" Foreground="#E6005C"/>
+                        <Button Command="{Binding ToggleNotificationPanelCommand}" Style="{StaticResource MaterialDesignIconButton}" Width="38" Height="38" Background="#F0F2F5" BorderBrush="Transparent" Padding="0">
+                            <materialDesign:PackIcon Kind="Bell" Width="20" Height="20" Foreground="#1C1E21"/>
                         </Button>
                     </materialDesign:Badged>
                 </Grid>
 
-                <!-- Navigation -->
+                <!-- Navigation Tabs -->
                 <StackPanel Grid.Row="1">
-                    <Button Command="{Binding ShowDiscoverCommand}" Style="{StaticResource MaterialDesignFlatButton}" Foreground="{Binding DiscoverTabColor}" HorizontalContentAlignment="Left" Padding="15,12" Margin="0,0,0,10" Height="Auto" MinHeight="50">
+                    <!-- Tab Discover -->
+                    <Button Command="{Binding ShowDiscoverCommand}" Foreground="{Binding DiscoverTabColor}">
+                        <Button.Style>
+                            <Style TargetType="Button" BasedOn="{StaticResource SidebarTabButtonStyle}">
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding IsDiscoverVisible}" Value="True">
+                                        <Setter Property="Background" Value="#FFF0F5"/>
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </Button.Style>
                         <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-                            <materialDesign:PackIcon Kind="CardsHeart" Width="26" Height="26" Margin="0,0,16,0"/>
-                            <TextBlock Text="Khám phá" FontSize="18" FontWeight="Bold"/>
+                            <materialDesign:PackIcon Kind="CardsHeart" Width="24" Height="24" Margin="0,0,16,0" VerticalAlignment="Center"/>
+                            <TextBlock Text="Khám phá" FontSize="16" FontWeight="Bold" VerticalAlignment="Center"/>
                         </StackPanel>
                     </Button>
-                    <Button Command="{Binding ShowMessagesCommand}" Style="{StaticResource MaterialDesignFlatButton}" Foreground="{Binding MessagesTabColor}" HorizontalContentAlignment="Left" Padding="15,12" Margin="0,0,0,10" Height="Auto" MinHeight="50">
+                    
+                    <!-- Tab Messages -->
+                    <Button Command="{Binding ShowMessagesCommand}" Foreground="{Binding MessagesTabColor}">
+                        <Button.Style>
+                            <Style TargetType="Button" BasedOn="{StaticResource SidebarTabButtonStyle}">
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding IsMessagesVisible}" Value="True">
+                                        <Setter Property="Background" Value="#FFF0F5"/>
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </Button.Style>
                         <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-                            <materialDesign:PackIcon Kind="MessageText" Width="26" Height="26" Margin="0,0,16,0"/>
-                            <TextBlock Text="Tin nhắn" FontSize="18" FontWeight="SemiBold"/>
+                            <materialDesign:PackIcon Kind="MessageText" Width="24" Height="24" Margin="0,0,16,0" VerticalAlignment="Center"/>
+                            <TextBlock Text="Tin nhắn" FontSize="16" FontWeight="Bold" VerticalAlignment="Center"/>
                         </StackPanel>
                     </Button>
-                    <Button Command="{Binding ShowLikesCommand}" Style="{StaticResource MaterialDesignFlatButton}" Foreground="{Binding LikesTabColor}" HorizontalContentAlignment="Stretch" Padding="15,12" Margin="0,0,0,10" Height="Auto" MinHeight="50">
+                    
+                    <!-- Tab Likes -->
+                    <Button Command="{Binding ShowLikesCommand}" Foreground="{Binding LikesTabColor}">
+                        <Button.Style>
+                            <Style TargetType="Button" BasedOn="{StaticResource SidebarTabButtonStyle}">
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding IsLikesVisible}" Value="True">
+                                        <Setter Property="Background" Value="#FFF0F5"/>
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </Button.Style>
                         <Grid>
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="*"/>
                                 <ColumnDefinition Width="Auto"/>
                             </Grid.ColumnDefinitions>
                             <StackPanel Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center">
-                                <materialDesign:PackIcon Kind="Heart" Width="26" Height="26" Margin="0,0,16,0"/>
-                                <TextBlock Text="Thích bạn" FontSize="18" FontWeight="SemiBold"/>
+                                <materialDesign:PackIcon Kind="Heart" Width="24" Height="24" Margin="0,0,16,0" VerticalAlignment="Center"/>
+                                <TextBlock Text="Thích bạn" FontSize="16" FontWeight="Bold" VerticalAlignment="Center"/>
                             </StackPanel>
                             <Border Grid.Column="1" Background="#EF4444" CornerRadius="10" MinWidth="20" Height="20" HorizontalAlignment="Right" VerticalAlignment="Center">
                                 <Border.Style>
@@ -98,38 +228,56 @@
                             </Border>
                         </Grid>
                     </Button>
-                    <Button Command="{Binding ShowProfileCommand}" Style="{StaticResource MaterialDesignFlatButton}" Foreground="{Binding ProfileTabColor}" HorizontalContentAlignment="Left" Padding="15,12" Margin="0,0,0,10" Height="Auto" MinHeight="50">
+                    
+                    <!-- Tab Profile -->
+                    <Button Command="{Binding ShowProfileCommand}" Foreground="{Binding ProfileTabColor}">
+                        <Button.Style>
+                            <Style TargetType="Button" BasedOn="{StaticResource SidebarTabButtonStyle}">
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding IsProfileVisible}" Value="True">
+                                        <Setter Property="Background" Value="#FFF0F5"/>
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </Button.Style>
                         <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-                            <materialDesign:PackIcon Kind="Account" Width="26" Height="26" Margin="0,0,16,0"/>
-                            <TextBlock Text="Hồ sơ" FontSize="18" FontWeight="SemiBold"/>
+                            <materialDesign:PackIcon Kind="Account" Width="24" Height="24" Margin="0,0,16,0" VerticalAlignment="Center"/>
+                            <TextBlock Text="Hồ sơ" FontSize="16" FontWeight="Bold" VerticalAlignment="Center"/>
                         </StackPanel>
                     </Button>
+                    
                     <!-- Admin Button -->
-                    <Button Command="{Binding OpenAdminCommand}" Visibility="{Binding IsAdmin, Converter={StaticResource BoolToVis}}" Style="{StaticResource MaterialDesignFlatButton}" Foreground="#1F2937" HorizontalContentAlignment="Left" Padding="15,12" Height="Auto" MinHeight="50">
+                    <Button Command="{Binding OpenAdminCommand}" Visibility="{Binding IsAdmin, Converter={StaticResource BoolToVis}}" Style="{StaticResource SidebarTabButtonStyle}" Foreground="#1C1E21">
                         <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-                            <materialDesign:PackIcon Kind="Security" Width="26" Height="26" Margin="0,0,16,0"/>
-                            <TextBlock Text="Quản trị viên" FontSize="18" FontWeight="Bold"/>
+                            <materialDesign:PackIcon Kind="Security" Width="24" Height="24" Margin="0,0,16,0" VerticalAlignment="Center"/>
+                            <TextBlock Text="Quản trị viên" FontSize="16" FontWeight="Bold" VerticalAlignment="Center"/>
                         </StackPanel>
                     </Button>
                 </StackPanel>
 
                 <!-- Footer Profile -->
-                <Border Grid.Row="2" Background="#FFF1F6" CornerRadius="12" Padding="16">
+                <Border Grid.Row="2" Background="#FFF0F5" CornerRadius="16" Padding="12,14">
                     <Grid>
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="Auto"/>
                             <ColumnDefinition Width="*"/>
                             <ColumnDefinition Width="Auto"/>
                         </Grid.ColumnDefinitions>
-                        <!-- Fake Avatar -->
-                        <Ellipse Width="40" Height="40" Fill="#FF5C9A" Grid.Column="0" Margin="0,0,12,0"/>
+                        <!-- Main Avatar -->
+                        <Border Grid.Column="0" Width="40" Height="40" CornerRadius="20" ClipToBounds="True" Margin="0,0,10,0">
+                            <Image Source="{Binding ProfileAvatarUrl, TargetNullValue='pack://application:,,,/Resources/default-avatar.jpg'}" Stretch="UniformToFill"/>
+                        </Border>
                         <StackPanel Grid.Column="1" VerticalAlignment="Center">
-                            <TextBlock Text="Tài khoản của bạn" FontSize="14" FontWeight="Bold" Foreground="#1F2937"/>
-                            <TextBlock Text="Chỉnh sửa thông tin" FontSize="12" Foreground="#E6005C" Margin="0,2,0,0" Cursor="Hand"/>
+                            <TextBlock Text="Tài khoản" FontSize="13.5" FontWeight="Bold" Foreground="#1C1E21" TextTrimming="CharacterEllipsis"/>
+                            <TextBlock Text="Chỉnh sửa thông tin" FontSize="11.5" Foreground="#E6005C" FontWeight="SemiBold" Margin="0,2,0,0" Cursor="Hand">
+                                <TextBlock.InputBindings>
+                                    <MouseBinding Gesture="LeftClick" Command="{Binding ShowProfileCommand}"/>
+                                </TextBlock.InputBindings>
+                            </TextBlock>
                         </StackPanel>
                         <!-- Logout Button -->
-                        <Button Grid.Column="2" Command="{Binding LogoutCommand}" Style="{StaticResource MaterialDesignIconButton}" Width="36" Height="36" Padding="0" ToolTip="Đăng xuất">
-                            <materialDesign:PackIcon Kind="Logout" Width="20" Height="20" Foreground="#EF4444"/>
+                        <Button Grid.Column="2" Command="{Binding LogoutCommand}" Style="{StaticResource MaterialDesignIconButton}" Width="34" Height="34" Padding="0" ToolTip="Đăng xuất">
+                            <materialDesign:PackIcon Kind="Logout" Width="18" Height="18" Foreground="#EF4444"/>
                         </Button>
                     </Grid>
                 </Border>
@@ -139,10 +287,10 @@
         <!-- Notification Panel Overlay -->
         <Border Grid.Column="1" HorizontalAlignment="Left" VerticalAlignment="Top" 
                 Width="320" Height="450" Margin="10,60,0,0" CornerRadius="16" 
-                Background="White" Panel.ZIndex="95" BorderThickness="1" BorderBrush="#FFF0F5"
+                Background="White" Panel.ZIndex="95" BorderThickness="1" BorderBrush="#E4E6EB"
                 Visibility="{Binding IsNotificationPanelOpen, Converter={StaticResource BoolToVis}}">
             <Border.Effect>
-                <DropShadowEffect BlurRadius="30" ShadowDepth="10" Opacity="0.1" Color="#E6005C"/>
+                <DropShadowEffect BlurRadius="30" ShadowDepth="10" Opacity="0.08" Color="Black"/>
             </Border.Effect>
             <Grid>
                 <Grid.RowDefinitions>
@@ -152,11 +300,11 @@
                 </Grid.RowDefinitions>
 
                 <!-- Header -->
-                <Border Grid.Row="0" BorderBrush="#FFF0F5" BorderThickness="0,0,0,1" Padding="15,10">
+                <Border Grid.Row="0" BorderBrush="#E4E6EB" BorderThickness="0,0,0,1" Padding="16,12">
                     <Grid>
-                        <TextBlock Text="Thông báo" FontSize="16" FontWeight="Bold" Foreground="#1F2937" VerticalAlignment="Center"/>
+                        <TextBlock Text="Thông báo" FontSize="16" FontWeight="Bold" Foreground="#1C1E21" VerticalAlignment="Center"/>
                         <Button Command="{Binding ToggleNotificationPanelCommand}" Style="{StaticResource MaterialDesignIconButton}" HorizontalAlignment="Right" Width="28" Height="28" Padding="0">
-                            <materialDesign:PackIcon Kind="Close" Width="18" Height="18" Foreground="Gray"/>
+                            <materialDesign:PackIcon Kind="Close" Width="18" Height="18" Foreground="#65676B"/>
                         </Button>
                     </Grid>
                 </Border>
@@ -166,7 +314,7 @@
                     <ItemsControl ItemsSource="{Binding Notifications}">
                         <ItemsControl.ItemTemplate>
                             <DataTemplate>
-                                <Border BorderBrush="#FFF8FB" BorderThickness="0,0,0,1" Padding="12,10" Cursor="Hand">
+                                <Border BorderBrush="#F0F2F5" BorderThickness="0,0,0,1" Padding="12,10" Cursor="Hand">
                                     <Border.InputBindings>
                                         <MouseBinding Gesture="LeftClick" 
                                                       Command="{Binding DataContext.ClickNotificationCommand, RelativeSource={RelativeSource AncestorType=UserControl}}" 
@@ -177,10 +325,10 @@
                                             <Setter Property="Background" Value="White"/>
                                             <Style.Triggers>
                                                 <DataTrigger Binding="{Binding IsRead}" Value="False">
-                                                    <Setter Property="Background" Value="#FFF9FB"/>
+                                                    <Setter Property="Background" Value="#FFF0F5"/>
                                                 </DataTrigger>
                                                 <Trigger Property="IsMouseOver" Value="True">
-                                                    <Setter Property="Background" Value="#FFF0F5"/>
+                                                    <Setter Property="Background" Value="#F2F3F5"/>
                                                 </Trigger>
                                             </Style.Triggers>
                                         </Style>
@@ -192,38 +340,24 @@
                                             <ColumnDefinition Width="10"/>
                                         </Grid.ColumnDefinitions>
 
-                                        <!-- Avatar or Icon -->
-                                        <Border Grid.Column="0" Width="32" Height="32" CornerRadius="16" Background="#FFF0F5">
-                                            <Border CornerRadius="16" ClipToBounds="True">
-                                                <Image Source="{Binding RelatedUser.AvatarUrl, TargetNullValue='pack://application:,,,/Resources/default-avatar.jpg'}" Stretch="UniformToFill"/>
-                                            </Border>
+                                        <!-- Avatar -->
+                                        <Border Grid.Column="0" Width="34" Height="34" CornerRadius="17" ClipToBounds="True">
+                                            <Image Source="{Binding RelatedUser.AvatarUrl, TargetNullValue='pack://application:,,,/Resources/default-avatar.jpg'}" Stretch="UniformToFill"/>
                                         </Border>
 
-                                        <!-- Content -->
                                         <StackPanel Grid.Column="1" Margin="10,0,0,0" VerticalAlignment="Center">
-                                            <TextBlock Text="{Binding Content}" FontSize="13" TextWrapping="Wrap" Foreground="#374151">
-                                                <TextBlock.Style>
-                                                    <Style TargetType="TextBlock">
-                                                        <Setter Property="FontWeight" Value="Normal"/>
-                                                        <Style.Triggers>
-                                                            <DataTrigger Binding="{Binding IsRead}" Value="False">
-                                                                <Setter Property="FontWeight" Value="SemiBold"/>
-                                                            </DataTrigger>
-                                                        </Style.Triggers>
-                                                    </Style>
-                                                </TextBlock.Style>
-                                            </TextBlock>
-                                            <TextBlock Text="{Binding TimeAgo}" FontSize="11" Foreground="Gray" Margin="0,2,0,0"/>
+                                            <TextBlock Text="{Binding Content}" FontSize="13" Foreground="#1C1E21" TextWrapping="Wrap" LineHeight="17"/>
+                                            <TextBlock Text="{Binding CreatedAt, StringFormat=\{0:HH:mm dd/MM\}}" FontSize="11" Foreground="#65676B" Margin="0,4,0,0"/>
                                         </StackPanel>
 
                                         <!-- Unread Dot Indicator -->
-                                        <Ellipse Grid.Column="2" Width="6" Height="6" Fill="#E6005C" VerticalAlignment="Center" HorizontalAlignment="Right">
+                                        <Ellipse Grid.Column="2" Width="8" Height="8" Fill="#E6005C" VerticalAlignment="Center" HorizontalAlignment="Right">
                                             <Ellipse.Style>
                                                 <Style TargetType="Ellipse">
-                                                    <Setter Property="Visibility" Value="Collapsed"/>
+                                                    <Setter Property="Visibility" Value="Visible"/>
                                                     <Style.Triggers>
-                                                        <DataTrigger Binding="{Binding IsRead}" Value="False">
-                                                            <Setter Property="Visibility" Value="Visible"/>
+                                                        <DataTrigger Binding="{Binding IsRead}" Value="True">
+                                                            <Setter Property="Visibility" Value="Collapsed"/>
                                                         </DataTrigger>
                                                     </Style.Triggers>
                                                 </Style>
@@ -236,299 +370,448 @@
                     </ItemsControl>
                 </ScrollViewer>
 
-                <!-- Footer / Mark Read All -->
-                <Border Grid.Row="2" BorderBrush="#FFF0F5" BorderThickness="0,1,0,0" Padding="10" Background="#FFFDFE" CornerRadius="0,0,16,16">
+                <!-- Footer Mark All Read -->
+                <Border Grid.Row="2" BorderBrush="#E4E6EB" BorderThickness="0,1,0,0" Padding="10" Background="White" CornerRadius="0,0,16,16">
                     <Grid>
                         <Button Command="{Binding MarkAllNotificationsAsReadCommand}" Content="Đọc tất cả" 
                                 Style="{StaticResource MaterialDesignFlatButton}" Foreground="#E6005C" 
-                                FontSize="12" Height="28" Padding="10,0" HorizontalAlignment="Center"/>
+                                FontSize="13" FontWeight="Bold" Height="32" Padding="12,0" HorizontalAlignment="Center"/>
                     </Grid>
                 </Border>
             </Grid>
         </Border>
 
         <!-- DISCOVER AREA -->
-        <Grid Grid.Column="1" Visibility="{Binding IsDiscoverVisible, Converter={StaticResource BoolToVis}}" Background="#FFF5F8">
+        <Grid Grid.Column="1" Visibility="{Binding IsDiscoverVisible, Converter={StaticResource BoolToVis}}" Background="#F0F2F5">
             <Grid.RowDefinitions>
                 <RowDefinition Height="Auto"/>
                 <RowDefinition Height="*"/>
             </Grid.RowDefinitions>
             
             <!-- Bộ lọc Tìm kiếm -->
-            <Expander Grid.Row="0" Header="Bộ lọc tìm kiếm" Background="White" Margin="20,20,20,0" BorderThickness="0">
-                <Grid Margin="20">
-                    <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="*"/>
-                        <ColumnDefinition Width="20"/>
-                        <ColumnDefinition Width="*"/>
-                    </Grid.ColumnDefinitions>
-                    
-                    <StackPanel Grid.Column="0">
-                        <TextBlock Text="Độ tuổi" FontWeight="SemiBold" Margin="0,0,0,10"/>
-                        <Grid>
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="*"/>
-                                <ColumnDefinition Width="20"/>
-                                <ColumnDefinition Width="*"/>
-                            </Grid.ColumnDefinitions>
-                            <TextBox Grid.Column="0" materialDesign:HintAssist.Hint="Từ" Text="{Binding FilterAgeMin, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource MaterialDesignOutlinedTextBox}" Height="40"/>
-                            <TextBlock Grid.Column="1" Text="-" HorizontalAlignment="Center" VerticalAlignment="Center"/>
-                            <TextBox Grid.Column="2" materialDesign:HintAssist.Hint="Đến" Text="{Binding FilterAgeMax, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource MaterialDesignOutlinedTextBox}" Height="40"/>
-                        </Grid>
-                    </StackPanel>
-                    
-                    <StackPanel Grid.Column="2">
-                        <Grid>
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="*"/>
-                                <ColumnDefinition Width="10"/>
-                                <ColumnDefinition Width="*"/>
-                            </Grid.ColumnDefinitions>
-                            <StackPanel Grid.Column="0">
-                                <TextBlock Text="Giới tính" FontWeight="SemiBold" Margin="0,0,0,10"/>
-                                <ComboBox Text="{Binding FilterGender, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource MaterialDesignOutlinedComboBox}" Height="40">
-                                    <ComboBoxItem Content="Tất cả"/>
-                                    <ComboBoxItem Content="Nam"/>
-                                    <ComboBoxItem Content="Nữ"/>
-                                </ComboBox>
-                            </StackPanel>
-                            <StackPanel Grid.Column="2">
-                                <TextBlock Text="Khoảng cách (km)" FontWeight="SemiBold" Margin="0,0,0,10"/>
-                                <TextBox materialDesign:HintAssist.Hint="Max km" Text="{Binding FilterMaxDistance, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource MaterialDesignOutlinedTextBox}" Height="40"/>
-                            </StackPanel>
-                        </Grid>
+            <Border Grid.Row="0" Background="White" CornerRadius="16" Margin="20,20,20,0" BorderThickness="1" BorderBrush="#E4E6EB" ClipToBounds="True">
+                <Expander Header="Bộ lọc tìm kiếm" Background="White" BorderThickness="0">
+                    <Grid Margin="16">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="20"/>
+                            <ColumnDefinition Width="*"/>
+                        </Grid.ColumnDefinitions>
                         
-                        <!-- Additional Filters -->
-                        <StackPanel Orientation="Horizontal" Margin="0,15,0,0" HorizontalAlignment="Right">
-                            <CheckBox IsChecked="{Binding FilterVerifiedOnly}" Content="Đã xác thực" Margin="0,0,20,0" Foreground="#1F2937" FontSize="14" FontWeight="Medium"/>
-                            <CheckBox IsChecked="{Binding FilterOnlineOnly}" Content="Đang online" Foreground="#1F2937" FontSize="14" FontWeight="Medium"/>
+                        <StackPanel Grid.Column="0">
+                            <TextBlock Text="Độ tuổi" FontWeight="Bold" Foreground="#1C1E21" Margin="0,0,0,10" FontSize="14"/>
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="20"/>
+                                    <ColumnDefinition Width="*"/>
+                                </Grid.ColumnDefinitions>
+                                <TextBox Grid.Column="0" materialDesign:HintAssist.Hint="Từ" Text="{Binding FilterAgeMin, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource PremiumTextBox}"/>
+                                <TextBlock Grid.Column="1" Text="-" HorizontalAlignment="Center" VerticalAlignment="Center" FontWeight="Bold" Foreground="#65676B"/>
+                                <TextBox Grid.Column="2" materialDesign:HintAssist.Hint="Đến" Text="{Binding FilterAgeMax, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource PremiumTextBox}"/>
+                            </Grid>
                         </StackPanel>
                         
-                        <Button Content="Áp dụng bộ lọc" Command="{Binding ApplyFiltersCommand}" Background="#E6005C" BorderBrush="Transparent" Margin="0,15,0,0" HorizontalAlignment="Right"/>
-                    </StackPanel>
-                </Grid>
-            </Expander>
+                        <StackPanel Grid.Column="2">
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="10"/>
+                                    <ColumnDefinition Width="*"/>
+                                </Grid.ColumnDefinitions>
+                                <StackPanel Grid.Column="0">
+                                    <TextBlock Text="Giới tính" FontWeight="Bold" Foreground="#1C1E21" Margin="0,0,0,10" FontSize="14"/>
+                                    <ComboBox SelectedValue="{Binding FilterGender, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource PremiumComboBox}">
+                                        <ComboBoxItem Content="Tất cả"/>
+                                        <ComboBoxItem Content="Nam"/>
+                                        <ComboBoxItem Content="Nữ"/>
+                                    </ComboBox>
+                                </StackPanel>
+                                <StackPanel Grid.Column="2">
+                                    <TextBlock Text="Khoảng cách (km)" FontWeight="Bold" Foreground="#1C1E21" Margin="0,0,0,10" FontSize="14"/>
+                                    <TextBox materialDesign:HintAssist.Hint="Max km" Text="{Binding FilterMaxDistance, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource PremiumTextBox}"/>
+                                </StackPanel>
+                            </Grid>
+                            
+                            <!-- Additional Filters -->
+                            <StackPanel Orientation="Horizontal" Margin="0,15,0,0" HorizontalAlignment="Right">
+                                <CheckBox IsChecked="{Binding FilterVerifiedOnly}" Content="Đã xác thực" Margin="0,0,20,0" Foreground="#1C1E21" FontSize="14" FontWeight="SemiBold"/>
+                                <CheckBox IsChecked="{Binding FilterOnlineOnly}" Content="Đang online" Foreground="#1C1E21" FontSize="14" FontWeight="SemiBold"/>
+                            </StackPanel>
+                            
+                            <Button Content="Áp dụng bộ lọc" Command="{Binding ApplyFiltersCommand}" Style="{StaticResource PremiumButton}" Width="150" Margin="0,15,0,0" HorizontalAlignment="Right"/>
+                        </StackPanel>
+                    </Grid>
+                </Expander>
+            </Border>
 
             <!-- Card Stack (Tinder Style) -->
-            <Grid Grid.Row="1" Width="400" Height="600" HorizontalAlignment="Center" VerticalAlignment="Center">
+            <Grid Grid.Row="1" MaxWidth="450" MaxHeight="720" MinWidth="350" MinHeight="550" HorizontalAlignment="Center" VerticalAlignment="Center" Margin="20">
                 <!-- Discover Queue Empty Overlay -->
-                <Border Width="380" Height="600" CornerRadius="28" Background="#FDF2F8" BorderBrush="#FFF0F6" BorderThickness="1.5"
+                <Border CornerRadius="24" Background="White" BorderBrush="#E4E6EB" BorderThickness="1"
                         Visibility="{Binding IsDiscoverQueueEmpty, Converter={StaticResource BoolToVis}}" Panel.ZIndex="10">
                     <Border.Effect>
-                        <DropShadowEffect BlurRadius="45" ShadowDepth="12" Opacity="0.1" Color="#E6005C"/>
+                        <DropShadowEffect BlurRadius="45" ShadowDepth="10" Opacity="0.06" Color="Black"/>
                     </Border.Effect>
                     <Grid>
                         <!-- Soft glowing background circles -->
                         <Canvas ClipToBounds="True">
-                            <Ellipse Fill="#FCE7F3" Width="320" Height="320" Canvas.Left="-80" Canvas.Top="-80" Opacity="0.6"/>
-                            <Ellipse Fill="#FAE8FF" Width="280" Height="280" Canvas.Right="-80" Canvas.Bottom="-80" Opacity="0.5"/>
+                            <Ellipse Fill="#FFF0F5" Width="320" Height="320" Canvas.Left="-80" Canvas.Top="-80" Opacity="0.6"/>
+                            <Ellipse Fill="#F3E8FF" Width="280" Height="280" Canvas.Right="-80" Canvas.Bottom="-80" Opacity="0.5"/>
                         </Canvas>
 
                         <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center" Margin="30">
-                            <!-- Premium Heart Icon with a subtle glow -->
+                            <!-- Heart broken glow -->
                             <Grid HorizontalAlignment="Center" Margin="0,0,0,24">
-                                <Ellipse Fill="#FFF0F6" Width="100" Height="100"/>
-                                <materialDesign:PackIcon Kind="HeartBreakOutline" Width="52" Height="52" Foreground="#E6005C" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                <Ellipse Fill="#FFF0F5" Width="100" Height="100"/>
+                                <materialDesign:PackIcon Kind="HeartBroken" Width="50" Height="50" Foreground="#E6005C" HorizontalAlignment="Center" VerticalAlignment="Center"/>
                             </Grid>
                             
-                            <TextBlock Text="Đã hết người khám phá!" FontSize="22" FontWeight="Black" Foreground="#1F2937" HorizontalAlignment="Center" TextAlignment="Center" Margin="0,0,0,12"/>
+                            <TextBlock Text="Đã hết người khám phá!" FontSize="22" FontWeight="Black" Foreground="#1C1E21" HorizontalAlignment="Center" TextAlignment="Center" Margin="0,0,0,12"/>
                             <TextBlock Text="Không tìm thấy ai xung quanh bạn phù hợp với bộ lọc hiện tại. Hãy thay đổi bộ lọc hoặc làm mới lượt vuốt của bạn để bắt đầu lại." 
-                                       FontSize="14" Foreground="#4B5563" HorizontalAlignment="Center" TextAlignment="Center" TextWrapping="Wrap" LineHeight="20" Margin="0,0,0,36"/>
+                                       FontSize="14.5" Foreground="#65676B" HorizontalAlignment="Center" TextAlignment="Center" TextWrapping="Wrap" LineHeight="20" Margin="0,0,0,36"/>
 
                             <Button Command="{Binding ResetSwipesCommand}" 
-                                    Style="{StaticResource MaterialDesignRaisedButton}"
-                                    Background="#E6005C" BorderBrush="Transparent" Height="50" materialDesign:ButtonAssist.CornerRadius="25"
-                                    Foreground="White" FontSize="15" FontWeight="Bold" Width="230">
+                                    Style="{StaticResource PremiumButton}" Width="230">
                                 <StackPanel Orientation="Horizontal">
-                                    <materialDesign:PackIcon Kind="Refresh" Width="20" Height="20" Margin="0,0,8,0" VerticalAlignment="Center"/>
-                                    <TextBlock Text="Làm mới lượt vuốt" VerticalAlignment="Center"/>
+                                    <materialDesign:PackIcon Kind="Refresh" Width="20" Height="20" Margin="0,0,8,0" VerticalAlignment="Center" Foreground="White"/>
+                                    <TextBlock Text="Làm mới lượt vuốt" VerticalAlignment="Center" Foreground="White"/>
                                 </StackPanel>
                             </Button>
                         </StackPanel>
                     </Grid>
                 </Border>
 
-                <Border x:Name="SwipeCard" Width="380" Height="600" CornerRadius="28" Background="White" 
-                    HorizontalAlignment="Center" VerticalAlignment="Center"
-                    MouseLeftButtonDown="SwipeCard_MouseLeftButtonDown"
-                    MouseMove="SwipeCard_MouseMove"
-                    MouseLeftButtonUp="SwipeCard_MouseLeftButtonUp"
-                    Cursor="Hand">
-                <Border.RenderTransform>
-                    <TransformGroup>
-                        <TranslateTransform x:Name="CardTranslate" X="0" Y="0" />
-                        <RotateTransform x:Name="CardRotate" Angle="0" CenterX="190" CenterY="650" />
-                    </TransformGroup>
-                </Border.RenderTransform>
+                <!-- Swipe Card View -->
+                <Border x:Name="SwipeCard" CornerRadius="24" Background="White" 
+                        HorizontalAlignment="Center" VerticalAlignment="Center"
+                        MouseLeftButtonDown="SwipeCard_MouseLeftButtonDown"
+                        MouseMove="SwipeCard_MouseMove"
+                        MouseLeftButtonUp="SwipeCard_MouseLeftButtonUp"
+                        Cursor="Hand">
+                    <Border.RenderTransform>
+                        <TransformGroup>
+                            <TranslateTransform x:Name="CardTranslate" X="0" Y="0" />
+                            <RotateTransform x:Name="CardRotate" Angle="0" CenterX="190" CenterY="650" />
+                        </TransformGroup>
+                    </Border.RenderTransform>
+                    <Border.Effect>
+                        <DropShadowEffect BlurRadius="45" ShadowDepth="10" Opacity="0.08" Color="Black"/>
+                    </Border.Effect>
+                    <Grid>
+                        <!-- Super Like Highlight Border -->
+                        <Border BorderBrush="#FFB300" BorderThickness="4" CornerRadius="24" IsHitTestVisible="False" Panel.ZIndex="5"
+                                Visibility="{Binding IsSuperLikedBy, Converter={StaticResource BoolToVis}}"/>
+
+                        <!-- Background Image -->
+                        <Border CornerRadius="24" ClipToBounds="True">
+                            <Image Source="{Binding CurrentUserImage, TargetNullValue={x:Null}}" Stretch="UniformToFill"/>
+                        </Border>
+                        
+                        <!-- Gradient Overlay for Text Readability -->
+                        <Border CornerRadius="24">
+                            <Border.Background>
+                                <LinearGradientBrush StartPoint="0,0.3" EndPoint="0,1">
+                                    <GradientStop Color="Transparent" Offset="0"/>
+                                    <GradientStop Color="#00000000" Offset="0.5"/>
+                                    <GradientStop Color="#99000000" Offset="0.8"/>
+                                    <GradientStop Color="#E6000000" Offset="1"/>
+                                </LinearGradientBrush>
+                            </Border.Background>
+                        </Border>
+
+                        <!-- Compatibility Score Badge -->
+                        <Border VerticalAlignment="Top" HorizontalAlignment="Right" Margin="20" CornerRadius="14" Padding="12,6"
+                                Background="{StaticResource FbBrandGradient}"
+                                Visibility="{Binding IsCompatibilityVisible, Converter={StaticResource BoolToVis}}">
+                            <Border.Effect>
+                                <DropShadowEffect BlurRadius="12" ShadowDepth="3" Opacity="0.3" Color="#E6005C"/>
+                            </Border.Effect>
+                            <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                <materialDesign:PackIcon Kind="HeartFlash" Foreground="White" Width="16" Height="16" Margin="0,0,6,0" VerticalAlignment="Center"/>
+                                <TextBlock Text="{Binding CurrentUserCompatibilityScore, StringFormat='Mức độ tương thích: {0}%'}" 
+                                           Foreground="White" FontWeight="Bold" FontSize="12" VerticalAlignment="Center"/>
+                            </StackPanel>
+                        </Border>
+
+                        <!-- Super Like Received Badge -->
+                        <Border VerticalAlignment="Top" HorizontalAlignment="Left" Margin="20" CornerRadius="14" Padding="12,6" Background="#FFB300" Panel.ZIndex="6"
+                                Visibility="{Binding IsSuperLikedBy, Converter={StaticResource BoolToVis}}">
+                            <Border.Effect>
+                                <DropShadowEffect BlurRadius="12" ShadowDepth="3" Opacity="0.3" Color="#FFB300"/>
+                            </Border.Effect>
+                            <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                <materialDesign:PackIcon Kind="Star" Foreground="White" Width="16" Height="16" Margin="0,0,6,0" VerticalAlignment="Center"/>
+                                <TextBlock Text="Đã Super Like bạn! ⭐" Foreground="White" FontWeight="Bold" FontSize="12" VerticalAlignment="Center"/>
+                            </StackPanel>
+                        </Border>
+
+                        <!-- Profile Info on Card -->
+                        <StackPanel VerticalAlignment="Bottom" Margin="24,0,24,120">
+                            <!-- Name, Age, Info button -->
+                            <StackPanel Orientation="Horizontal" Margin="0,0,0,6">
+                                <TextBlock Text="{Binding CurrentUserName}" FontSize="32" FontWeight="Black" Foreground="White" VerticalAlignment="Center"/>
+                                <materialDesign:PackIcon Kind="CheckDecagram" Foreground="#1877F2" Width="26" Height="26" Margin="8,0,0,0" VerticalAlignment="Center"
+                                                         Visibility="{Binding IsCurrentUserVerified, Converter={StaticResource BoolToVis}}"/>
+                                <materialDesign:PackIcon Kind="InformationOutline" Foreground="White" Width="22" Height="22" Margin="10,0,0,0" VerticalAlignment="Center" Opacity="0.75"/>
+                            </StackPanel>
+
+                            <!-- Location -->
+                            <StackPanel Orientation="Horizontal" Margin="0,0,0,8" Visibility="{Binding CurrentUserLocation, Converter={StaticResource NullOrEmptyToVisibilityConverter}}">
+                                <materialDesign:PackIcon Kind="MapMarkerOutline" Width="16" Height="16" Foreground="#E5E7EB" VerticalAlignment="Center" Margin="0,0,4,0"/>
+                                <TextBlock Text="{Binding CurrentUserLocation}" FontSize="13.5" Foreground="#E5E7EB" FontWeight="Medium" VerticalAlignment="Center"/>
+                            </StackPanel>
+
+                            <!-- Bio snippet -->
+                            <TextBlock Text="{Binding CurrentUserBio}" FontSize="15" Foreground="#E5E7EB" TextWrapping="Wrap" MaxHeight="45" TextTrimming="CharacterEllipsis" Margin="0,0,0,10" LineHeight="20"/>
+
+                            <!-- Quick tags -->
+                            <WrapPanel Orientation="Horizontal">
+                                <!-- Zodiac -->
+                                <Border CornerRadius="10" Background="#33FFFFFF" Padding="8,4" Margin="0,0,8,6" 
+                                        Visibility="{Binding CurrentUserZodiac, Converter={StaticResource NullOrEmptyToVisibilityConverter}}">
+                                    <StackPanel Orientation="Horizontal">
+                                        <materialDesign:PackIcon Kind="CompassOutline" Width="12" Height="12" Foreground="White" VerticalAlignment="Center" Margin="0,0,4,0"/>
+                                        <TextBlock Text="{Binding CurrentUserZodiac}" FontSize="11" Foreground="White" FontWeight="SemiBold"/>
+                                    </StackPanel>
+                                </Border>
+                                
+                                <!-- MBTI -->
+                                <Border CornerRadius="10" Background="#33FFFFFF" Padding="8,4" Margin="0,0,8,6"
+                                        Visibility="{Binding CurrentUserMbti, Converter={StaticResource NullOrEmptyToVisibilityConverter}}">
+                                    <StackPanel Orientation="Horizontal">
+                                        <materialDesign:PackIcon Kind="Brain" Width="12" Height="12" Foreground="White" VerticalAlignment="Center" Margin="0,0,4,0"/>
+                                        <TextBlock Text="{Binding CurrentUserMbti}" FontSize="11" Foreground="White" FontWeight="SemiBold"/>
+                                    </StackPanel>
+                                </Border>
+                            </WrapPanel>
+                        </StackPanel>
+
+                        <!-- Swipe Action Circular Buttons -->
+                        <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" VerticalAlignment="Bottom" Margin="0,0,0,24">
+                            <!-- PASS -->
+                            <Button x:Name="BtnPass" Command="{Binding PassCommand}" Style="{StaticResource PassRoundButtonStyle}">
+                                <materialDesign:PackIcon Kind="Close" Width="36" Height="36" Foreground="#1C1E21"/>
+                            </Button>
+
+                            <!-- SUPER LIKE -->
+                            <Button x:Name="BtnSuperLike" Command="{Binding SuperLikeCommand}" Style="{StaticResource SuperLikeRoundButtonStyle}" Margin="20,0">
+                                <materialDesign:PackIcon Kind="Star" Width="28" Height="28" Foreground="White"/>
+                            </Button>
+
+                            <!-- LIKE -->
+                            <Button x:Name="BtnLike" Command="{Binding LikeCommand}" Style="{StaticResource LikeRoundButtonStyle}">
+                                <materialDesign:PackIcon Kind="Heart" Width="34" Height="34" Foreground="White"/>
+                            </Button>
+                        </StackPanel>
+                    </Grid>
+                </Border>
+            </Grid>
+            
+            <!-- Match Popup Notification -->
+            <Border x:Name="MatchPopup" Visibility="{Binding IsMatchPopupVisible, Converter={StaticResource BoolToVis}}" Background="#CC000000" CornerRadius="24" Width="450" Height="720" HorizontalAlignment="Center" VerticalAlignment="Center" Panel.ZIndex="100">
+                <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center">
+                    <materialDesign:PackIcon Kind="CardsHeart" Width="90" Height="90" Foreground="#E6005C" HorizontalAlignment="Center">
+                        <materialDesign:PackIcon.Effect>
+                            <DropShadowEffect BlurRadius="40" ShadowDepth="0" Color="#E6005C" Opacity="0.8"/>
+                        </materialDesign:PackIcon.Effect>
+                    </materialDesign:PackIcon>
+                    <TextBlock Text="TƯƠNG THÍCH!" FontSize="36" FontWeight="Black" Foreground="White" Margin="0,20,0,0" HorizontalAlignment="Center"/>
+                    <TextBlock Text="Hai bạn đã thích nhau. Hãy bắt đầu trò chuyện ngay thôi!" FontSize="15" Foreground="#E5E7EB" HorizontalAlignment="Center" TextAlignment="Center" Margin="0,10,0,0" TextWrapping="Wrap" Width="300"/>
+                    <Button Content="Trò chuyện ngay" Width="180" Style="{StaticResource PremiumButton}" Margin="0,40,0,0" Command="{Binding CloseMatchPopupCommand}"/>
+                </StackPanel>
+            </Border>
+
+            <!-- Chi tiết Hồ sơ (User Detail Profile Overlay) -->
+            <Border x:Name="UserDetailPopup" Visibility="{Binding IsUserDetailVisible, Converter={StaticResource BoolToVis}}" Background="White" CornerRadius="24" Width="450" Height="720" HorizontalAlignment="Center" VerticalAlignment="Center" Panel.ZIndex="90">
                 <Border.Effect>
-                    <DropShadowEffect BlurRadius="60" ShadowDepth="20" Opacity="0.12" Color="#111827"/>
+                    <DropShadowEffect BlurRadius="45" ShadowDepth="10" Opacity="0.12" Color="Black"/>
                 </Border.Effect>
                 <Grid>
-                    <!-- Super Like Highlight Border -->
-                    <Border BorderBrush="#3B82F6" BorderThickness="4" CornerRadius="28" IsHitTestVisible="False" Panel.ZIndex="5"
-                            Visibility="{Binding IsSuperLikedBy, Converter={StaticResource BoolToVis}}"/>
-
-                    <!-- Background Image -->
-                    <Border CornerRadius="28" ClipToBounds="True">
-                        <Image Source="{Binding CurrentUserImage, TargetNullValue={x:Null}}" Stretch="UniformToFill"/>
-                    </Border>
-                    
-                    <!-- Gradient Overlay for Text Readability -->
-                    <Border CornerRadius="28">
-                        <Border.Background>
-                            <LinearGradientBrush StartPoint="0,0.5" EndPoint="0,1">
-                                <GradientStop Color="Transparent" Offset="0"/>
-                                <GradientStop Color="#E6000000" Offset="1"/>
-                            </LinearGradientBrush>
-                        </Border.Background>
-                    </Border>
-
-                    <!-- Compatibility Score Badge -->
-                    <Border VerticalAlignment="Top" HorizontalAlignment="Right" Margin="20" CornerRadius="16" Padding="12,6"
-                            Visibility="{Binding IsCompatibilityVisible, Converter={StaticResource BoolToVis}}">
-                        <Border.Background>
-                            <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
-                                <GradientStop Color="#FF4D80" Offset="0"/>
-                                <GradientStop Color="#7A22FF" Offset="1"/>
-                            </LinearGradientBrush>
-                        </Border.Background>
-                        <Border.Effect>
-                            <DropShadowEffect BlurRadius="12" ShadowDepth="3" Opacity="0.3" Color="#7A22FF"/>
-                        </Border.Effect>
-                        <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-                            <materialDesign:PackIcon Kind="HeartFlash" Foreground="White" Width="18" Height="18" Margin="0,0,6,0" VerticalAlignment="Center"/>
-                            <TextBlock Text="{Binding CurrentUserCompatibilityScore, StringFormat='Tương hợp AI: {0}%'}" 
-                                       Foreground="White" FontWeight="Bold" FontSize="13" VerticalAlignment="Center"/>
-                        </StackPanel>
-                    </Border>
-
-                    <!-- Super Like Badge -->
-                    <Border VerticalAlignment="Top" HorizontalAlignment="Left" Margin="20" CornerRadius="16" Padding="12,6" Background="#3B82F6" Panel.ZIndex="6"
-                            Visibility="{Binding IsSuperLikedBy, Converter={StaticResource BoolToVis}}">
-                        <Border.Effect>
-                            <DropShadowEffect BlurRadius="12" ShadowDepth="3" Opacity="0.3" Color="#3B82F6"/>
-                        </Border.Effect>
-                        <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-                            <materialDesign:PackIcon Kind="Star" Foreground="White" Width="18" Height="18" Margin="0,0,6,0" VerticalAlignment="Center"/>
-                            <TextBlock Text="Đã Super Like bạn! ⭐" Foreground="White" FontWeight="Bold" FontSize="13" VerticalAlignment="Center"/>
-                        </StackPanel>
-                    </Border>
-
-                    <!-- Info -->
-                    <StackPanel VerticalAlignment="Bottom" Margin="24,0,24,125">
-                        <StackPanel Orientation="Horizontal" Margin="0,0,0,4">
-                            <TextBlock Text="{Binding CurrentUserName}" FontSize="36" FontWeight="Black" Foreground="White" VerticalAlignment="Center"/>
-                            <materialDesign:PackIcon Kind="CheckDecagram" Foreground="#3B82F6" Width="28" Height="28" Margin="10,0,0,0" VerticalAlignment="Center"
-                                                     Visibility="{Binding IsCurrentUserVerified, Converter={StaticResource BoolToVis}}"/>
-                        </StackPanel>
-
-                        <!-- Location -->
-                        <StackPanel Orientation="Horizontal" Margin="0,0,0,8" Visibility="{Binding CurrentUserLocation, Converter={StaticResource NullOrEmptyToVisibilityConverter}}">
-                            <materialDesign:PackIcon Kind="MapMarkerOutline" Width="16" Height="16" Foreground="#E5E7EB" VerticalAlignment="Center" Margin="0,0,4,0"/>
-                            <TextBlock Text="{Binding CurrentUserLocation}" FontSize="14" Foreground="#E5E7EB" FontWeight="Medium" VerticalAlignment="Center"/>
-                        </StackPanel>
-
-                        <TextBlock Text="{Binding CurrentUserBio}" FontSize="16" FontWeight="Medium" Foreground="#E5E7EB" TextWrapping="Wrap" MaxHeight="45" TextTrimming="CharacterEllipsis" Margin="0,0,0,8"/>
-
-                        <!-- Tags (Zodiac, MBTI, Interests) -->
-                        <WrapPanel Orientation="Horizontal">
-                            <!-- Zodiac Chip -->
-                            <Border CornerRadius="12" Background="#4DFFFFFF" Padding="10,4" Margin="0,0,8,6" 
-                                    Visibility="{Binding CurrentUserZodiac, Converter={StaticResource NullOrEmptyToVisibilityConverter}}">
-                                <StackPanel Orientation="Horizontal">
-                                    <materialDesign:PackIcon Kind="CompassOutline" Width="14" Height="14" Foreground="White" VerticalAlignment="Center" Margin="0,0,4,0"/>
-                                    <TextBlock Text="{Binding CurrentUserZodiac}" FontSize="12" Foreground="White" FontWeight="SemiBold"/>
+                    <ScrollViewer VerticalScrollBarVisibility="Hidden" Margin="0,0,0,96">
+                        <StackPanel Margin="20">
+                            <!-- Main user details (Name, MBTI compatibility) -->
+                            <StackPanel Margin="0,10,0,16">
+                                <StackPanel Orientation="Horizontal" Margin="0,0,0,6">
+                                    <TextBlock Text="{Binding CurrentUserName}" FontSize="28" FontWeight="Black" Foreground="#1C1E21" VerticalAlignment="Center"/>
+                                    <materialDesign:PackIcon Kind="CheckDecagram" Foreground="#1877F2" Width="24" Height="24" Margin="8,0,0,0" VerticalAlignment="Center" Visibility="{Binding IsCurrentUserVerified, Converter={StaticResource BoolToVis}}"/>
                                 </StackPanel>
-                            </Border>
-                            
-                            <!-- MBTI Chip -->
-                            <Border CornerRadius="12" Background="#4DFFFFFF" Padding="10,4" Margin="0,0,8,6"
-                                    Visibility="{Binding CurrentUserMbti, Converter={StaticResource NullOrEmptyToVisibilityConverter}}">
-                                <StackPanel Orientation="Horizontal">
-                                    <materialDesign:PackIcon Kind="Brain" Width="14" Height="14" Foreground="White" VerticalAlignment="Center" Margin="0,0,4,0"/>
-                                    <TextBlock Text="{Binding CurrentUserMbti}" FontSize="12" Foreground="White" FontWeight="SemiBold"/>
+                                
+                                <StackPanel Orientation="Horizontal" Margin="0,0,0,12" Visibility="{Binding CurrentUserLocation, Converter={StaticResource NullOrEmptyToVisibilityConverter}}">
+                                    <materialDesign:PackIcon Kind="MapMarkerOutline" Width="16" Height="16" Foreground="#65676B" VerticalAlignment="Center" Margin="0,0,4,0"/>
+                                    <TextBlock Text="{Binding CurrentUserLocation}" FontSize="14" Foreground="#65676B" FontWeight="SemiBold" VerticalAlignment="Center"/>
+                                </StackPanel>
+
+                                <!-- Compatibility score bento badge -->
+                                <Border CornerRadius="12" Background="#FFF0F5" Padding="12,6" HorizontalAlignment="Left" Visibility="{Binding IsCompatibilityVisible, Converter={StaticResource BoolToVis}}">
+                                    <StackPanel Orientation="Horizontal">
+                                        <materialDesign:PackIcon Kind="HeartFlash" Width="16" Height="16" Foreground="#E6005C" VerticalAlignment="Center" Margin="0,0,6,0"/>
+                                        <TextBlock Text="{Binding CurrentUserCompatibilityScore, StringFormat='Mức độ tương thích: {0}%'}" FontSize="13.5" Foreground="#E6005C" FontWeight="Bold" VerticalAlignment="Center"/>
+                                    </StackPanel>
+                                </Border>
+                            </StackPanel>
+
+                            <!-- Bento module 1: Bio -->
+                            <Border CornerRadius="16" Background="#F0F2F5" Padding="16" Margin="0,0,0,16">
+                                <StackPanel>
+                                    <TextBlock Text="Giới thiệu" FontSize="13" FontWeight="Bold" Foreground="#65676B" Margin="0,0,0,8"/>
+                                    <TextBlock Text="{Binding CurrentUserBio}" FontSize="15" Foreground="#1C1E21" TextWrapping="Wrap" LineHeight="22"/>
                                 </StackPanel>
                             </Border>
 
-                            <!-- Interests List -->
-                            <ItemsControl ItemsSource="{Binding CurrentUserInterests}">
-                                <ItemsControl.ItemsPanel>
-                                    <ItemsPanelTemplate>
-                                        <WrapPanel Orientation="Horizontal"/>
-                                    </ItemsPanelTemplate>
-                                </ItemsControl.ItemsPanel>
+                            <!-- Bento module 2: Basic Info -->
+                            <Border CornerRadius="16" BorderBrush="#E4E6EB" BorderThickness="1" Padding="16" Margin="0,0,0,16">
+                                <StackPanel>
+                                    <TextBlock Text="Thông tin cơ bản" FontSize="13" FontWeight="Bold" Foreground="#65676B" Margin="0,0,0,12"/>
+                                    <WrapPanel Orientation="Horizontal">
+                                        <!-- Height -->
+                                        <Border CornerRadius="8" Background="#F0F2F5" Padding="10,6" Margin="0,0,8,8" Visibility="{Binding CurrentUserHeight, Converter={StaticResource NullOrEmptyToVisibilityConverter}}">
+                                            <StackPanel Orientation="Horizontal">
+                                                <materialDesign:PackIcon Kind="Ruler" Width="14" Height="14" Foreground="#65676B" Margin="0,0,4,0" VerticalAlignment="Center"/>
+                                                <TextBlock Text="{Binding CurrentUserHeight, StringFormat={}{0} cm}" FontSize="13" Foreground="#1C1E21" FontWeight="SemiBold"/>
+                                            </StackPanel>
+                                        </Border>
+                                        <!-- Job/Occupation -->
+                                        <Border CornerRadius="8" Background="#F0F2F5" Padding="10,6" Margin="0,0,8,8" Visibility="{Binding CurrentUserOccupation, Converter={StaticResource NullOrEmptyToVisibilityConverter}}">
+                                            <StackPanel Orientation="Horizontal">
+                                                <materialDesign:PackIcon Kind="BriefcaseOutline" Width="14" Height="14" Foreground="#65676B" Margin="0,0,4,0" VerticalAlignment="Center"/>
+                                                <TextBlock Text="{Binding CurrentUserOccupation}" FontSize="13" Foreground="#1C1E21" FontWeight="SemiBold"/>
+                                            </StackPanel>
+                                        </Border>
+                                        <!-- Education -->
+                                        <Border CornerRadius="8" Background="#F0F2F5" Padding="10,6" Margin="0,0,8,8" Visibility="{Binding CurrentUserEducation, Converter={StaticResource NullOrEmptyToVisibilityConverter}}">
+                                            <StackPanel Orientation="Horizontal">
+                                                <materialDesign:PackIcon Kind="SchoolOutline" Width="14" Height="14" Foreground="#65676B" Margin="0,0,4,0" VerticalAlignment="Center"/>
+                                                <TextBlock Text="{Binding CurrentUserEducation}" FontSize="13" Foreground="#1C1E21" FontWeight="SemiBold"/>
+                                            </StackPanel>
+                                        </Border>
+                                    </WrapPanel>
+                                </StackPanel>
+                            </Border>
+
+                            <!-- Bento module 3: Lifestyle -->
+                            <Border CornerRadius="16" BorderBrush="#E4E6EB" BorderThickness="1" Padding="16" Margin="0,0,0,16">
+                                <StackPanel>
+                                    <TextBlock Text="Lối sống &amp; Tính cách" FontSize="13" FontWeight="Bold" Foreground="#65676B" Margin="0,0,0,12"/>
+                                    <WrapPanel Orientation="Horizontal">
+                                        <!-- Smoking -->
+                                        <Border CornerRadius="8" Background="#F0F2F5" Padding="10,6" Margin="0,0,8,8" Visibility="{Binding CurrentUserSmoking, Converter={StaticResource NullOrEmptyToVisibilityConverter}}">
+                                            <StackPanel Orientation="Horizontal">
+                                                <materialDesign:PackIcon Kind="Smoking" Width="14" Height="14" Foreground="#65676B" Margin="0,0,4,0" VerticalAlignment="Center"/>
+                                                <TextBlock Text="{Binding CurrentUserSmoking}" FontSize="13" Foreground="#1C1E21" FontWeight="SemiBold"/>
+                                            </StackPanel>
+                                        </Border>
+                                        <!-- Drinking -->
+                                        <Border CornerRadius="8" Background="#F0F2F5" Padding="10,6" Margin="0,0,8,8" Visibility="{Binding CurrentUserDrinking, Converter={StaticResource NullOrEmptyToVisibilityConverter}}">
+                                            <StackPanel Orientation="Horizontal">
+                                                <materialDesign:PackIcon Kind="GlassWine" Width="14" Height="14" Foreground="#65676B" Margin="0,0,4,0" VerticalAlignment="Center"/>
+                                                <TextBlock Text="{Binding CurrentUserDrinking}" FontSize="13" Foreground="#1C1E21" FontWeight="SemiBold"/>
+                                            </StackPanel>
+                                        </Border>
+                                        <!-- Zodiac -->
+                                        <Border CornerRadius="8" Background="#F0F2F5" Padding="10,6" Margin="0,0,8,8" Visibility="{Binding CurrentUserZodiac, Converter={StaticResource NullOrEmptyToVisibilityConverter}}">
+                                            <StackPanel Orientation="Horizontal">
+                                                <materialDesign:PackIcon Kind="CompassOutline" Width="14" Height="14" Foreground="#65676B" Margin="0,0,4,0" VerticalAlignment="Center"/>
+                                                <TextBlock Text="{Binding CurrentUserZodiac}" FontSize="13" Foreground="#1C1E21" FontWeight="SemiBold"/>
+                                            </StackPanel>
+                                        </Border>
+                                        <!-- MBTI -->
+                                        <Border CornerRadius="8" Background="#F0F2F5" Padding="10,6" Margin="0,0,8,8" Visibility="{Binding CurrentUserMbti, Converter={StaticResource NullOrEmptyToVisibilityConverter}}">
+                                            <StackPanel Orientation="Horizontal">
+                                                <materialDesign:PackIcon Kind="Brain" Width="14" Height="14" Foreground="#65676B" Margin="0,0,4,0" VerticalAlignment="Center"/>
+                                                <TextBlock Text="{Binding CurrentUserMbti}" FontSize="13" Foreground="#1C1E21" FontWeight="SemiBold"/>
+                                            </StackPanel>
+                                        </Border>
+                                    </WrapPanel>
+                                </StackPanel>
+                            </Border>
+
+                            <!-- Bento module 4: Interests -->
+                            <Border CornerRadius="16" BorderBrush="#E4E6EB" BorderThickness="1" Padding="16" Margin="0,0,0,20">
+                                <StackPanel>
+                                    <TextBlock Text="Sở thích" FontSize="13" FontWeight="Bold" Foreground="#65676B" Margin="0,0,0,12"/>
+                                    <ItemsControl ItemsSource="{Binding CurrentUserInterests}">
+                                        <ItemsControl.ItemsPanel>
+                                            <ItemsPanelTemplate>
+                                                <WrapPanel Orientation="Horizontal"/>
+                                            </ItemsPanelTemplate>
+                                        </ItemsControl.ItemsPanel>
+                                        <ItemsControl.ItemTemplate>
+                                            <DataTemplate>
+                                                <Border CornerRadius="12" Background="#FFF0F5" Padding="12,6" Margin="0,0,8,8">
+                                                    <TextBlock Text="{Binding}" FontSize="13" Foreground="#E6005C" FontWeight="SemiBold"/>
+                                                </Border>
+                                            </DataTemplate>
+                                        </ItemsControl.ItemTemplate>
+                                    </ItemsControl>
+                                </StackPanel>
+                            </Border>
+
+                            <!-- Gallery of Additional Photos -->
+                            <TextBlock Text="Hình ảnh khác" FontSize="14" FontWeight="Bold" Foreground="#1C1E21" Margin="0,0,0,12"/>
+                            <ItemsControl ItemsSource="{Binding CurrentUserPhotos}">
                                 <ItemsControl.ItemTemplate>
                                     <DataTemplate>
-                                        <Border CornerRadius="12" Background="#26FFFFFF" BorderBrush="#33FFFFFF" BorderThickness="1" Padding="10,4" Margin="0,0,8,6">
-                                            <TextBlock Text="{Binding}" FontSize="12" Foreground="White"/>
+                                        <Border CornerRadius="20" Margin="0,0,0,16" ClipToBounds="True" Background="#F0F2F5">
+                                            <Border.Effect>
+                                                <DropShadowEffect BlurRadius="20" ShadowDepth="4" Opacity="0.05" Color="Black"/>
+                                            </Border.Effect>
+                                            <Image Source="{Binding Url}" Stretch="UniformToFill" MinHeight="450" MaxHeight="600" />
                                         </Border>
                                     </DataTemplate>
                                 </ItemsControl.ItemTemplate>
                             </ItemsControl>
-                        </WrapPanel>
-                    </StackPanel>
+                        </StackPanel>
+                    </ScrollViewer>
+                    
+                    <!-- Close button floating on top -->
+                    <Button Command="{Binding CloseUserDetailCommand}" Style="{StaticResource MaterialDesignFloatingActionMiniLightButton}" Background="White" BorderBrush="#E4E6EB" Width="40" Height="40" VerticalAlignment="Top" HorizontalAlignment="Right" Margin="20">
+                        <materialDesign:PackIcon Kind="ArrowDown" Width="24" Height="24" Foreground="#1C1E21"/>
+                    </Button>
 
-                    <!-- Action Buttons -->
-                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" VerticalAlignment="Bottom" Margin="0,0,0,30">
-                        <!-- PASS Button -->
-                        <Button x:Name="BtnPass" Command="{Binding PassCommand}" 
-                                Style="{StaticResource MaterialDesignFloatingActionLightButton}" 
-                                Background="White" BorderBrush="White" Width="68" Height="68" Margin="0,0,20,0">
-                            <Button.Effect>
-                                <DropShadowEffect BlurRadius="25" ShadowDepth="8" Opacity="0.15" Color="Black"/>
-                            </Button.Effect>
-                            <materialDesign:PackIcon Kind="Close" Width="38" Height="38" Foreground="#4B5563"/>
-                        </Button>
-
-                        <!-- SUPER LIKE Button -->
-                        <Button x:Name="BtnSuperLike" Command="{Binding SuperLikeCommand}" 
-                                Style="{StaticResource MaterialDesignFloatingActionLightButton}" 
-                                Background="White" BorderBrush="White" Width="60" Height="60" Margin="0,0,20,0">
-                            <Button.Effect>
-                                <DropShadowEffect BlurRadius="25" ShadowDepth="8" Opacity="0.15" Color="Black"/>
-                            </Button.Effect>
-                            <materialDesign:PackIcon Kind="Star" Width="32" Height="32" Foreground="#3B82F6"/>
-                        </Button>
-
-                        <!-- LIKE Button -->
-                        <Button x:Name="BtnLike" Command="{Binding LikeCommand}" 
-                                Style="{StaticResource MaterialDesignFloatingActionLightButton}" 
-                                Background="White" BorderBrush="White" Width="68" Height="68">
-                            <Button.Effect>
-                                <DropShadowEffect BlurRadius="25" ShadowDepth="8" Opacity="0.15" Color="Black"/>
-                            </Button.Effect>
-                            <materialDesign:PackIcon Kind="Heart" Width="36" Height="36" Foreground="#E6005C"/>
-                        </Button>
-                    </StackPanel>
+                    <!-- Sticky Action Buttons at bottom -->
+                    <Border VerticalAlignment="Bottom" Background="White" Padding="0,14" CornerRadius="0,0,24,24" BorderBrush="#E4E6EB" BorderThickness="0,1,0,0">
+                        <Border.Effect>
+                            <DropShadowEffect BlurRadius="20" ShadowDepth="-4" Opacity="0.04" Color="Black"/>
+                        </Border.Effect>
+                        <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
+                            <!-- PASS -->
+                            <Button Command="{Binding PassCommand}" Style="{StaticResource PassRoundButtonStyle}">
+                                <materialDesign:PackIcon Kind="Close" Width="36" Height="36" Foreground="#1C1E21"/>
+                            </Button>
+                            
+                            <!-- SUPER LIKE -->
+                            <Button Command="{Binding SuperLikeCommand}" Style="{StaticResource SuperLikeRoundButtonStyle}" Margin="20,0">
+                                <materialDesign:PackIcon Kind="Star" Width="28" Height="28" Foreground="White"/>
+                            </Button>
+                            
+                            <!-- LIKE -->
+                            <Button Command="{Binding LikeCommand}" Style="{StaticResource LikeRoundButtonStyle}">
+                                <materialDesign:PackIcon Kind="Heart" Width="34" Height="34" Foreground="White"/>
+                            </Button>
+                        </StackPanel>
+                    </Border>
                 </Grid>
-            </Border>
-            </Grid>
-            
-            <!-- Hiệu ứng thông báo Match -->
-            <Border x:Name="MatchPopup" Visibility="{Binding IsMatchPopupVisible, Converter={StaticResource BoolToVis}}" Background="#CC000000" CornerRadius="24" Width="400" Height="600" HorizontalAlignment="Center" VerticalAlignment="Center" Panel.ZIndex="100">
-                <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center">
-                    <materialDesign:PackIcon Kind="CardsHeart" Width="100" Height="100" Foreground="#FF5C9A" HorizontalAlignment="Center"/>
-                    <TextBlock Text="IT'S A MATCH!" FontSize="36" FontWeight="Black" Foreground="White" Margin="0,20,0,0" HorizontalAlignment="Center"/>
-                    <Button Content="Tiếp tục" Width="150" Margin="0,30,0,0" Command="{Binding CloseMatchPopupCommand}" Background="#FF5C9A" BorderBrush="Transparent"/>
-                </StackPanel>
             </Border>
         </Grid>
         
         <!-- PROFILE AREA -->
-        <Grid Grid.Column="1" Visibility="{Binding IsProfileVisible, Converter={StaticResource BoolToVis}}">
+        <Grid Grid.Column="1" Visibility="{Binding IsProfileVisible, Converter={StaticResource BoolToVis}}" Background="#F0F2F5">
             <Grid.RowDefinitions>
+                <RowDefinition Height="Auto"/>
                 <RowDefinition Height="Auto"/>
                 <RowDefinition Height="*"/>
             </Grid.RowDefinitions>
-            <TextBlock Text="Chỉnh sửa Hồ sơ" FontSize="28" FontWeight="Bold" Foreground="#1F2937" Margin="40,40,0,10"/>
             
-            <StackPanel Margin="40,0,40,20">
-                <Grid Margin="0,0,0,4">
-                    <TextBlock Text="Độ hoàn thiện hồ sơ" FontSize="14" FontWeight="SemiBold" Foreground="#4B5563" HorizontalAlignment="Left"/>
-                    <TextBlock Text="{Binding ProfileCompletionScore, StringFormat={}{0}%}" FontSize="14" FontWeight="Bold" Foreground="#E6005C" HorizontalAlignment="Right"/>
+            <TextBlock Grid.Row="0" Text="Chỉnh sửa Hồ sơ" FontSize="26" FontWeight="Black" Foreground="#1C1E21" Margin="32,32,32,8" FontFamily="Segoe UI, sans-serif"/>
+            
+            <StackPanel Grid.Row="1" Margin="32,0,32,16">
+                <Grid Margin="0,0,0,6">
+                    <TextBlock Text="Độ hoàn thiện hồ sơ" FontSize="13.5" FontWeight="Bold" Foreground="#65676B" HorizontalAlignment="Left"/>
+                    <TextBlock Text="{Binding ProfileCompletionScore, StringFormat={}{0}%}" FontSize="13.5" FontWeight="Black" Foreground="#E6005C" HorizontalAlignment="Right"/>
                 </Grid>
-                <ProgressBar Value="{Binding ProfileCompletionScore}" Height="8" Minimum="0" Maximum="100" Background="#E5E7EB" Foreground="#E6005C" BorderThickness="0"/>
-                <TextBlock Text="Hoàn thiện hồ sơ để tăng 100% khả năng hiển thị!" FontSize="12" Foreground="#6B7280" Margin="0,4,0,0">
+                <ProgressBar Value="{Binding ProfileCompletionScore}" Height="8" Minimum="0" Maximum="100" Background="#E4E6EB" Foreground="{StaticResource FbBrandGradient}" BorderThickness="0" materialDesign:TransitionAssist.DisableTransitions="False"/>
+                <TextBlock Text="Hoàn thiện hồ sơ để tăng 100% khả năng hiển thị!" FontSize="12" Foreground="#E6005C" FontWeight="SemiBold" Margin="0,6,0,0">
                     <TextBlock.Style>
                         <Style TargetType="TextBlock">
                             <Setter Property="Visibility" Value="Visible"/>
@@ -542,201 +825,237 @@
                 </TextBlock>
             </StackPanel>
 
-            <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto">
-                <StackPanel Margin="40,0,40,40" MaxWidth="500" HorizontalAlignment="Left">
-                    <!-- Avatar -->
-                    <Border Width="120" Height="120" CornerRadius="60" HorizontalAlignment="Left" Margin="0,0,0,20">
-                        <Border.Background>
-                            <ImageBrush ImageSource="{Binding ProfileAvatarUrl, TargetNullValue='pack://application:,,,/Resources/default-avatar.jpg', FallbackValue='pack://application:,,,/Resources/default-avatar.jpg'}" Stretch="UniformToFill"/>
-                        </Border.Background>
-                    </Border>
-                    <Button Content="Đổi ảnh đại diện" Command="{Binding UploadAvatarCommand}" Style="{StaticResource MaterialDesignOutlinedButton}" Foreground="#E6005C" BorderBrush="#E6005C" HorizontalAlignment="Left" Margin="0,0,0,20"/>
-                    
-                    <!-- Thư viện ảnh -->
-                    <TextBlock Text="Thư viện ảnh" FontSize="16" FontWeight="Bold" Foreground="#1F2937" Margin="0,0,0,10"/>
-                    <ItemsControl ItemsSource="{Binding ProfilePhotos}" Margin="0,0,0,10">
-                        <ItemsControl.ItemsPanel>
-                            <ItemsPanelTemplate>
-                                <WrapPanel />
-                            </ItemsPanelTemplate>
-                        </ItemsControl.ItemsPanel>
-                        <ItemsControl.ItemTemplate>
-                            <DataTemplate>
-                                <Grid Margin="0,0,10,10">
-                                    <Border Width="100" Height="100" CornerRadius="8">
-                                        <Border.Background>
-                                            <ImageBrush ImageSource="{Binding Url, TargetNullValue={x:Null}}" Stretch="UniformToFill"/>
-                                        </Border.Background>
-                                    </Border>
-                                    <StackPanel Orientation="Horizontal" VerticalAlignment="Top" HorizontalAlignment="Right" Margin="5">
-                                        <Button Command="{Binding DataContext.SetMainPhotoCommand, RelativeSource={RelativeSource AncestorType=UserControl}}" CommandParameter="{Binding}" Background="#10B981" BorderBrush="Transparent" Width="24" Height="24" Padding="0" Margin="0,0,5,0" ToolTip="Đặt làm ảnh chính">
-                                            <Button.Style>
-                                                <Style TargetType="Button">
-                                                    <Setter Property="Visibility" Value="Visible"/>
-                                                    <Style.Triggers>
-                                                        <DataTrigger Binding="{Binding IsMain}" Value="True">
-                                                            <Setter Property="Visibility" Value="Collapsed"/>
-                                                        </DataTrigger>
-                                                    </Style.Triggers>
-                                                </Style>
-                                            </Button.Style>
-                                            <materialDesign:PackIcon Kind="Check" Width="14" Height="14" Foreground="White"/>
-                                        </Button>
-                                        <Button Command="{Binding DataContext.DeletePhotoCommand, RelativeSource={RelativeSource AncestorType=UserControl}}" CommandParameter="{Binding}" Background="#EF4444" BorderBrush="Transparent" Width="24" Height="24" Padding="0" ToolTip="Xoá ảnh">
-                                            <materialDesign:PackIcon Kind="Close" Width="14" Height="14" Foreground="White"/>
-                                        </Button>
-                                    </StackPanel>
-                                    <Border Background="#10B981" CornerRadius="4" Padding="4,2" HorizontalAlignment="Left" VerticalAlignment="Bottom" Margin="5" Visibility="{Binding IsMain, Converter={StaticResource BoolToVis}}">
-                                        <TextBlock Text="Ảnh chính" FontSize="10" Foreground="White" FontWeight="Bold"/>
-                                    </Border>
-                                </Grid>
-                            </DataTemplate>
-                        </ItemsControl.ItemTemplate>
-                    </ItemsControl>
-                    <Button Content="Thêm ảnh vào thư viện" Command="{Binding AddPhotoCommand}" Style="{StaticResource MaterialDesignFlatButton}" Foreground="#E6005C" HorizontalAlignment="Left" Margin="0,0,0,30">
-                        <Button.ContentTemplate>
-                            <DataTemplate>
-                                <StackPanel Orientation="Horizontal">
-                                    <materialDesign:PackIcon Kind="ImageAdd" Margin="0,0,8,0" VerticalAlignment="Center"/>
-                                    <TextBlock Text="{Binding}"/>
+            <ScrollViewer Grid.Row="2" VerticalScrollBarVisibility="Auto">
+                <StackPanel Margin="32,0,32,32" MaxWidth="560" HorizontalAlignment="Left">
+                    <!-- Photo Section Bento -->
+                    <Border Style="{StaticResource PremiumCard}" Padding="24" Margin="0,0,0,16">
+                        <StackPanel>
+                            <TextBlock Text="Ảnh đại diện &amp; Thư viện" FontSize="16" FontWeight="Bold" Foreground="#1C1E21" Margin="0,0,0,16"/>
+                            <Grid Margin="0,0,0,16">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="Auto"/>
+                                    <ColumnDefinition Width="*"/>
+                                </Grid.ColumnDefinitions>
+                                <!-- Avatar -->
+                                <Border Grid.Column="0" Width="100" Height="100" CornerRadius="50" ClipToBounds="True" Margin="0,0,16,0" BorderBrush="#E4E6EB" BorderThickness="1">
+                                    <Image Source="{Binding ProfileAvatarUrl, TargetNullValue='pack://application:,,,/Resources/default-avatar.jpg'}" Stretch="UniformToFill"/>
+                                </Border>
+                                <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                                    <Button Content="Đổi ảnh đại diện" Command="{Binding UploadAvatarCommand}" Style="{StaticResource PremiumOutlineButton}" Height="40" Margin="0,0,0,8"/>
+                                    <TextBlock Text="Ảnh định dạng JPG, PNG. Khuyên dùng ảnh vuông chính diện." FontSize="11.5" Foreground="#65676B"/>
                                 </StackPanel>
-                            </DataTemplate>
-                        </Button.ContentTemplate>
-                    </Button>
-                    
-                    <!-- Form -->
-                    <TextBox materialDesign:HintAssist.Hint="Họ và tên" Text="{Binding ProfileFullName, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource MaterialDesignOutlinedTextBox}" Margin="0,0,0,20"/>
-                    <TextBox materialDesign:HintAssist.Hint="Giới thiệu bản thân (Bio)" Text="{Binding ProfileBio, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource MaterialDesignOutlinedTextBox}" TextWrapping="Wrap" AcceptsReturn="True" Height="100" Margin="0,0,0,20"/>
-                    
-                    <ComboBox materialDesign:HintAssist.Hint="Giới tính" Text="{Binding ProfileGender, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource MaterialDesignOutlinedComboBox}" Margin="0,0,0,20">
-                        <ComboBoxItem Content="Nam"/>
-                        <ComboBoxItem Content="Nữ"/>
-                        <ComboBoxItem Content="Khác"/>
-                    </ComboBox>
-                    
-                    <DatePicker materialDesign:HintAssist.Hint="Ngày sinh" SelectedDate="{Binding ProfileDateOfBirth, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource MaterialDesignOutlinedDatePicker}" Margin="0,0,0,20"/>
-                    
-                    <Grid Margin="0,0,0,20">
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="*"/>
-                            <ColumnDefinition Width="20"/>
-                            <ColumnDefinition Width="*"/>
-                        </Grid.ColumnDefinitions>
-                        <TextBox Grid.Column="0" materialDesign:HintAssist.Hint="Chiều cao (cm)" Text="{Binding ProfileHeight, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource MaterialDesignOutlinedTextBox}"/>
-                        <TextBox Grid.Column="2" materialDesign:HintAssist.Hint="Học vấn" Text="{Binding ProfileEducation, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource MaterialDesignOutlinedTextBox}"/>
-                    </Grid>
+                            </Grid>
 
-                    <Grid Margin="0,0,0,20">
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="*"/>
-                            <ColumnDefinition Width="20"/>
-                            <ColumnDefinition Width="*"/>
-                        </Grid.ColumnDefinitions>
-                        <TextBox Grid.Column="0" materialDesign:HintAssist.Hint="Nghề nghiệp" Text="{Binding ProfileOccupation, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource MaterialDesignOutlinedTextBox}"/>
-                        <TextBox Grid.Column="2" materialDesign:HintAssist.Hint="Địa điểm (Thành phố)" Text="{Binding ProfileLocation, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource MaterialDesignOutlinedTextBox}"/>
-                    </Grid>
+                            <!-- Photo Library Grid -->
+                            <TextBlock Text="Thư viện ảnh khác" FontSize="14" FontWeight="Bold" Foreground="#1C1E21" Margin="0,8,0,8"/>
+                            <ItemsControl ItemsSource="{Binding ProfilePhotos}" Margin="0,0,0,12">
+                                <ItemsControl.ItemsPanel>
+                                    <ItemsPanelTemplate>
+                                        <WrapPanel />
+                                    </ItemsPanelTemplate>
+                                </ItemsControl.ItemsPanel>
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate>
+                                        <Grid Margin="0,0,10,10">
+                                            <Border Width="90" Height="90" CornerRadius="12" ClipToBounds="True">
+                                                <Image Source="{Binding Url, TargetNullValue={x:Null}}" Stretch="UniformToFill"/>
+                                            </Border>
+                                            <!-- Action Overlay Buttons -->
+                                            <StackPanel Orientation="Horizontal" VerticalAlignment="Top" HorizontalAlignment="Right" Margin="4">
+                                                <!-- Set Main -->
+                                                <Button Command="{Binding DataContext.SetMainPhotoCommand, RelativeSource={RelativeSource AncestorType=UserControl}}" CommandParameter="{Binding}" Background="#10B981" BorderBrush="Transparent" Width="22" Height="22" Padding="0" Margin="0,0,4,0" ToolTip="Đặt làm ảnh chính">
+                                                    <Button.Style>
+                                                        <Style TargetType="Button">
+                                                            <Setter Property="Visibility" Value="Visible"/>
+                                                            <Style.Triggers>
+                                                                <DataTrigger Binding="{Binding IsMain}" Value="True">
+                                                                    <Setter Property="Visibility" Value="Collapsed"/>
+                                                                </DataTrigger>
+                                                            </Style.Triggers>
+                                                        </Style>
+                                                    </Button.Style>
+                                                    <materialDesign:PackIcon Kind="Check" Width="12" Height="12" Foreground="White"/>
+                                                </Button>
+                                                <!-- Delete -->
+                                                <Button Command="{Binding DataContext.DeletePhotoCommand, RelativeSource={RelativeSource AncestorType=UserControl}}" CommandParameter="{Binding}" Background="#EF4444" BorderBrush="Transparent" Width="22" Height="22" Padding="0" ToolTip="Xoá ảnh">
+                                                    <materialDesign:PackIcon Kind="Close" Width="12" Height="12" Foreground="White"/>
+                                                </Button>
+                                            </StackPanel>
+                                            <Border Background="#10B981" CornerRadius="6" Padding="6,2" HorizontalAlignment="Left" VerticalAlignment="Bottom" Margin="4" Visibility="{Binding IsMain, Converter={StaticResource BoolToVis}}">
+                                                <TextBlock Text="Ảnh chính" FontSize="9.5" Foreground="White" FontWeight="Bold"/>
+                                            </Border>
+                                        </Grid>
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
+                            
+                            <Button Command="{Binding AddPhotoCommand}" Style="{StaticResource PremiumOutlineButton}" Height="40" Margin="0,8,0,0">
+                                <StackPanel Orientation="Horizontal">
+                                    <materialDesign:PackIcon Kind="ImageAdd" Margin="0,0,8,0" VerticalAlignment="Center" Width="18" Height="18"/>
+                                    <TextBlock Text="Thêm ảnh vào thư viện" VerticalAlignment="Center"/>
+                                </StackPanel>
+                            </Button>
+                        </StackPanel>
+                    </Border>
 
-                    <Grid Margin="0,0,0,20">
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="*"/>
-                            <ColumnDefinition Width="20"/>
-                            <ColumnDefinition Width="*"/>
-                        </Grid.ColumnDefinitions>
-                        <ComboBox Grid.Column="0" materialDesign:HintAssist.Hint="Hút thuốc" Text="{Binding ProfileSmoking, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource MaterialDesignOutlinedComboBox}">
-                            <ComboBoxItem Content="Không"/>
-                            <ComboBoxItem Content="Thỉnh thoảng"/>
-                            <ComboBoxItem Content="Thường xuyên"/>
-                        </ComboBox>
-                        <ComboBox Grid.Column="2" materialDesign:HintAssist.Hint="Nhậu nhẹt" Text="{Binding ProfileDrinking, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource MaterialDesignOutlinedComboBox}">
-                            <ComboBoxItem Content="Không"/>
-                            <ComboBoxItem Content="Xã giao"/>
-                            <ComboBoxItem Content="Thường xuyên"/>
-                        </ComboBox>
-                    </Grid>
+                    <!-- Profile Form Bento -->
+                    <Border Style="{StaticResource PremiumCard}" Padding="24" Margin="0,0,0,16">
+                        <StackPanel>
+                            <TextBlock Text="Thông tin cơ bản" FontSize="16" FontWeight="Bold" Foreground="#1C1E21" Margin="0,0,0,16"/>
+                            
+                            <TextBox materialDesign:HintAssist.Hint="Họ và tên" Text="{Binding ProfileFullName, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource PremiumTextBox}" Margin="0,0,0,16"/>
+                            <TextBox materialDesign:HintAssist.Hint="Giới thiệu bản thân (Bio)" Text="{Binding ProfileBio, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource PremiumTextBox}" TextWrapping="Wrap" AcceptsReturn="True" Height="80" Margin="0,0,0,16"/>
+                            
+                            <Grid Margin="0,0,0,16">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="16"/>
+                                    <ColumnDefinition Width="*"/>
+                                </Grid.ColumnDefinitions>
+                                <ComboBox Grid.Column="0" materialDesign:HintAssist.Hint="Giới tính" Text="{Binding ProfileGender, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource PremiumComboBox}">
+                                    <ComboBoxItem Content="Nam"/>
+                                    <ComboBoxItem Content="Nữ"/>
+                                    <ComboBoxItem Content="Khác"/>
+                                </ComboBox>
+                                <DatePicker Grid.Column="2" materialDesign:HintAssist.Hint="Ngày sinh" SelectedDate="{Binding ProfileDateOfBirth, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource PremiumDatePicker}"/>
+                            </Grid>
+                            
+                            <Grid Margin="0,0,0,16">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="16"/>
+                                    <ColumnDefinition Width="*"/>
+                                </Grid.ColumnDefinitions>
+                                <TextBox Grid.Column="0" materialDesign:HintAssist.Hint="Chiều cao (cm)" Text="{Binding ProfileHeight, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource PremiumTextBox}"/>
+                                <TextBox Grid.Column="2" materialDesign:HintAssist.Hint="Học vấn" Text="{Binding ProfileEducation, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource PremiumTextBox}"/>
+                            </Grid>
 
-                    <Grid Margin="0,0,0,20">
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="*"/>
-                            <ColumnDefinition Width="20"/>
-                            <ColumnDefinition Width="*"/>
-                        </Grid.ColumnDefinitions>
-                        <ComboBox Grid.Column="0" materialDesign:HintAssist.Hint="Cung Hoàng Đạo" Text="{Binding ProfileZodiac, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource MaterialDesignOutlinedComboBox}">
-                            <ComboBoxItem Content="Bạch Dương"/>
-                            <ComboBoxItem Content="Kim Ngưu"/>
-                            <ComboBoxItem Content="Song Tử"/>
-                            <ComboBoxItem Content="Cự Giải"/>
-                            <ComboBoxItem Content="Sư Tử"/>
-                            <ComboBoxItem Content="Xử Nữ"/>
-                            <ComboBoxItem Content="Thiên Bình"/>
-                            <ComboBoxItem Content="Bọ Cạp"/>
-                            <ComboBoxItem Content="Nhân Mã"/>
-                            <ComboBoxItem Content="Ma Kết"/>
-                            <ComboBoxItem Content="Bảo Bình"/>
-                            <ComboBoxItem Content="Song Ngư"/>
-                        </ComboBox>
-                        <ComboBox Grid.Column="2" materialDesign:HintAssist.Hint="MBTI" Text="{Binding ProfileMbti, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource MaterialDesignOutlinedComboBox}">
-                            <ComboBoxItem Content="INTJ"/>
-                            <ComboBoxItem Content="INTP"/>
-                            <ComboBoxItem Content="ENTJ"/>
-                            <ComboBoxItem Content="ENTP"/>
-                            <ComboBoxItem Content="INFJ"/>
-                            <ComboBoxItem Content="INFP"/>
-                            <ComboBoxItem Content="ENFJ"/>
-                            <ComboBoxItem Content="ENFP"/>
-                            <ComboBoxItem Content="ISTJ"/>
-                            <ComboBoxItem Content="ISFJ"/>
-                            <ComboBoxItem Content="ESTJ"/>
-                            <ComboBoxItem Content="ESFJ"/>
-                            <ComboBoxItem Content="ISTP"/>
-                            <ComboBoxItem Content="ISFP"/>
-                            <ComboBoxItem Content="ESTP"/>
-                            <ComboBoxItem Content="ESFP"/>
-                        </ComboBox>
-                    </Grid>
+                            <Grid Margin="0,0,0,16">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="16"/>
+                                    <ColumnDefinition Width="*"/>
+                                </Grid.ColumnDefinitions>
+                                <TextBox Grid.Column="0" materialDesign:HintAssist.Hint="Nghề nghiệp" Text="{Binding ProfileOccupation, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource PremiumTextBox}"/>
+                                <TextBox Grid.Column="2" materialDesign:HintAssist.Hint="Địa điểm (Thành phố)" Text="{Binding ProfileLocation, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource PremiumTextBox}"/>
+                            </Grid>
+                        </StackPanel>
+                    </Border>
 
-                    <Grid Margin="0,0,0,20">
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="*"/>
-                            <ColumnDefinition Width="20"/>
-                            <ColumnDefinition Width="*"/>
-                        </Grid.ColumnDefinitions>
-                        <ComboBox Grid.Column="0" materialDesign:HintAssist.Hint="Đang tìm kiếm" Text="{Binding ProfileLookingFor, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource MaterialDesignOutlinedComboBox}">
-                            <ComboBoxItem Content="Mối quan hệ nghiêm túc"/>
-                            <ComboBoxItem Content="Tìm bạn bè"/>
-                            <ComboBoxItem Content="Không ràng buộc"/>
-                            <ComboBoxItem Content="Chưa xác định"/>
-                        </ComboBox>
-                        <TextBox Grid.Column="2" materialDesign:HintAssist.Hint="Lối sống" Text="{Binding ProfileLifestyle, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource MaterialDesignOutlinedTextBox}"/>
-                    </Grid>
+                    <!-- Lifestyle & Attributes Bento -->
+                    <Border Style="{StaticResource PremiumCard}" Padding="24" Margin="0,0,0,16">
+                        <StackPanel>
+                            <TextBlock Text="Lối sống &amp; Chiêm tinh" FontSize="16" FontWeight="Bold" Foreground="#1C1E21" Margin="0,0,0,16"/>
+                            
+                            <Grid Margin="0,0,0,16">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="16"/>
+                                    <ColumnDefinition Width="*"/>
+                                </Grid.ColumnDefinitions>
+                                <ComboBox Grid.Column="0" materialDesign:HintAssist.Hint="Hút thuốc" Text="{Binding ProfileSmoking, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource PremiumComboBox}">
+                                    <ComboBoxItem Content="Không"/>
+                                    <ComboBoxItem Content="Thỉnh thoảng"/>
+                                    <ComboBoxItem Content="Thường xuyên"/>
+                                </ComboBox>
+                                <ComboBox Grid.Column="2" materialDesign:HintAssist.Hint="Nhậu nhẹt" Text="{Binding ProfileDrinking, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource PremiumComboBox}">
+                                    <ComboBoxItem Content="Không"/>
+                                    <ComboBoxItem Content="Xã giao"/>
+                                    <ComboBoxItem Content="Thường xuyên"/>
+                                </ComboBox>
+                            </Grid>
 
-                    <Grid Margin="0,0,0,20">
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="*"/>
-                            <ColumnDefinition Width="20"/>
-                            <ColumnDefinition Width="*"/>
-                        </Grid.ColumnDefinitions>
-                        <TextBox Grid.Column="0" materialDesign:HintAssist.Hint="Vibe / Tính cách" Text="{Binding ProfileVibe, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource MaterialDesignOutlinedTextBox}"/>
-                        <TextBox Grid.Column="2" materialDesign:HintAssist.Hint="Khoảng cách tìm kiếm tối đa (km)" Text="{Binding ProfileMaxDistance, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource MaterialDesignOutlinedTextBox}"/>
-                    </Grid>
+                            <Grid Margin="0,0,0,16">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="16"/>
+                                    <ColumnDefinition Width="*"/>
+                                </Grid.ColumnDefinitions>
+                                <ComboBox Grid.Column="0" materialDesign:HintAssist.Hint="Cung Hoàng Đạo" Text="{Binding ProfileZodiac, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource PremiumComboBox}">
+                                    <ComboBoxItem Content="Bạch Dương"/>
+                                    <ComboBoxItem Content="Kim Ngưu"/>
+                                    <ComboBoxItem Content="Song Tử"/>
+                                    <ComboBoxItem Content="Cự Giải"/>
+                                    <ComboBoxItem Content="Sư Tử"/>
+                                    <ComboBoxItem Content="Xử Nữ"/>
+                                    <ComboBoxItem Content="Thiên Bình"/>
+                                    <ComboBoxItem Content="Bọ Cạp"/>
+                                    <ComboBoxItem Content="Nhân Mã"/>
+                                    <ComboBoxItem Content="Ma Kết"/>
+                                    <ComboBoxItem Content="Bảo Bình"/>
+                                    <ComboBoxItem Content="Song Ngư"/>
+                                </ComboBox>
+                                <ComboBox Grid.Column="2" materialDesign:HintAssist.Hint="MBTI" Text="{Binding ProfileMbti, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource PremiumComboBox}">
+                                    <ComboBoxItem Content="INTJ"/>
+                                    <ComboBoxItem Content="INTP"/>
+                                    <ComboBoxItem Content="ENTJ"/>
+                                    <ComboBoxItem Content="ENTP"/>
+                                    <ComboBoxItem Content="INFJ"/>
+                                    <ComboBoxItem Content="INFP"/>
+                                    <ComboBoxItem Content="ENFJ"/>
+                                    <ComboBoxItem Content="ENFP"/>
+                                    <ComboBoxItem Content="ISTJ"/>
+                                    <ComboBoxItem Content="ISFJ"/>
+                                    <ComboBoxItem Content="ESTJ"/>
+                                    <ComboBoxItem Content="ESFJ"/>
+                                    <ComboBoxItem Content="ISTP"/>
+                                    <ComboBoxItem Content="ISFP"/>
+                                    <ComboBoxItem Content="ESTP"/>
+                                    <ComboBoxItem Content="ESFP"/>
+                                </ComboBox>
+                            </Grid>
 
-                    <TextBox materialDesign:HintAssist.Hint="Sở thích (ngăn cách bởi dấu phẩy)" Text="{Binding ProfileInterests, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource MaterialDesignOutlinedTextBox}" Margin="0,0,0,20"/>
-                    <TextBox materialDesign:HintAssist.Hint="Giá trị sống (ngăn cách bởi dấu phẩy)" Text="{Binding ProfileValues, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource MaterialDesignOutlinedTextBox}" Margin="0,0,0,30"/>
-                    
-                    <Button Content="Lưu Thay Đổi" Command="{Binding SaveProfileCommand}" Background="#E6005C" BorderBrush="Transparent" Height="45" FontSize="16"/>
+                            <Grid Margin="0,0,0,16">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="16"/>
+                                    <ColumnDefinition Width="*"/>
+                                </Grid.ColumnDefinitions>
+                                <ComboBox Grid.Column="0" materialDesign:HintAssist.Hint="Đang tìm kiếm" Text="{Binding ProfileLookingFor, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource PremiumComboBox}">
+                                    <ComboBoxItem Content="Mối quan hệ nghiêm túc"/>
+                                    <ComboBoxItem Content="Tìm bạn bè"/>
+                                    <ComboBoxItem Content="Không ràng buộc"/>
+                                    <ComboBoxItem Content="Chưa xác định"/>
+                                </ComboBox>
+                                <TextBox Grid.Column="2" materialDesign:HintAssist.Hint="Lối sống" Text="{Binding ProfileLifestyle, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource PremiumTextBox}"/>
+                            </Grid>
+
+                            <Grid Margin="0,0,0,16">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="16"/>
+                                    <ColumnDefinition Width="*"/>
+                                </Grid.ColumnDefinitions>
+                                <TextBox Grid.Column="0" materialDesign:HintAssist.Hint="Vibe / Tính cách" Text="{Binding ProfileVibe, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource PremiumTextBox}"/>
+                                <TextBox Grid.Column="2" materialDesign:HintAssist.Hint="Khoảng cách tìm kiếm tối đa (km)" Text="{Binding ProfileMaxDistance, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource PremiumTextBox}"/>
+                            </Grid>
+                        </StackPanel>
+                    </Border>
+
+                    <!-- Interests & Values Bento -->
+                    <Border Style="{StaticResource PremiumCard}" Padding="24" Margin="0,0,0,20">
+                        <StackPanel>
+                            <TextBlock Text="Sở thích &amp; Giá trị quan" FontSize="16" FontWeight="Bold" Foreground="#1C1E21" Margin="0,0,0,16"/>
+                            <TextBox materialDesign:HintAssist.Hint="Sở thích (ngăn cách bởi dấu phẩy)" Text="{Binding ProfileInterests, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource PremiumTextBox}" Margin="0,0,0,16"/>
+                            <TextBox materialDesign:HintAssist.Hint="Giá trị sống (ngăn cách bởi dấu phẩy)" Text="{Binding ProfileValues, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource PremiumTextBox}" Margin="0,0,0,24"/>
+                            
+                            <Button Content="Lưu thay đổi" Command="{Binding SaveProfileCommand}" Style="{StaticResource PremiumButton}"/>
+                        </StackPanel>
+                    </Border>
                 </StackPanel>
             </ScrollViewer>
         </Grid>
 
         <!-- LIKES RECEIVED AREA -->
-        <Grid Grid.Column="1" Visibility="{Binding IsLikesVisible, Converter={StaticResource BoolToVis}}" Background="#FFF5F8">
+        <Grid Grid.Column="1" Visibility="{Binding IsLikesVisible, Converter={StaticResource BoolToVis}}" Background="#F0F2F5">
             <Grid.RowDefinitions>
                 <RowDefinition Height="Auto"/>
                 <RowDefinition Height="*"/>
             </Grid.RowDefinitions>
             
-            <TextBlock Grid.Row="0" Text="Những người thích bạn" FontSize="28" FontWeight="Bold" Foreground="#1F2937" Margin="40,40,0,10"/>
+            <TextBlock Grid.Row="0" Text="Những người thích bạn" FontSize="26" FontWeight="Black" Foreground="#1C1E21" Margin="32,32,32,8" FontFamily="Segoe UI, sans-serif"/>
             
-            <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled" Margin="40,10,40,40">
+            <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled" Margin="32,8,32,32">
                 <ItemsControl ItemsSource="{Binding LikesReceived}">
                     <ItemsControl.ItemsPanel>
                         <ItemsPanelTemplate>
@@ -745,27 +1064,28 @@
                     </ItemsControl.ItemsPanel>
                     <ItemsControl.ItemTemplate>
                         <DataTemplate>
-                            <Border Width="220" Height="330" CornerRadius="16" Background="White" Margin="0,0,20,20">
+                            <Border Width="210" Height="310" CornerRadius="20" Background="White" Margin="0,0,16,16">
                                 <Border.Effect>
-                                    <DropShadowEffect BlurRadius="20" ShadowDepth="4" Opacity="0.06" Color="Black"/>
+                                    <DropShadowEffect BlurRadius="25" ShadowDepth="6" Opacity="0.05" Color="Black"/>
                                 </Border.Effect>
                                 <Grid>
                                     <!-- Background Image -->
-                                    <Border CornerRadius="16" ClipToBounds="True">
+                                    <Border CornerRadius="20" ClipToBounds="True">
                                         <Image Source="{Binding AvatarUrl, TargetNullValue='pack://application:,,,/Resources/default-avatar.jpg'}" Stretch="UniformToFill"/>
                                     </Border>
                                     
                                     <!-- Gradient Overlay -->
-                                    <Border CornerRadius="16">
+                                    <Border CornerRadius="20">
                                         <Border.Background>
                                             <LinearGradientBrush StartPoint="0,0.4" EndPoint="0,1">
                                                 <GradientStop Color="Transparent" Offset="0"/>
+                                                <GradientStop Color="#00000000" Offset="0.5"/>
                                                 <GradientStop Color="#CC000000" Offset="1"/>
                                             </LinearGradientBrush>
                                         </Border.Background>
                                     </Border>
 
-                                    <!-- AI Compatibility Badge -->
+                                    <!-- Compatibility Badge -->
                                     <Border VerticalAlignment="Top" HorizontalAlignment="Right" Margin="10" CornerRadius="10" Padding="8,4" Background="#E6005C">
                                         <Border.Style>
                                             <Style TargetType="Border">
@@ -783,7 +1103,7 @@
                                         </StackPanel>
                                     </Border>
 
-                                    <!-- Info & Action Buttons -->
+                                    <!-- Info & Actions -->
                                     <Grid VerticalAlignment="Bottom" Margin="12">
                                         <Grid.RowDefinitions>
                                             <RowDefinition Height="Auto"/>
@@ -791,30 +1111,32 @@
                                             <RowDefinition Height="Auto"/>
                                         </Grid.RowDefinitions>
                                         
-                                        <!-- Name & Age -->
-                                        <TextBlock Grid.Row="0" Text="{Binding FullName}" FontSize="18" FontWeight="Bold" Foreground="White" TextTrimming="CharacterEllipsis"/>
+                                        <!-- Name -->
+                                        <TextBlock Grid.Row="0" Text="{Binding FullName}" FontSize="16" FontWeight="Bold" Foreground="White" TextTrimming="CharacterEllipsis"/>
+                                        
+                                        <!-- Age & Location -->
                                         <StackPanel Grid.Row="1" Orientation="Horizontal" Margin="0,2,0,0">
-                                            <TextBlock Text="{Binding Age, StringFormat={}{0} tuổi}" FontSize="12" Foreground="#E5E7EB" FontWeight="Medium"/>
-                                            <TextBlock Text=" • " FontSize="12" Foreground="#E5E7EB" Visibility="{Binding Location, Converter={StaticResource NullOrEmptyToVisibilityConverter}}"/>
-                                            <TextBlock Text="{Binding Location}" FontSize="12" Foreground="#E5E7EB" FontWeight="Medium" MaxWidth="100" TextTrimming="CharacterEllipsis" Visibility="{Binding Location, Converter={StaticResource NullOrEmptyToVisibilityConverter}}"/>
+                                            <TextBlock Text="{Binding Age, StringFormat={}{0} tuổi}" FontSize="11.5" Foreground="#E5E7EB" FontWeight="Medium"/>
+                                            <TextBlock Text=" • " FontSize="11.5" Foreground="#E5E7EB" Visibility="{Binding Location, Converter={StaticResource NullOrEmptyToVisibilityConverter}}"/>
+                                            <TextBlock Text="{Binding Location}" FontSize="11.5" Foreground="#E5E7EB" FontWeight="Medium" MaxWidth="100" TextTrimming="CharacterEllipsis" Visibility="{Binding Location, Converter={StaticResource NullOrEmptyToVisibilityConverter}}"/>
                                         </StackPanel>
 
-                                        <!-- Action Buttons -->
-                                        <StackPanel Grid.Row="2" Orientation="Horizontal" HorizontalAlignment="Center" Margin="0,12,0,0">
-                                            <!-- Dislike/Pass Button -->
+                                        <!-- floating buttons inside Card -->
+                                        <StackPanel Grid.Row="2" Orientation="Horizontal" HorizontalAlignment="Center" Margin="0,10,0,0">
+                                            <!-- Dislike -->
                                             <Button Command="{Binding DataContext.PassLikeCommand, RelativeSource={RelativeSource AncestorType=UserControl}}" 
                                                     CommandParameter="{Binding}"
                                                     Style="{StaticResource MaterialDesignFloatingActionLightButton}" 
-                                                    Background="#4DFFFFFF" BorderBrush="Transparent" Width="36" Height="36" Margin="0,0,16,0" Padding="0">
-                                                <materialDesign:PackIcon Kind="Close" Width="20" Height="20" Foreground="White"/>
+                                                    Background="#CCFFFFFF" BorderBrush="Transparent" Width="34" Height="34" Margin="0,0,12,0" Padding="0">
+                                                <materialDesign:PackIcon Kind="Close" Width="18" Height="18" Foreground="#1C1E21"/>
                                             </Button>
 
-                                            <!-- Like back Button -->
+                                            <!-- Like back -->
                                             <Button Command="{Binding DataContext.AcceptLikeCommand, RelativeSource={RelativeSource AncestorType=UserControl}}" 
                                                     CommandParameter="{Binding}"
                                                     Style="{StaticResource MaterialDesignFloatingActionLightButton}" 
-                                                    Background="#E6005C" BorderBrush="Transparent" Width="36" Height="36" Padding="0">
-                                                <materialDesign:PackIcon Kind="Heart" Width="18" Height="18" Foreground="White"/>
+                                                    Background="{StaticResource FbBrandGradient}" BorderBrush="Transparent" Width="34" Height="34" Padding="0">
+                                                <materialDesign:PackIcon Kind="Heart" Width="16" Height="16" Foreground="White"/>
                                             </Button>
                                         </StackPanel>
                                     </Grid>
@@ -825,7 +1147,7 @@
                 </ItemsControl>
             </ScrollViewer>
 
-            <!-- Empty State Placeholder when no likes -->
+            <!-- Empty State Placeholder -->
             <StackPanel Grid.Row="1" VerticalAlignment="Center" HorizontalAlignment="Center">
                 <StackPanel.Style>
                     <Style TargetType="StackPanel">
@@ -837,20 +1159,20 @@
                         </Style.Triggers>
                     </Style>
                 </StackPanel.Style>
-                <materialDesign:PackIcon Kind="HeartBreakOutline" Width="100" Height="100" Foreground="#E5E7EB" HorizontalAlignment="Center"/>
-                <TextBlock Text="Chưa có ai thích bạn gần đây" FontSize="18" Foreground="#9CA3AF" FontWeight="Medium" Margin="0,20,0,0"/>
+                <materialDesign:PackIcon Kind="HeartBroken" Width="80" Height="80" Foreground="#B0B3B8" HorizontalAlignment="Center"/>
+                <TextBlock Text="Chưa có ai thích bạn gần đây" FontSize="16.5" Foreground="#65676B" FontWeight="Bold" Margin="0,16,0,0"/>
             </StackPanel>
         </Grid>
 
         <!-- MESSAGES AREA -->
         <Grid Grid.Column="1" Visibility="{Binding IsMessagesVisible, Converter={StaticResource BoolToVis}}" Background="White">
             <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="350"/>
+                <ColumnDefinition Width="280"/>
                 <ColumnDefinition Width="*"/>
             </Grid.ColumnDefinitions>
 
             <!-- Matches & Inbox List -->
-            <Border Grid.Column="0" BorderBrush="#F3F4F6" BorderThickness="0,0,1,0">
+            <Border Grid.Column="0" BorderBrush="#E4E6EB" BorderThickness="0,0,1,0">
                 <Grid>
                     <Grid.RowDefinitions>
                         <RowDefinition Height="Auto"/>
@@ -858,10 +1180,10 @@
                         <RowDefinition Height="*"/>
                     </Grid.RowDefinitions>
 
-                    <TextBlock Grid.Row="0" Text="Tương hợp mới" FontSize="18" FontWeight="Bold" Foreground="#E6005C" Margin="20,20,20,10"/>
+                    <TextBlock Grid.Row="0" Text="Tương hợp mới" FontSize="16" FontWeight="Black" Foreground="#E6005C" Margin="16,16,16,10"/>
                     
                     <!-- Horizontal Matches (Tinder Style) -->
-                    <ScrollViewer Grid.Row="1" HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Disabled" Margin="20,0,0,10">
+                    <ScrollViewer Grid.Row="1" HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Disabled" Margin="16,0,0,10">
                         <ItemsControl ItemsSource="{Binding Matches}">
                             <ItemsControl.ItemsPanel>
                                 <ItemsPanelTemplate>
@@ -870,18 +1192,19 @@
                             </ItemsControl.ItemsPanel>
                             <ItemsControl.ItemTemplate>
                                 <DataTemplate>
-                                    <StackPanel Margin="0,0,15,0" Width="70" Cursor="Hand">
+                                    <StackPanel Margin="0,0,12,0" Width="68" Cursor="Hand">
                                         <StackPanel.InputBindings>
                                             <MouseBinding Gesture="LeftClick" Command="{Binding DataContext.SelectMatchCommand, RelativeSource={RelativeSource AncestorType=UserControl}}" CommandParameter="{Binding}" />
                                         </StackPanel.InputBindings>
-                                        <Border Width="64" Height="64" CornerRadius="32" BorderBrush="#E6005C" BorderThickness="2" Padding="2">
-                                            <Border CornerRadius="30">
-                                                <Border.Background>
-                                                    <ImageBrush ImageSource="{Binding Partner.AvatarUrl, TargetNullValue='pack://application:,,,/Resources/default-avatar.jpg'}" Stretch="UniformToFill"/>
-                                                </Border.Background>
+                                        <!-- Glowing gradient match ring -->
+                                        <Border Width="62" Height="62" CornerRadius="31" Background="{StaticResource FbBrandGradient}" Padding="2">
+                                            <Border CornerRadius="29" ClipToBounds="True" Background="White" Padding="2">
+                                                <Border CornerRadius="27" ClipToBounds="True">
+                                                    <Image Source="{Binding Partner.AvatarUrl, TargetNullValue='pack://application:,,,/Resources/default-avatar.jpg'}" Stretch="UniformToFill"/>
+                                                </Border>
                                             </Border>
                                         </Border>
-                                        <TextBlock Text="{Binding Partner.FullName}" FontSize="12" FontWeight="SemiBold" TextAlignment="Center" Margin="0,5,0,0" TextTrimming="CharacterEllipsis"/>
+                                        <TextBlock Text="{Binding Partner.FullName}" FontSize="12.5" FontWeight="SemiBold" TextAlignment="Center" Margin="0,5,0,0" TextTrimming="CharacterEllipsis"/>
                                     </StackPanel>
                                 </DataTemplate>
                             </ItemsControl.ItemTemplate>
@@ -889,43 +1212,41 @@
                     </ScrollViewer>
 
                     <!-- Vertical Inbox -->
-                    <TextBlock Grid.Row="2" Text="Tin nhắn" FontSize="18" FontWeight="Bold" Foreground="#E6005C" Margin="20,10,20,10" VerticalAlignment="Top"/>
+                    <TextBlock Grid.Row="2" Text="Tin nhắn" FontSize="16" FontWeight="Black" Foreground="#1C1E21" Margin="16,10,16,10" VerticalAlignment="Top"/>
                     <ListBox Grid.Row="2" ItemsSource="{Binding Matches}" SelectedItem="{Binding SelectedMatch}" Background="Transparent" BorderThickness="0" Margin="0,40,0,0" HorizontalContentAlignment="Stretch">
                         <ListBox.ItemTemplate>
                             <DataTemplate>
-                                <Grid Margin="10,5">
+                                <Grid Margin="6,6">
                                     <Grid.ColumnDefinitions>
-                                        <ColumnDefinition Width="60"/>
+                                        <ColumnDefinition Width="54"/>
                                         <ColumnDefinition Width="*"/>
                                         <ColumnDefinition Width="Auto"/>
                                     </Grid.ColumnDefinitions>
                                     
-                                    <Grid Grid.Column="0" Width="50" Height="50">
-                                        <Border Width="50" Height="50" CornerRadius="25">
-                                            <Border.Background>
-                                                <ImageBrush ImageSource="{Binding Partner.AvatarUrl, TargetNullValue='pack://application:,,,/Resources/default-avatar.jpg'}" Stretch="UniformToFill"/>
-                                            </Border.Background>
+                                    <Grid Grid.Column="0" Width="44" Height="44">
+                                        <Border Width="44" Height="44" CornerRadius="22" ClipToBounds="True">
+                                            <Image Source="{Binding Partner.AvatarUrl, TargetNullValue='pack://application:,,,/Resources/default-avatar.jpg'}" Stretch="UniformToFill"/>
                                         </Border>
                                         
                                         <!-- Online Status Badge -->
-                                        <Ellipse Width="12" Height="12" Fill="#10B981" 
-                                                 Stroke="White" StrokeThickness="2"
+                                        <Ellipse Width="11" Height="11" Fill="{StaticResource FbSuccessGreen}" 
+                                                 Stroke="White" StrokeThickness="1.5"
                                                  HorizontalAlignment="Right" VerticalAlignment="Bottom"
                                                  Margin="0,0,1,1"
                                                  Visibility="{Binding Partner.IsOnline, Converter={StaticResource BoolToVis}}"/>
                                     </Grid>
                                     
-                                    <StackPanel Grid.Column="1" VerticalAlignment="Center" Margin="10,0,0,0">
+                                    <StackPanel Grid.Column="1" VerticalAlignment="Center" Margin="8,0,0,0">
                                         <StackPanel Orientation="Horizontal">
-                                            <TextBlock Text="{Binding Partner.FullName}" FontSize="16" FontWeight="Bold" Foreground="#1F2937" VerticalAlignment="Center"/>
-                                            <materialDesign:PackIcon Kind="CheckDecagram" Foreground="#3B82F6" Width="16" Height="16" Margin="6,0,0,0" VerticalAlignment="Center"
+                                            <TextBlock Text="{Binding Partner.FullName}" FontSize="14.5" FontWeight="Bold" Foreground="#1C1E21" VerticalAlignment="Center"/>
+                                            <materialDesign:PackIcon Kind="CheckDecagram" Foreground="#1877F2" Width="15" Height="15" Margin="4,0,0,0" VerticalAlignment="Center"
                                                                      Visibility="{Binding Partner.IsVerified, Converter={StaticResource BoolToVis}}"/>
                                         </StackPanel>
-                                        <TextBlock Text="{Binding LastMessage.Content, FallbackValue='Bắt đầu trò chuyện'}" FontSize="13" Foreground="#6B7280" TextTrimming="CharacterEllipsis" MaxWidth="180"/>
+                                        <TextBlock Text="{Binding LastMessage.Content, FallbackValue='Bắt đầu trò chuyện'}" FontSize="12.5" Foreground="#65676B" TextTrimming="CharacterEllipsis" MaxWidth="190"/>
                                     </StackPanel>
                                     
-                                    <Border Grid.Column="2" Visibility="{Binding UnreadCount, Converter={StaticResource BoolToVis}}" Background="#E6005C" CornerRadius="10" MinWidth="20" Height="20" HorizontalAlignment="Right" VerticalAlignment="Center">
-                                        <TextBlock Text="{Binding UnreadCount}" Foreground="White" FontSize="11" FontWeight="Bold" HorizontalAlignment="Center" VerticalAlignment="Center" Margin="5,0"/>
+                                    <Border Grid.Column="2" Visibility="{Binding UnreadCount, Converter={StaticResource BoolToVis}}" Background="#E6005C" CornerRadius="9" MinWidth="18" Height="18" HorizontalAlignment="Right" VerticalAlignment="Center">
+                                        <TextBlock Text="{Binding UnreadCount}" Foreground="White" FontSize="10.5" FontWeight="Bold" HorizontalAlignment="Center" VerticalAlignment="Center" Margin="5,0"/>
                                     </Border>
                                 </Grid>
                             </DataTemplate>
@@ -935,7 +1256,7 @@
             </Border>
 
             <!-- Chat Box -->
-            <Grid Grid.Column="1" Background="#FFF5F8">
+            <Grid Grid.Column="1" Background="#F0F2F5">
                 <Grid.RowDefinitions>
                     <RowDefinition Height="70"/>
                     <RowDefinition Height="*"/>
@@ -954,34 +1275,33 @@
                 </Grid.Style>
 
                 <!-- Header -->
-                <Border Grid.Row="0" Background="White" BorderBrush="#F3F4F6" BorderThickness="0,0,0,1">
-                    <Grid Margin="20,0">
+                <Border Grid.Row="0" Background="White" BorderBrush="#E4E6EB" BorderThickness="0,0,0,1">
+                    <Grid Margin="16,0">
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="Auto"/>
                             <ColumnDefinition Width="*"/>
                             <ColumnDefinition Width="Auto"/>
                         </Grid.ColumnDefinitions>
                         
-                        <Border Grid.Column="0" Width="40" Height="40" CornerRadius="20">
-                            <Border.Background>
-                                <ImageBrush ImageSource="{Binding SelectedMatch.Partner.AvatarUrl, TargetNullValue='pack://application:,,,/Resources/default-avatar.jpg'}" Stretch="UniformToFill"/>
-                            </Border.Background>
+                        <Border Grid.Column="0" Width="42" Height="42" CornerRadius="21" ClipToBounds="True">
+                            <Image Source="{Binding SelectedMatch.Partner.AvatarUrl, TargetNullValue='pack://application:,,,/Resources/default-avatar.jpg'}" Stretch="UniformToFill"/>
                         </Border>
-                        <StackPanel Grid.Column="1" Margin="15,0,0,0" VerticalAlignment="Center">
+                        
+                        <StackPanel Grid.Column="1" Margin="12,0,0,0" VerticalAlignment="Center">
                             <StackPanel Orientation="Horizontal">
-                                <TextBlock Text="{Binding SelectedMatch.Partner.FullName}" FontSize="18" FontWeight="Bold" Foreground="#1F2937" VerticalAlignment="Center"/>
-                                <materialDesign:PackIcon Kind="CheckDecagram" Foreground="#3B82F6" Width="18" Height="18" Margin="6,0,0,0" VerticalAlignment="Center"
+                                <TextBlock Text="{Binding SelectedMatch.Partner.FullName}" FontSize="16" FontWeight="Bold" Foreground="#1C1E21" VerticalAlignment="Center"/>
+                                <materialDesign:PackIcon Kind="CheckDecagram" Foreground="#1877F2" Width="16" Height="16" Margin="4,0,0,0" VerticalAlignment="Center"
                                                          Visibility="{Binding SelectedMatch.Partner.IsVerified, Converter={StaticResource BoolToVis}}"/>
                             </StackPanel>
                             <TextBlock FontSize="12" VerticalAlignment="Center">
                                 <TextBlock.Style>
                                     <Style TargetType="TextBlock">
                                         <Setter Property="Text" Value="Ngoại tuyến"/>
-                                        <Setter Property="Foreground" Value="Gray"/>
+                                        <Setter Property="Foreground" Value="#65676B"/>
                                         <Style.Triggers>
                                             <DataTrigger Binding="{Binding SelectedMatch.Partner.IsOnline}" Value="True">
                                                 <Setter Property="Text" Value="Đang hoạt động"/>
-                                                <Setter Property="Foreground" Value="#10B981"/>
+                                                <Setter Property="Foreground" Value="{StaticResource FbSuccessGreen}"/>
                                             </DataTrigger>
                                         </Style.Triggers>
                                     </Style>
@@ -989,17 +1309,18 @@
                             </TextBlock>
                         </StackPanel>
                         
+                        <!-- Header Buttons -->
                         <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center">
-                            <Button Command="{Binding UnmatchCommand}" Style="{StaticResource MaterialDesignOutlinedButton}" BorderBrush="#EF4444" Foreground="#EF4444" Margin="0,0,10,0">
+                            <Button Command="{Binding UnmatchCommand}" Style="{StaticResource PremiumOutlineButton}" BorderBrush="#EF4444" Foreground="#EF4444" Height="36" FontSize="13" Margin="0,0,10,0" Padding="12,0">
                                 <StackPanel Orientation="Horizontal">
-                                    <materialDesign:PackIcon Kind="AccountCancel" Margin="0,0,5,0" VerticalAlignment="Center"/>
-                                    <TextBlock Text="Unmatch"/>
+                                    <materialDesign:PackIcon Kind="AccountCancel" Margin="0,0,5,0" Width="14" Height="14" VerticalAlignment="Center"/>
+                                    <TextBlock Text="Hủy Tương hợp" VerticalAlignment="Center"/>
                                 </StackPanel>
                             </Button>
-                            <Button Command="{Binding BlockCommand}" Style="{StaticResource MaterialDesignFlatButton}" Background="#EF4444" Foreground="White">
+                            <Button Command="{Binding BlockCommand}" Style="{StaticResource PremiumButton}" Background="#EF4444" Height="36" FontSize="13" Padding="12,0">
                                 <StackPanel Orientation="Horizontal">
-                                    <materialDesign:PackIcon Kind="BlockHelper" Margin="0,0,5,0" VerticalAlignment="Center"/>
-                                    <TextBlock Text="Block"/>
+                                    <materialDesign:PackIcon Kind="BlockHelper" Margin="0,0,5,0" Width="14" Height="14" VerticalAlignment="Center" Foreground="White"/>
+                                    <TextBlock Text="Chặn" VerticalAlignment="Center" Foreground="White"/>
                                 </StackPanel>
                             </Button>
                         </StackPanel>
@@ -1007,26 +1328,29 @@
                 </Border>
 
                 <!-- Message History -->
-                <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto" Margin="0,10">
-                    <ItemsControl ItemsSource="{Binding CurrentMessages}" Margin="20,0">
+                <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto" Margin="0,8">
+                    <ItemsControl ItemsSource="{Binding CurrentMessages}" Margin="16,0">
                         <ItemsControl.ItemTemplate>
                             <DataTemplate>
-                                <StackPanel Margin="0,5">
-                                    <Border CornerRadius="15" Padding="12,8" MaxWidth="300">
+                                <StackPanel Margin="0,4">
+                                    <!-- Message Bubble with Tail CornerRadius -->
+                                    <Border Tag="{Binding DataContext, RelativeSource={RelativeSource AncestorType=UserControl}}" Padding="12,10" MaxWidth="320">
                                         <Border.Style>
                                             <Style TargetType="Border">
-                                                <Setter Property="Background" Value="#F3F4F6"/>
+                                                <Setter Property="Background" Value="#E4E6EB"/>
+                                                <Setter Property="CornerRadius" Value="18,18,18,4"/>
                                                 <Setter Property="HorizontalAlignment" Value="Left"/>
                                                 <Setter Property="ContextMenu" Value="{x:Null}"/>
                                                 <Style.Triggers>
                                                     <DataTrigger Binding="{Binding IsMine}" Value="True">
-                                                        <Setter Property="Background" Value="#E6005C"/>
+                                                        <Setter Property="Background" Value="{StaticResource FbBrandGradient}"/>
+                                                        <Setter Property="CornerRadius" Value="18,18,4,18"/>
                                                         <Setter Property="HorizontalAlignment" Value="Right"/>
                                                         <Setter Property="ContextMenu">
                                                             <Setter.Value>
                                                                 <ContextMenu>
                                                                     <MenuItem Header="Chỉnh sửa" 
-                                                                              Command="{Binding DataContext.StartEditMessageCommand, RelativeSource={RelativeSource AncestorType=UserControl}}" 
+                                                                              Command="{Binding PlacementTarget.Tag.StartEditMessageCommand, RelativeSource={RelativeSource AncestorType=ContextMenu}}" 
                                                                               CommandParameter="{Binding}">
                                                                         <MenuItem.Style>
                                                                             <Style TargetType="MenuItem" BasedOn="{StaticResource {x:Type MenuItem}}">
@@ -1040,7 +1364,7 @@
                                                                         </MenuItem.Style>
                                                                     </MenuItem>
                                                                     <MenuItem Header="Thu hồi" 
-                                                                              Command="{Binding DataContext.RecallMessageCommand, RelativeSource={RelativeSource AncestorType=UserControl}}" 
+                                                                              Command="{Binding PlacementTarget.Tag.RecallMessageCommand, RelativeSource={RelativeSource AncestorType=ContextMenu}}" 
                                                                               CommandParameter="{Binding}"/>
                                                                 </ContextMenu>
                                                             </Setter.Value>
@@ -1050,11 +1374,11 @@
                                             </Style>
                                         </Border.Style>
                                         <StackPanel>
-                                            <Image Source="{Binding ImageUrl, TargetNullValue={x:Null}}" Visibility="{Binding HasImage, Converter={StaticResource BoolToVis}}" Stretch="Uniform" MaxHeight="200" Margin="0,0,0,5"/>
-                                            <TextBlock Text="{Binding Content}" Visibility="{Binding HasContent, Converter={StaticResource BoolToVis}}" TextWrapping="Wrap" FontSize="14">
+                                            <Image Source="{Binding ImageUrlDisplay, TargetNullValue={x:Null}}" Visibility="{Binding HasImage, Converter={StaticResource BoolToVis}}" Stretch="Uniform" MaxHeight="200" Margin="0,0,0,5"/>
+                                            <TextBlock Text="{Binding Content}" Visibility="{Binding HasContent, Converter={StaticResource BoolToVis}}" TextWrapping="Wrap" FontSize="14.5">
                                                 <TextBlock.Style>
                                                     <Style TargetType="TextBlock">
-                                                        <Setter Property="Foreground" Value="#1F2937"/>
+                                                        <Setter Property="Foreground" Value="#1C1E21"/>
                                                         <Style.Triggers>
                                                             <DataTrigger Binding="{Binding IsMine}" Value="True">
                                                                 <Setter Property="Foreground" Value="White"/>
@@ -1066,8 +1390,8 @@
                                         </StackPanel>
                                     </Border>
                                     
-                                    <!-- Sent time and Seen receipt -->
-                                    <StackPanel Orientation="Horizontal" Margin="5,2,5,0">
+                                    <!-- Sent time & receipt info -->
+                                    <StackPanel Orientation="Horizontal" Margin="6,2,6,2">
                                         <StackPanel.Style>
                                             <Style TargetType="StackPanel">
                                                 <Setter Property="HorizontalAlignment" Value="Left"/>
@@ -1080,11 +1404,11 @@
                                         </StackPanel.Style>
                                         
                                         <!-- Sent Time -->
-                                        <TextBlock Text="{Binding SentAt, StringFormat=\{0:HH:mm\}}" FontSize="10" Foreground="Gray" VerticalAlignment="Center"/>
+                                        <TextBlock Text="{Binding SentAt, StringFormat=\{0:HH:mm\}}" FontSize="10.5" Foreground="#65676B" VerticalAlignment="Center"/>
                                         
-                                        <!-- Read Receipt (only for mine messages) -->
-                                        <StackPanel Orientation="Horizontal" Margin="5,0,0,0" Visibility="{Binding IsMine, Converter={StaticResource BoolToVis}}">
-                                            <materialDesign:PackIcon Kind="Check" Width="12" Height="12" Foreground="Gray" VerticalAlignment="Center">
+                                        <!-- Seen Status Icon -->
+                                        <StackPanel Orientation="Horizontal" Margin="6,0,0,0" Visibility="{Binding IsMine, Converter={StaticResource BoolToVis}}">
+                                            <materialDesign:PackIcon Kind="Check" Width="12" Height="12" Foreground="#65676B" VerticalAlignment="Center">
                                                 <materialDesign:PackIcon.Style>
                                                     <Style TargetType="materialDesign:PackIcon">
                                                         <Setter Property="Visibility" Value="Visible"/>
@@ -1097,7 +1421,7 @@
                                                 </materialDesign:PackIcon.Style>
                                             </materialDesign:PackIcon>
                                             
-                                            <materialDesign:PackIcon Kind="CheckAll" Width="12" Height="12" Foreground="#3B82F6" VerticalAlignment="Center">
+                                            <materialDesign:PackIcon Kind="CheckAll" Width="12" Height="12" Foreground="#1877F2" VerticalAlignment="Center">
                                                 <materialDesign:PackIcon.Style>
                                                     <Style TargetType="materialDesign:PackIcon">
                                                         <Setter Property="Visibility" Value="Collapsed"/>
@@ -1117,8 +1441,8 @@
                     </ItemsControl>
                 </ScrollViewer>
 
-                <!-- Input Area -->
-                <Border Grid.Row="2" Background="White" Padding="15,10,15,15" BorderBrush="#F3F4F6" BorderThickness="0,1,0,0">
+                <!-- Input Area (Bubble look like Messenger) -->
+                <Border Grid.Row="2" Background="White" Padding="12,10,12,12" BorderBrush="#E4E6EB" BorderThickness="0,1,0,0">
                     <Grid>
                         <Grid.RowDefinitions>
                             <RowDefinition Height="Auto"/>
@@ -1131,16 +1455,16 @@
                             <ColumnDefinition Width="Auto"/>
                         </Grid.ColumnDefinitions>
                         
-                        <!-- Info Bars (Typing and Editing) -->
-                        <Grid Grid.Row="0" Grid.Column="0" Grid.ColumnSpan="4" Margin="10,0,10,5">
-                            <!-- Typing Indicator -->
-                            <StackPanel Orientation="Horizontal" Margin="45,0,0,0" Visibility="{Binding IsPartnerTyping, Converter={StaticResource BoolToVis}}">
-                                <TextBlock Text="{Binding SelectedMatch.Partner.FullName}" FontSize="12" FontWeight="SemiBold" Foreground="#E6005C"/>
-                                <TextBlock Text=" đang soạn tin nhắn..." FontSize="12" FontStyle="Italic" Foreground="Gray"/>
+                        <!-- Info Bars -->
+                        <Grid Grid.Row="0" Grid.Column="0" Grid.ColumnSpan="4" Margin="8,0,8,4">
+                            <!-- Typing -->
+                            <StackPanel Orientation="Horizontal" Margin="42,0,0,0" Visibility="{Binding IsPartnerTyping, Converter={StaticResource BoolToVis}}">
+                                <TextBlock Text="{Binding SelectedMatch.Partner.FullName}" FontSize="12.5" FontWeight="SemiBold" Foreground="#E6005C"/>
+                                <TextBlock Text=" đang nhập tin nhắn..." FontSize="12" FontStyle="Italic" Foreground="#65676B"/>
                             </StackPanel>
                             
                             <!-- Editing Message Bar -->
-                            <Border Visibility="{Binding IsEditingMessage, Converter={StaticResource BoolToVis}}" Background="#FFF5F8" Padding="10,6" Margin="-10,-5,-10,5">
+                            <Border Visibility="{Binding IsEditingMessage, Converter={StaticResource BoolToVis}}" Background="#FFF0F5" CornerRadius="8" Padding="10,6" Margin="-10,-4,-10,4">
                                 <Grid>
                                     <Grid.ColumnDefinitions>
                                         <ColumnDefinition Width="*"/>
@@ -1150,35 +1474,36 @@
                                         <materialDesign:PackIcon Kind="Pencil" Width="14" Height="14" Foreground="#E6005C" VerticalAlignment="Center" Margin="0,0,6,0"/>
                                         <TextBlock Text="Đang chỉnh sửa tin nhắn..." FontSize="12" FontWeight="SemiBold" Foreground="#E6005C" VerticalAlignment="Center"/>
                                     </StackPanel>
-                                    <Button Grid.Column="1" Command="{Binding CancelEditMessageCommand}" Style="{StaticResource MaterialDesignIconButton}" Width="24" Height="24" Foreground="#6B7280" VerticalAlignment="Center">
+                                    <Button Grid.Column="1" Command="{Binding CancelEditMessageCommand}" Style="{StaticResource MaterialDesignIconButton}" Width="24" Height="24" Foreground="#65676B" VerticalAlignment="Center">
                                         <materialDesign:PackIcon Kind="Close" Width="16" Height="16"/>
                                     </Button>
                                 </Grid>
                             </Border>
                         </Grid>
                         
-                        <Button Grid.Row="1" Grid.Column="0" Command="{Binding SendImageCommand}" Style="{StaticResource MaterialDesignFlatButton}" Foreground="#6B7280" Width="40" Height="40" Margin="0,0,5,0">
-                            <materialDesign:PackIcon Kind="ImageOutline" Width="22" Height="22"/>
+                        <!-- Attach image -->
+                        <Button Grid.Row="1" Grid.Column="0" Command="{Binding SendImageCommand}" Style="{StaticResource MaterialDesignFlatButton}" Foreground="#65676B" Width="38" Height="38" Margin="0,0,4,0">
+                            <materialDesign:PackIcon Kind="ImageOutline" Width="20" Height="20"/>
                         </Button>
                         
-                        <!-- Emoji Button and Popup -->
+                        <!-- Emoji Picker -->
                         <Grid Grid.Row="1" Grid.Column="1">
-                            <Button x:Name="BtnEmoji" Command="{Binding ToggleEmojiPopupCommand}" Style="{StaticResource MaterialDesignFlatButton}" Foreground="#6B7280" Width="40" Height="40" Margin="0,0,5,0">
-                                <materialDesign:PackIcon Kind="EmoticonOutline" Width="22" Height="22"/>
+                            <Button x:Name="BtnEmoji" Command="{Binding ToggleEmojiPopupCommand}" Style="{StaticResource MaterialDesignFlatButton}" Foreground="#65676B" Width="38" Height="38" Margin="0,0,4,0">
+                                <materialDesign:PackIcon Kind="EmoticonOutline" Width="20" Height="20"/>
                             </Button>
                             <Popup IsOpen="{Binding IsEmojiPopupOpen}" PlacementTarget="{Binding ElementName=BtnEmoji}" Placement="Top" StaysOpen="False">
-                                <Border Background="White" CornerRadius="12" BorderBrush="#E5E7EB" BorderThickness="1" Padding="8" Width="250">
+                                <Border Background="White" CornerRadius="16" BorderBrush="#E4E6EB" BorderThickness="1" Padding="10" Width="260">
                                     <Border.Effect>
-                                        <DropShadowEffect BlurRadius="15" ShadowDepth="5" Opacity="0.1" Color="Black"/>
+                                        <DropShadowEffect BlurRadius="25" ShadowDepth="5" Opacity="0.08" Color="Black"/>
                                     </Border.Effect>
                                     <Grid>
                                         <Grid.RowDefinitions>
                                             <RowDefinition Height="Auto"/>
                                             <RowDefinition Height="*"/>
                                         </Grid.RowDefinitions>
-                                        <TextBlock Text="Biểu tượng cảm xúc" FontSize="11" FontWeight="SemiBold" Foreground="#9CA3AF" Margin="4,0,0,8"/>
+                                        <TextBlock Text="Biểu tượng cảm xúc" FontSize="11.5" FontWeight="Bold" Foreground="#65676B" Margin="4,0,0,8"/>
                                         <UniformGrid Grid.Row="1" Columns="6" Rows="4">
-                                            <!-- Hàng 1 -->
+                                            <!-- Row 1 -->
                                             <Button Content="😀" Command="{Binding AddEmojiCommand}" CommandParameter="😀" Style="{StaticResource MaterialDesignFlatButton}" Padding="0" FontSize="18" Height="32" Width="32"/>
                                             <Button Content="😂" Command="{Binding AddEmojiCommand}" CommandParameter="😂" Style="{StaticResource MaterialDesignFlatButton}" Padding="0" FontSize="18" Height="32" Width="32"/>
                                             <Button Content="😍" Command="{Binding AddEmojiCommand}" CommandParameter="😍" Style="{StaticResource MaterialDesignFlatButton}" Padding="0" FontSize="18" Height="32" Width="32"/>
@@ -1186,7 +1511,7 @@
                                             <Button Content="👍" Command="{Binding AddEmojiCommand}" CommandParameter="👍" Style="{StaticResource MaterialDesignFlatButton}" Padding="0" FontSize="18" Height="32" Width="32"/>
                                             <Button Content="🔥" Command="{Binding AddEmojiCommand}" CommandParameter="🔥" Style="{StaticResource MaterialDesignFlatButton}" Padding="0" FontSize="18" Height="32" Width="32"/>
                                             
-                                            <!-- Hàng 2 -->
+                                            <!-- Row 2 -->
                                             <Button Content="😊" Command="{Binding AddEmojiCommand}" CommandParameter="😊" Style="{StaticResource MaterialDesignFlatButton}" Padding="0" FontSize="18" Height="32" Width="32"/>
                                             <Button Content="😭" Command="{Binding AddEmojiCommand}" CommandParameter="😭" Style="{StaticResource MaterialDesignFlatButton}" Padding="0" FontSize="18" Height="32" Width="32"/>
                                             <Button Content="🥺" Command="{Binding AddEmojiCommand}" CommandParameter="🥺" Style="{StaticResource MaterialDesignFlatButton}" Padding="0" FontSize="18" Height="32" Width="32"/>
@@ -1194,7 +1519,7 @@
                                             <Button Content="🙌" Command="{Binding AddEmojiCommand}" CommandParameter="🙌" Style="{StaticResource MaterialDesignFlatButton}" Padding="0" FontSize="18" Height="32" Width="32"/>
                                             <Button Content="🎉" Command="{Binding AddEmojiCommand}" CommandParameter="🎉" Style="{StaticResource MaterialDesignFlatButton}" Padding="0" FontSize="18" Height="32" Width="32"/>
 
-                                            <!-- Hàng 3 -->
+                                            <!-- Row 3 -->
                                             <Button Content="😎" Command="{Binding AddEmojiCommand}" CommandParameter="😎" Style="{StaticResource MaterialDesignFlatButton}" Padding="0" FontSize="18" Height="32" Width="32"/>
                                             <Button Content="🤔" Command="{Binding AddEmojiCommand}" CommandParameter="🤔" Style="{StaticResource MaterialDesignFlatButton}" Padding="0" FontSize="18" Height="32" Width="32"/>
                                             <Button Content="😜" Command="{Binding AddEmojiCommand}" CommandParameter="😜" Style="{StaticResource MaterialDesignFlatButton}" Padding="0" FontSize="18" Height="32" Width="32"/>
@@ -1202,7 +1527,7 @@
                                             <Button Content="👏" Command="{Binding AddEmojiCommand}" CommandParameter="👏" Style="{StaticResource MaterialDesignFlatButton}" Padding="0" FontSize="18" Height="32" Width="32"/>
                                             <Button Content="🎂" Command="{Binding AddEmojiCommand}" CommandParameter="🎂" Style="{StaticResource MaterialDesignFlatButton}" Padding="0" FontSize="18" Height="32" Width="32"/>
 
-                                            <!-- Hàng 4 -->
+                                            <!-- Row 4 -->
                                             <Button Content="😉" Command="{Binding AddEmojiCommand}" CommandParameter="😉" Style="{StaticResource MaterialDesignFlatButton}" Padding="0" FontSize="18" Height="32" Width="32"/>
                                             <Button Content="😡" Command="{Binding AddEmojiCommand}" CommandParameter="😡" Style="{StaticResource MaterialDesignFlatButton}" Padding="0" FontSize="18" Height="32" Width="32"/>
                                             <Button Content="😴" Command="{Binding AddEmojiCommand}" CommandParameter="😴" Style="{StaticResource MaterialDesignFlatButton}" Padding="0" FontSize="18" Height="32" Width="32"/>
@@ -1215,14 +1540,18 @@
                             </Popup>
                         </Grid>
                         
-                        <TextBox Grid.Row="1" Grid.Column="2" Text="{Binding MessageDraft, UpdateSourceTrigger=PropertyChanged}" materialDesign:HintAssist.Hint="Nhập tin nhắn..." Style="{StaticResource MaterialDesignOutlinedTextBox}" Height="45" VerticalContentAlignment="Center" Background="#F9FAFB">
-                            <TextBox.InputBindings>
-                                <KeyBinding Key="Enter" Command="{Binding SendMessageCommand}"/>
-                            </TextBox.InputBindings>
-                        </TextBox>
+                        <!-- Messenger Pill Input Box -->
+                        <Border Grid.Row="1" Grid.Column="2" CornerRadius="19" Background="#F0F2F5" Height="38" Padding="14,0" VerticalAlignment="Center">
+                            <TextBox Text="{Binding MessageDraft, UpdateSourceTrigger=PropertyChanged}" materialDesign:HintAssist.Hint="Nhập tin nhắn..." Style="{StaticResource MaterialDesignTextBoxBase}" VerticalContentAlignment="Center" Background="Transparent" BorderThickness="0" Foreground="#1C1E21">
+                                <TextBox.InputBindings>
+                                    <KeyBinding Key="Enter" Command="{Binding SendMessageCommand}"/>
+                                </TextBox.InputBindings>
+                            </TextBox>
+                        </Border>
                         
-                        <Button Grid.Row="1" Grid.Column="3" Command="{Binding SendMessageCommand}" Style="{StaticResource MaterialDesignFloatingActionLightButton}" Width="45" Height="45" Background="#E6005C" BorderBrush="#E6005C" Margin="10,0,0,0" Foreground="White">
-                            <materialDesign:PackIcon Kind="Send" Width="20" Height="20"/>
+                        <!-- Circular Gradient Send Button -->
+                        <Button Grid.Row="1" Grid.Column="3" Command="{Binding SendMessageCommand}" Style="{StaticResource MaterialDesignFloatingActionLightButton}" Width="38" Height="38" Background="{StaticResource FbBrandGradient}" BorderBrush="Transparent" Margin="8,0,0,0" Foreground="White">
+                            <materialDesign:PackIcon Kind="Send" Width="18" Height="18" Foreground="White"/>
                         </Button>
                     </Grid>
                 </Border>
@@ -1240,8 +1569,8 @@
                         </Style.Triggers>
                     </Style>
                 </StackPanel.Style>
-                <materialDesign:PackIcon Kind="MessageOutline" Width="100" Height="100" Foreground="#F3F4F6" HorizontalAlignment="Center"/>
-                <TextBlock Text="Chọn một tương hợp để bắt đầu trò chuyện" FontSize="18" Foreground="#9CA3AF" FontWeight="Medium" Margin="0,20,0,0"/>
+                <materialDesign:PackIcon Kind="MessageOutline" Width="80" Height="80" Foreground="#B0B3B8" HorizontalAlignment="Center"/>
+                <TextBlock Text="Chọn một tương hợp để bắt đầu trò chuyện" FontSize="16.5" Foreground="#65676B" FontWeight="Bold" Margin="0,16,0,0"/>
             </StackPanel>
         </Grid>
 

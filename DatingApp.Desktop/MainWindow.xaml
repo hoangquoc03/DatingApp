@@ -6,7 +6,7 @@
         xmlns:viewmodels="clr-namespace:DatingApp.Desktop.ViewModels"
         xmlns:views="clr-namespace:DatingApp.Desktop.Views"
         mc:Ignorable="d"
-        Title="Aura Premium - Dating App" Height="700" Width="1000" WindowStartupLocation="CenterScreen">
+        Title="Aura Dating - Dating App" Height="700" Width="1000" MinHeight="650" MinWidth="950" WindowStartupLocation="CenterScreen">
     <Window.Resources>
         <DataTemplate DataType="{x:Type viewmodels:LoginViewModel}">
             <views:LoginView />

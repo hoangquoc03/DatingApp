@@ -62,6 +62,27 @@ public partial class DashboardViewModel : ObservableObject
     [ObservableProperty]
     private bool _isEmojiPopupOpen = false;
 
+    [ObservableProperty]
+    private bool _isUserDetailVisible = false;
+
+    [ObservableProperty]
+    private ObservableCollection<PhotoDto> _currentUserPhotos = new();
+
+    [ObservableProperty]
+    private int? _currentUserHeight;
+
+    [ObservableProperty]
+    private string _currentUserOccupation = "";
+
+    [ObservableProperty]
+    private string _currentUserEducation = "";
+
+    [ObservableProperty]
+    private string _currentUserSmoking = "";
+
+    [ObservableProperty]
+    private string _currentUserDrinking = "";
+
     // --- Tabs ---
     [ObservableProperty]
     private bool _isDiscoverVisible = true;
@@ -278,6 +299,10 @@ public partial class DashboardViewModel : ObservableObject
         _authService = authService;
         _httpClient = httpClientFactory.CreateClient("ApiClient");
         IsAdmin = _authService.CurrentUser?.IsAdmin == true;
+        
+        ProfileAvatarUrl = string.IsNullOrEmpty(_authService.CurrentUser?.AvatarUrl) 
+            ? "pack://application:,,,/Resources/default-avatar.jpg" 
+            : _authService.CurrentUser!.AvatarUrl;
 
         // Set token trực tiếp — đảm bảo luôn có Bearer token
         if (!string.IsNullOrEmpty(_authService.CurrentToken))
@@ -409,7 +434,7 @@ public partial class DashboardViewModel : ObservableObject
     {
         // Navigate to AdminView
         CommunityToolkit.Mvvm.Messaging.WeakReferenceMessenger.Default.Send(
-            new DatingApp.Desktop.Messages.NavigationMessage(((App)System.Windows.Application.Current).Services.GetService(typeof(AdminViewModel)))
+            new DatingApp.Desktop.Messages.NavigationMessage(((App)System.Windows.Application.Current).Services.GetService(typeof(AdminViewModel))!)
         );
     }
 
@@ -432,7 +457,13 @@ public partial class DashboardViewModel : ObservableObject
             CurrentUserCompatibilityScore = _currentUserDto.CompatibilityScore;
             IsCompatibilityVisible = _currentUserDto.CompatibilityScore > 0;
             IsSuperLikedBy = _currentUserDto.IsSuperLikedBy;
+            CurrentUserHeight = _currentUserDto.Height;
+            CurrentUserOccupation = _currentUserDto.Occupation ?? string.Empty;
+            CurrentUserEducation = _currentUserDto.Education ?? string.Empty;
+            CurrentUserSmoking = _currentUserDto.Smoking ?? string.Empty;
+            CurrentUserDrinking = _currentUserDto.Drinking ?? string.Empty;
             IsDiscoverQueueEmpty = false;
+            IsUserDetailVisible = false; // Reset view when next profile loads
 
             CurrentUserInterests.Clear();
             if (_currentUserDto.Interests != null)
@@ -442,6 +473,20 @@ public partial class DashboardViewModel : ObservableObject
                     CurrentUserInterests.Add(interest);
                 }
             }
+
+            CurrentUserPhotos.Clear();
+            if (_currentUserDto.Photos != null && _currentUserDto.Photos.Count > 0)
+            {
+                foreach (var photo in _currentUserDto.Photos)
+                {
+                    CurrentUserPhotos.Add(photo);
+                }
+            }
+            else if (!string.IsNullOrEmpty(_currentUserDto.AvatarUrl))
+            {
+                CurrentUserPhotos.Add(new PhotoDto { Url = _currentUserDto.AvatarUrl, IsMain = true });
+            }
+
         }
         else
         {
@@ -456,8 +501,15 @@ public partial class DashboardViewModel : ObservableObject
             CurrentUserCompatibilityScore = 0;
             IsCompatibilityVisible = false;
             IsSuperLikedBy = false;
+            CurrentUserHeight = null;
+            CurrentUserOccupation = string.Empty;
+            CurrentUserEducation = string.Empty;
+            CurrentUserSmoking = string.Empty;
+            CurrentUserDrinking = string.Empty;
             CurrentUserInterests.Clear();
+            CurrentUserPhotos.Clear();
             IsDiscoverQueueEmpty = true;
+            IsUserDetailVisible = false;
         }
     }
 
@@ -465,6 +517,19 @@ public partial class DashboardViewModel : ObservableObject
     private void CloseMatchPopup()
     {
         IsMatchPopupVisible = false;
+    }
+
+    [RelayCommand]
+    private void OpenUserDetail()
+    {
+        if (_currentUserDto != null)
+            IsUserDetailVisible = true;
+    }
+
+    [RelayCommand]
+    private void CloseUserDetail()
+    {
+        IsUserDetailVisible = false;
     }
 
     [RelayCommand]
@@ -671,7 +736,7 @@ public partial class DashboardViewModel : ObservableObject
                         var result = await response.Content.ReadFromJsonAsync<System.Text.Json.JsonElement>();
                         if (result.TryGetProperty("avatarUrl", out var avatarUrlProp))
                         {
-                            ProfileAvatarUrl = avatarUrlProp.GetString() ?? ProfileAvatarUrl;
+                            ProfileAvatarUrl = avatarUrlProp.GetString() ?? ProfileAvatarUrl ?? string.Empty;
                             _authService.CurrentUser!.AvatarUrl = ProfileAvatarUrl;
                         }
                         System.Windows.MessageBox.Show("Cập nhật Avatar thành công!", "Thành công");
@@ -738,7 +803,7 @@ public partial class DashboardViewModel : ObservableObject
         if (string.IsNullOrEmpty(baseUrl)) return;
 
         _hubConnection = new HubConnectionBuilder()
-            .WithUrl($"{baseUrl}/hubs/chat", options =>
+            .WithUrl($"{baseUrl}/chatHub", options =>
             {
                 options.AccessTokenProvider = () => Task.FromResult(_authService.CurrentToken)!;
             })
@@ -1390,13 +1455,24 @@ public partial class DashboardViewModel : ObservableObject
     [RelayCommand]
     private void Logout()
     {
+        var loggedOutEmail = _authService.CurrentUser?.Email;
+
         _authService.Logout();
 
         var app = (App)System.Windows.Application.Current;
-        var loginVm = app.Services.GetService(typeof(LoginViewModel));
-        CommunityToolkit.Mvvm.Messaging.WeakReferenceMessenger.Default.Send(
-            new DatingApp.Desktop.Messages.NavigationMessage(loginVm!)
-        );
+        if (app.Services.GetService(typeof(LoginViewModel)) is LoginViewModel loginVm)
+        {
+            if (!string.IsNullOrEmpty(loggedOutEmail))
+            {
+                loginVm.Email = loggedOutEmail;
+            }
+            loginVm.Password = "";
+            loginVm.ErrorMessage = "";
+
+            CommunityToolkit.Mvvm.Messaging.WeakReferenceMessenger.Default.Send(
+                new DatingApp.Desktop.Messages.NavigationMessage(loginVm)
+            );
+        }
     }
 }
 

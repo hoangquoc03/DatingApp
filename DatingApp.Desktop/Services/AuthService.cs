@@ -145,6 +145,9 @@ public class AuthService
                     sessionData.User.AvatarUrl = userDto.AvatarUrl ?? sessionData.User.AvatarUrl;
                     sessionData.User.IsOnboarded = userDto.IsOnboarded;
                     sessionData.User.ProfileCompletionScore = userDto.ProfileCompletionScore;
+
+                    // Lưu lại session đã cập nhật
+                    await SaveSessionAsync(sessionData.Token, sessionData.User);
                 }
 
                 CurrentToken = sessionData.Token;

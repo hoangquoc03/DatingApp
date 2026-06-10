@@ -167,6 +167,11 @@ namespace DatingApp.Services
                     x.Mbti,
                     x.Interests,
                     x.IsVerified,
+                    x.Height,
+                    x.Occupation,
+                    x.Education,
+                    x.Smoking,
+                    x.Drinking,
                     Age = x.DateOfBirth.HasValue
                         ? (int)((DateTime.UtcNow - x.DateOfBirth.Value).TotalDays / 365.25)
                         : (int?)null
@@ -188,6 +193,11 @@ namespace DatingApp.Services
                 x.Mbti,
                 x.Interests,
                 x.Age,
+                x.Height,
+                x.Occupation,
+                x.Education,
+                x.Smoking,
+                x.Drinking,
                 CompatibilityScore = UserService.CalculateCompatibility(currentUser, x.Interests, x.Zodiac, x.Mbti, x.Age)
             }).ToList();
 

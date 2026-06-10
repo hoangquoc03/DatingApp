@@ -11,13 +11,13 @@ namespace DatingApp.Desktop.ViewModels;
 public partial class LoginViewModel : ObservableObject
 {
     private readonly AuthService _authService;
-    private bool _isNewUserSession = false;
+
 
     [ObservableProperty]
-    private string _email = "admin@gmail.com"; // Default for testing
+    private string _email = "";
 
     [ObservableProperty]
-    private string _password = "123456";
+    private string _password = "";
     private string _tempPassword = "";
 
     [ObservableProperty]
@@ -125,7 +125,7 @@ public partial class LoginViewModel : ObservableObject
                     nextViewModel = app.Services.GetService(typeof(DashboardViewModel));
                 }
 
-                _isNewUserSession = false; // Reset cờ
+
 
                 CommunityToolkit.Mvvm.Messaging.WeakReferenceMessenger.Default.Send(
                     new DatingApp.Desktop.Messages.NavigationMessage(nextViewModel!)
@@ -231,7 +231,7 @@ public partial class LoginViewModel : ObservableObject
             if (success)
             {
                 System.Windows.MessageBox.Show("Đăng ký thành công! Hãy nhập mã xác thực OTP đã được gửi tới email của bạn.", "Thông báo", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Information);
-                _isNewUserSession = true;
+
                 _tempPassword = RegisterPassword;
                 
                 // Chuyển sang OTP panel
@@ -384,6 +384,10 @@ public partial class LoginViewModel : ObservableObject
                     _tempPassword = ""; // clear
                     if (loginSuccess)
                     {
+                        if (IsRememberMe)
+                        {
+                            await _authService.SaveSessionAsync(_authService.CurrentToken!, _authService.CurrentUser!);
+                        }
                         var app = (App)System.Windows.Application.Current;
                         object? nextViewModel;
                         if (_authService.CurrentUser?.IsAdmin == true)
@@ -399,7 +403,7 @@ public partial class LoginViewModel : ObservableObject
                             nextViewModel = app.Services.GetService(typeof(DashboardViewModel));
                         }
 
-                        _isNewUserSession = false;
+
 
                         CommunityToolkit.Mvvm.Messaging.WeakReferenceMessenger.Default.Send(
                             new DatingApp.Desktop.Messages.NavigationMessage(nextViewModel!)

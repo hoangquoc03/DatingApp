@@ -19,6 +19,11 @@ public partial class DashboardView : UserControl
 
     private void SwipeCard_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)
     {
+        // Hủy bỏ mọi animation đang chạy để có thể kéo thả lại
+        CardTranslate.BeginAnimation(System.Windows.Media.TranslateTransform.XProperty, null);
+        CardTranslate.BeginAnimation(System.Windows.Media.TranslateTransform.YProperty, null);
+        CardRotate.BeginAnimation(System.Windows.Media.RotateTransform.AngleProperty, null);
+
         _isDragging = true;
         _clickPosition = e.GetPosition(this);
         SwipeCard.CaptureMouse();
@@ -34,6 +39,11 @@ public partial class DashboardView : UserControl
 
         CardTranslate.X = deltaX;
         CardTranslate.Y = deltaY;
+
+        // Dynamically calculate rotation center based on card's actual width and height
+        CardRotate.CenterX = SwipeCard.ActualWidth / 2;
+        CardRotate.CenterY = SwipeCard.ActualHeight + 50;
+
         CardRotate.Angle = deltaX / 10; // Rotate slightly based on X
     }
 
@@ -44,6 +54,19 @@ public partial class DashboardView : UserControl
         SwipeCard.ReleaseMouseCapture();
 
         var deltaX = CardTranslate.X;
+        var deltaY = CardTranslate.Y;
+
+        // Nhận diện Click (Nếu chuột chỉ di chuyển rất nhỏ)
+        if (Math.Abs(deltaX) < 5 && Math.Abs(deltaY) < 5)
+        {
+            var vm = DataContext as DashboardViewModel;
+            if (vm?.OpenUserDetailCommand.CanExecute(null) == true)
+            {
+                vm.OpenUserDetailCommand.Execute(null);
+            }
+            ResetCardPosition(false);
+            return;
+        }
 
         // Nếu vuốt quá trái/phải 120px thì lướt đi
         if (deltaX < -120)
@@ -73,6 +96,9 @@ public partial class DashboardView : UserControl
             if (commandName == "LikeCommand") vm?.LikeCommand.Execute(null);
 
             ResetCardPosition(false);
+            
+            // Phải xóa animation Opacity trước khi gán lại giá trị 1, nếu không sẽ bị đè
+            SwipeCard.BeginAnimation(UIElement.OpacityProperty, null);
             SwipeCard.Opacity = 1;
         };
 
@@ -87,6 +113,21 @@ public partial class DashboardView : UserControl
             var animX = new DoubleAnimation(0, TimeSpan.FromMilliseconds(300)) { EasingFunction = new BackEase { Amplitude = 0.5 } };
             var animY = new DoubleAnimation(0, TimeSpan.FromMilliseconds(300)) { EasingFunction = new BackEase { Amplitude = 0.5 } };
             var animRot = new DoubleAnimation(0, TimeSpan.FromMilliseconds(300));
+            
+            // Tự động xóa animation sau khi hoàn thành để nhường quyền điều khiển cho code C#
+            animX.Completed += (s, e) => {
+                CardTranslate.BeginAnimation(System.Windows.Media.TranslateTransform.XProperty, null);
+                CardTranslate.X = 0;
+            };
+            animY.Completed += (s, e) => {
+                CardTranslate.BeginAnimation(System.Windows.Media.TranslateTransform.YProperty, null);
+                CardTranslate.Y = 0;
+            };
+            animRot.Completed += (s, e) => {
+                CardRotate.BeginAnimation(System.Windows.Media.RotateTransform.AngleProperty, null);
+                CardRotate.Angle = 0;
+            };
+
             CardTranslate.BeginAnimation(System.Windows.Media.TranslateTransform.XProperty, animX);
             CardTranslate.BeginAnimation(System.Windows.Media.TranslateTransform.YProperty, animY);
             CardRotate.BeginAnimation(System.Windows.Media.RotateTransform.AngleProperty, animRot);

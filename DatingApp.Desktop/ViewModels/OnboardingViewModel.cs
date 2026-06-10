@@ -110,6 +110,7 @@ public partial class OnboardingViewModel : ObservableObject
                 if (response.IsSuccessStatusCode)
                 {
                     authService.CurrentUser.IsOnboarded = true;
+                    await authService.SaveSessionAsync(authService.CurrentToken!, authService.CurrentUser);
                     // Chuyển về Dashboard
                     var dashboardVm = app.Services.GetService(typeof(DashboardViewModel));
                     WeakReferenceMessenger.Default.Send(new Messages.NavigationMessage(dashboardVm!));

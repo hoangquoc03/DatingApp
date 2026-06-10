@@ -14,6 +14,7 @@ public partial class MessageDto : ObservableObject
     
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(HasImage))]
+    [NotifyPropertyChangedFor(nameof(ImageUrlDisplay))]
     private string? _imageUrl;
 
     [ObservableProperty]
@@ -26,4 +27,5 @@ public partial class MessageDto : ObservableObject
     public bool IsMine { get; set; }
     public bool HasImage => !string.IsNullOrEmpty(ImageUrl);
     public bool HasContent => !string.IsNullOrEmpty(Content);
+    public string? ImageUrlDisplay => string.IsNullOrEmpty(ImageUrl) ? null : ImageUrl;
 }

@@ -11,10 +11,7 @@ namespace DatingApp.Data
     {
         public static async Task SeedData(AppDbContext context)
         {
-            if (await context.Users.CountAsync() > 2)
-            {
-                return; // Đã có đủ dữ liệu người dùng
-            }
+            // Chúng ta sẽ lọc ra những user chưa tồn tại để thêm vào, tránh lỗi trùng lặp
 
             var passwordHash = BCrypt.Net.BCrypt.HashPassword("123456");
 
@@ -23,7 +20,7 @@ namespace DatingApp.Data
                 new User
                 {
                     Id = Guid.NewGuid(),
-                    Email = "aura1@gmail.com",
+                    Email = "demo1@gmail.com",
                     PasswordHash = passwordHash,
                     FullName = "Nguyễn Thảo Linh",
                     Gender = Gender.Female,
@@ -46,7 +43,7 @@ namespace DatingApp.Data
                 new User
                 {
                     Id = Guid.NewGuid(),
-                    Email = "aura2@gmail.com",
+                    Email = "demo2@gmail.com",
                     PasswordHash = passwordHash,
                     FullName = "Trần Minh Quân",
                     Gender = Gender.Male,
@@ -712,8 +709,14 @@ namespace DatingApp.Data
                 }
             };
 
-            await context.Users.AddRangeAsync(users);
-            await context.SaveChangesAsync();
+            var existingEmails = await context.Users.Select(u => u.Email).ToListAsync();
+            var newUsers = users.Where(u => !existingEmails.Contains(u.Email)).ToList();
+            
+            if (newUsers.Any())
+            {
+                await context.Users.AddRangeAsync(newUsers);
+                await context.SaveChangesAsync();
+            }
         }
     }
 }
