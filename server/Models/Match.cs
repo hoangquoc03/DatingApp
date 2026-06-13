@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 
 namespace DatingApp.Models
 {
@@ -9,12 +9,12 @@ namespace DatingApp.Models
         // Trường lưu trữ ID (Khóa ngoại)
         public Guid User1Id { get; set; }
         // 🔹 BỔ SUNG: Thuộc tính liên kết vật lý hướng về thực thể User số 1
-        public User UserOne { get; set; }
+        public User UserOne { get; set; } = null!;
 
         // Trường lưu trữ ID (Khóa ngoại)
         public Guid User2Id { get; set; }
         // 🔹 BỔ SUNG: Thuộc tính liên kết vật lý hướng về thực thể User số 2
-        public User UserTwo { get; set; }
+        public User UserTwo { get; set; } = null!;
 
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
     }

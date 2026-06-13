@@ -27,6 +27,7 @@
 
             <!-- Premium TextBox Style -->
             <Style x:Key="PremiumTextBox" TargetType="TextBox" BasedOn="{StaticResource MaterialDesignOutlinedTextBox}">
+                <Setter Property="materialDesign:TextFieldAssist.HasClearButton" Value="True"/>
                 <Setter Property="BorderBrush" Value="#E4E6EB"/>
                 <Setter Property="materialDesign:HintAssist.Foreground" Value="#65676B"/>
                 <Setter Property="Background" Value="White"/>
@@ -40,7 +41,7 @@
             </Style>
 
             <!-- Premium PasswordBox Style -->
-            <Style x:Key="PremiumPasswordBox" TargetType="PasswordBox" BasedOn="{StaticResource MaterialDesignOutlinedPasswordBox}">
+            <Style x:Key="PremiumPasswordBox" TargetType="PasswordBox" BasedOn="{StaticResource MaterialDesignOutlinedRevealPasswordBox}">
                 <Setter Property="BorderBrush" Value="#E4E6EB"/>
                 <Setter Property="materialDesign:HintAssist.Foreground" Value="#65676B"/>
                 <Setter Property="Background" Value="White"/>
@@ -103,6 +104,7 @@
                 <Setter Property="FontSize" Value="16"/>
                 <Setter Property="Height" Value="50"/>
                 <Setter Property="BorderThickness" Value="0"/>
+                <Setter Property="RenderTransformOrigin" Value="0.5,0.5"/>
                 <Setter Property="Template">
                     <Setter.Value>
                         <ControlTemplate TargetType="Button">
@@ -116,7 +118,7 @@
                                 <Trigger Property="IsPressed" Value="True">
                                     <Setter Property="RenderTransform">
                                         <Setter.Value>
-                                            <ScaleTransform ScaleX="0.97" ScaleY="0.97" CenterX="100" CenterY="25"/>
+                                            <ScaleTransform ScaleX="0.97" ScaleY="0.97"/>
                                         </Setter.Value>
                                     </Setter>
                                 </Trigger>
@@ -139,6 +141,7 @@
                 <Setter Property="FontWeight" Value="SemiBold"/>
                 <Setter Property="FontSize" Value="15"/>
                 <Setter Property="Height" Value="50"/>
+                <Setter Property="RenderTransformOrigin" Value="0.5,0.5"/>
                 <Setter Property="Template">
                     <Setter.Value>
                         <ControlTemplate TargetType="Button">
@@ -152,7 +155,7 @@
                                 <Trigger Property="IsPressed" Value="True">
                                     <Setter Property="RenderTransform">
                                         <Setter.Value>
-                                            <ScaleTransform ScaleX="0.97" ScaleY="0.97" CenterX="100" CenterY="25"/>
+                                            <ScaleTransform ScaleX="0.97" ScaleY="0.97"/>
                                         </Setter.Value>
                                     </Setter>
                                 </Trigger>

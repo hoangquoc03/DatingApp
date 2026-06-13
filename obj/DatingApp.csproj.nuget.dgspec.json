@@ -1,17 +1,17 @@
 {
   "format": 1,
   "restore": {
-    "C:\\Users\\ADMIN\\Source\\Repos\\DatingApp\\DatingApp.csproj": {}
+    "C:\\Users\\ADMIN\\source\\repos\\DatingApp\\DatingApp.csproj": {}
   },
   "projects": {
-    "C:\\Users\\ADMIN\\Source\\Repos\\DatingApp\\DatingApp.csproj": {
+    "C:\\Users\\ADMIN\\source\\repos\\DatingApp\\DatingApp.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "C:\\Users\\ADMIN\\Source\\Repos\\DatingApp\\DatingApp.csproj",
+        "projectUniqueName": "C:\\Users\\ADMIN\\source\\repos\\DatingApp\\DatingApp.csproj",
         "projectName": "DatingApp",
-        "projectPath": "C:\\Users\\ADMIN\\Source\\Repos\\DatingApp\\DatingApp.csproj",
+        "projectPath": "C:\\Users\\ADMIN\\source\\repos\\DatingApp\\DatingApp.csproj",
         "packagesPath": "C:\\Users\\ADMIN\\.nuget\\packages\\",
-        "outputPath": "C:\\Users\\ADMIN\\Source\\Repos\\DatingApp\\obj\\",
+        "outputPath": "C:\\Users\\ADMIN\\source\\repos\\DatingApp\\obj\\",
         "projectStyle": "PackageReference",
         "configFilePaths": [
           "C:\\Users\\ADMIN\\AppData\\Roaming\\NuGet\\NuGet.Config",
@@ -104,7 +104,7 @@
               "privateAssets": "all"
             }
           },
-          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\9.0.314/PortableRuntimeIdentifierGraph.json"
+          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\9.0.315/PortableRuntimeIdentifierGraph.json"
         }
       }
     }

@@ -1,17 +1,17 @@
 {
   "format": 1,
   "restore": {
-    "c:\\Users\\ADMIN\\source\\repos\\DatingApp\\DatingApp.Desktop\\DatingApp.Desktop.csproj": {}
+    "C:\\Users\\ADMIN\\source\\repos\\DatingApp\\DatingApp.Desktop\\DatingApp.Desktop.csproj": {}
   },
   "projects": {
-    "c:\\Users\\ADMIN\\source\\repos\\DatingApp\\DatingApp.Desktop\\DatingApp.Desktop.csproj": {
+    "C:\\Users\\ADMIN\\source\\repos\\DatingApp\\DatingApp.Desktop\\DatingApp.Desktop.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "c:\\Users\\ADMIN\\source\\repos\\DatingApp\\DatingApp.Desktop\\DatingApp.Desktop.csproj",
+        "projectUniqueName": "C:\\Users\\ADMIN\\source\\repos\\DatingApp\\DatingApp.Desktop\\DatingApp.Desktop.csproj",
         "projectName": "DatingApp.Desktop",
-        "projectPath": "c:\\Users\\ADMIN\\source\\repos\\DatingApp\\DatingApp.Desktop\\DatingApp.Desktop.csproj",
+        "projectPath": "C:\\Users\\ADMIN\\source\\repos\\DatingApp\\DatingApp.Desktop\\DatingApp.Desktop.csproj",
         "packagesPath": "C:\\Users\\ADMIN\\.nuget\\packages\\",
-        "outputPath": "c:\\Users\\ADMIN\\source\\repos\\DatingApp\\DatingApp.Desktop\\obj\\",
+        "outputPath": "C:\\Users\\ADMIN\\source\\repos\\DatingApp\\DatingApp.Desktop\\obj\\",
         "projectStyle": "PackageReference",
         "configFilePaths": [
           "C:\\Users\\ADMIN\\AppData\\Roaming\\NuGet\\NuGet.Config",
@@ -86,7 +86,7 @@
               "privateAssets": "none"
             }
           },
-          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\9.0.314/PortableRuntimeIdentifierGraph.json"
+          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\9.0.315/PortableRuntimeIdentifierGraph.json"
         }
       }
     }

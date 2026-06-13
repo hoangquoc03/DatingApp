@@ -8,7 +8,7 @@ namespace DatingApp.Models
         public int Id { get; set; }
 
         [Required]
-        public string Url { get; set; }
+        public string Url { get; set; } = string.Empty;
 
         public bool IsMain { get; set; }
 
@@ -17,6 +17,6 @@ namespace DatingApp.Models
         public Guid UserId { get; set; }
 
         [ForeignKey("UserId")]
-        public User User { get; set; }
+        public User User { get; set; } = null!;
     }
 }
