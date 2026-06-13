@@ -250,4 +250,3 @@ C:\Users\ADMIN\source\repos\DatingApp\bin\Debug\net8.0\skills-lock.json
 C:\Users\ADMIN\Source\Repos\DatingApp\bin\Debug\net8.0\spa.proxy.json
 C:\Users\ADMIN\Source\Repos\DatingApp\bin\Debug\net8.0\Microsoft.AspNetCore.SpaProxy.dll
 C:\Users\ADMIN\Source\Repos\DatingApp\obj\Debug\net8.0\spa.proxy.json
-C:\Users\ADMIN\Source\Repos\DatingApp\obj\Debug\net8.0\staticwebassets.upToDateCheck.txt
