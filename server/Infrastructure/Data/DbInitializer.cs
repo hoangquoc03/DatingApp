@@ -20,6 +20,26 @@ namespace DatingApp.Data
                 new User
                 {
                     Id = Guid.NewGuid(),
+                    Email = "admin@gmail.com",
+                    PasswordHash = passwordHash,
+                    FullName = "Quản trị viên",
+                    Gender = Gender.Male,
+                    InterestedIn = Gender.Female,
+                    DateOfBirth = DateTime.UtcNow.AddYears(-30),
+                    Bio = "Tài khoản quản trị hệ thống.",
+                    AvatarUrl = "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?q=80&w=600&auto=format&fit=crop",
+                    Location = "Hà Nội",
+                    IsVerified = true,
+                    IsOnboarded = true,
+                    IsActive = true,
+                    Status = UserStatus.Active,
+                    Role = Role.Admin,
+                    ProfileCompletionScore = 100,
+                    CreatedAt = DateTime.UtcNow
+                },
+                new User
+                {
+                    Id = Guid.NewGuid(),
                     Email = "demo1@gmail.com",
                     PasswordHash = passwordHash,
                     FullName = "Nguyễn Thảo Linh",

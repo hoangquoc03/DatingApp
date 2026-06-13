@@ -23,8 +23,8 @@ namespace DatingApp.Services
 
         public class CloudinaryUploadResult
         {
-            public string Url { get; set; }
-            public string PublicId { get; set; }
+            public string Url { get; set; } = string.Empty;
+            public string PublicId { get; set; } = string.Empty;
         }
 
         public async Task<CloudinaryUploadResult> UploadImageAsync(IFormFile file, string subfolder = "avatars")

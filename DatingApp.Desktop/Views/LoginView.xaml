@@ -10,6 +10,30 @@
              d:DesignHeight="600" d:DesignWidth="800">
     <UserControl.Resources>
         <BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter"/>
+        
+        <Style x:Key="FadeInPanelStyle" TargetType="FrameworkElement">
+            <Setter Property="RenderTransform">
+                <Setter.Value>
+                    <TranslateTransform Y="0"/>
+                </Setter.Value>
+            </Setter>
+            <Style.Triggers>
+                <Trigger Property="Visibility" Value="Visible">
+                    <Trigger.EnterActions>
+                        <BeginStoryboard>
+                            <Storyboard>
+                                <DoubleAnimation Storyboard.TargetProperty="Opacity" From="0" To="1" Duration="0:0:0.3"/>
+                                <DoubleAnimation Storyboard.TargetProperty="RenderTransform.(TranslateTransform.Y)" From="20" To="0" Duration="0:0:0.3">
+                                    <DoubleAnimation.EasingFunction>
+                                        <CubicEase EasingMode="EaseOut"/>
+                                    </DoubleAnimation.EasingFunction>
+                                </DoubleAnimation>
+                            </Storyboard>
+                        </BeginStoryboard>
+                    </Trigger.EnterActions>
+                </Trigger>
+            </Style.Triggers>
+        </Style>
     </UserControl.Resources>
     
     <Grid Background="#F0F2F5">
@@ -28,7 +52,7 @@
         <Border Width="460" Style="{StaticResource PremiumCard}" VerticalAlignment="Center" HorizontalAlignment="Center">
             <Grid>
                 <!-- PANEL 1: LOGIN -->
-                <StackPanel Visibility="{Binding IsLoginPanelVisible, Converter={StaticResource BooleanToVisibilityConverter}}">
+                <StackPanel Style="{StaticResource FadeInPanelStyle}" Visibility="{Binding IsLoginPanelVisible, Converter={StaticResource BooleanToVisibilityConverter}}">
                     <TextBlock Text="Aura Dating" FontSize="30" FontWeight="Black" Foreground="{StaticResource FbBrandSolid}" HorizontalAlignment="Center" Margin="0,0,0,8" FontFamily="Segoe UI, Arial, sans-serif"/>
                     <TextBlock Text="Đăng nhập để kết nối" FontSize="15" FontWeight="Medium" Foreground="{StaticResource FbTextSecondary}" HorizontalAlignment="Center" Margin="0,0,0,28"/>
 
@@ -73,7 +97,7 @@
                 </StackPanel>
 
                 <!-- PANEL 2: REGISTER STEP 1 (Email / Password) -->
-                <StackPanel Visibility="{Binding IsRegisterStep1Visible, Converter={StaticResource BooleanToVisibilityConverter}}">
+                <StackPanel Style="{StaticResource FadeInPanelStyle}" Visibility="{Binding IsRegisterStep1Visible, Converter={StaticResource BooleanToVisibilityConverter}}">
                     <TextBlock Text="Tạo tài khoản" FontSize="30" FontWeight="Black" Foreground="{StaticResource FbBrandSolid}" HorizontalAlignment="Center" Margin="0,0,0,8" FontFamily="Segoe UI, Arial, sans-serif"/>
                     <TextBlock Text="Bước 1: Thông tin đăng nhập" FontSize="15" FontWeight="Medium" Foreground="{StaticResource FbTextSecondary}" HorizontalAlignment="Center" Margin="0,0,0,28"/>
 
@@ -101,7 +125,7 @@
                 </StackPanel>
 
                 <!-- PANEL 3: REGISTER STEP 2 (Profile Info) -->
-                <StackPanel Visibility="{Binding IsRegisterStep2Visible, Converter={StaticResource BooleanToVisibilityConverter}}">
+                <StackPanel Style="{StaticResource FadeInPanelStyle}" Visibility="{Binding IsRegisterStep2Visible, Converter={StaticResource BooleanToVisibilityConverter}}">
                     <TextBlock Text="Hồ sơ cá nhân" FontSize="30" FontWeight="Black" Foreground="{StaticResource FbBrandSolid}" HorizontalAlignment="Center" Margin="0,0,0,8" FontFamily="Segoe UI, Arial, sans-serif"/>
                     <TextBlock Text="Bước 2: Hoàn thiện hồ sơ" FontSize="15" FontWeight="Medium" Foreground="{StaticResource FbTextSecondary}" HorizontalAlignment="Center" Margin="0,0,0,28"/>
 
@@ -140,7 +164,7 @@
                 </StackPanel>
 
                 <!-- PANEL 4: OTP VERIFICATION -->
-                <StackPanel Visibility="{Binding IsOtpVerificationVisible, Converter={StaticResource BooleanToVisibilityConverter}}">
+                <StackPanel Style="{StaticResource FadeInPanelStyle}" Visibility="{Binding IsOtpVerificationVisible, Converter={StaticResource BooleanToVisibilityConverter}}">
                     <TextBlock Text="Xác minh Email" FontSize="30" FontWeight="Black" Foreground="{StaticResource FbBrandSolid}" HorizontalAlignment="Center" Margin="0,0,0,8" FontFamily="Segoe UI, Arial, sans-serif"/>
                     <TextBlock Text="Vui lòng nhập mã OTP 6 số đã được gửi tới email:" TextWrapping="Wrap" TextAlignment="Center" FontSize="14" Foreground="{StaticResource FbTextSecondary}" HorizontalAlignment="Center" Margin="0,0,0,12"/>
 
@@ -178,7 +202,7 @@
                 </StackPanel>
 
                 <!-- PANEL 5: FORGOT PASSWORD -->
-                <StackPanel Visibility="{Binding IsForgotPasswordVisible, Converter={StaticResource BooleanToVisibilityConverter}}">
+                <StackPanel Style="{StaticResource FadeInPanelStyle}" Visibility="{Binding IsForgotPasswordVisible, Converter={StaticResource BooleanToVisibilityConverter}}">
                     <TextBlock Text="Quên mật khẩu" FontSize="30" FontWeight="Black" Foreground="{StaticResource FbBrandSolid}" HorizontalAlignment="Center" Margin="0,0,0,8" FontFamily="Segoe UI, Arial, sans-serif"/>
                     <TextBlock Text="Nhập email để nhận mã phục hồi mật khẩu:" TextWrapping="Wrap" TextAlignment="Center" FontSize="14" Foreground="{StaticResource FbTextSecondary}" HorizontalAlignment="Center" Margin="0,0,0,24"/>
 
@@ -203,7 +227,7 @@
                 </StackPanel>
 
                 <!-- PANEL 6: RESET PASSWORD -->
-                <StackPanel Visibility="{Binding IsResetPasswordVisible, Converter={StaticResource BooleanToVisibilityConverter}}">
+                <StackPanel Style="{StaticResource FadeInPanelStyle}" Visibility="{Binding IsResetPasswordVisible, Converter={StaticResource BooleanToVisibilityConverter}}">
                     <TextBlock Text="Đặt lại mật khẩu" FontSize="30" FontWeight="Black" Foreground="{StaticResource FbBrandSolid}" HorizontalAlignment="Center" Margin="0,0,0,8" FontFamily="Segoe UI, Arial, sans-serif"/>
                     <TextBlock Text="Nhập mã phục hồi và mật khẩu mới:" TextWrapping="Wrap" TextAlignment="Center" FontSize="14" Foreground="{StaticResource FbTextSecondary}" HorizontalAlignment="Center" Margin="0,0,0,24"/>
 
@@ -212,15 +236,17 @@
                              Style="{StaticResource PremiumTextBox}" 
                              Margin="0,0,0,12" FontSize="14"/>
 
-                    <TextBox Text="{Binding ResetNewPassword, UpdateSourceTrigger=PropertyChanged}" 
-                             materialDesign:HintAssist.Hint="Mật khẩu mới (ít nhất 6 ký tự)" 
-                             Style="{StaticResource PremiumTextBox}" 
-                             Margin="0,0,0,12"/>
+                    <PasswordBox x:Name="ResetNewPasswordBox"
+                                 materialDesign:HintAssist.Hint="Mật khẩu mới (ít nhất 6 ký tự)" 
+                                 Style="{StaticResource PremiumPasswordBox}" 
+                                 Margin="0,0,0,12"
+                                 PasswordChanged="ResetNewPasswordBox_PasswordChanged"/>
 
-                    <TextBox Text="{Binding ResetConfirmPassword, UpdateSourceTrigger=PropertyChanged}" 
-                             materialDesign:HintAssist.Hint="Xác nhận mật khẩu mới" 
-                             Style="{StaticResource PremiumTextBox}" 
-                             Margin="0,0,0,16"/>
+                    <PasswordBox x:Name="ResetConfirmPasswordBox"
+                                 materialDesign:HintAssist.Hint="Xác nhận mật khẩu mới" 
+                                 Style="{StaticResource PremiumPasswordBox}" 
+                                 Margin="0,0,0,16"
+                                 PasswordChanged="ResetConfirmPasswordBox_PasswordChanged"/>
 
                     <TextBlock Text="{Binding ErrorMessage}" Foreground="#EF4444" TextWrapping="Wrap" HorizontalAlignment="Center" Margin="0,0,0,16" FontSize="13" FontWeight="SemiBold"/>
 

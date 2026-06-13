@@ -6,6 +6,7 @@ using System.Text;
 using DatingApp.Helpers;
 using DatingApp.Services;
 using DatingApp.Hubs;
+using Microsoft.AspNetCore.RateLimiting;
 
 System.AppContext.SetSwitch("Npgsql.EnableLegacyTimestampBehavior", true);
 var builder = WebApplication.CreateBuilder(args);
@@ -65,6 +66,24 @@ builder.Services.AddScoped<SwipeService>();
 builder.Services.AddScoped<NotificationService>();
 builder.Services.AddScoped<MatchService>();
 
+// ── Rate Limiting ─────────────────────────────────────────────────────────────
+builder.Services.AddRateLimiter(options =>
+{
+    options.AddFixedWindowLimiter("AuthPolicy", opt =>
+    {
+        opt.Window = TimeSpan.FromMinutes(1);
+        opt.PermitLimit = 10; // Tối đa 10 yêu cầu/phút
+        opt.QueueLimit = 0;
+    });
+
+    options.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
+    options.OnRejected = async (context, token) =>
+    {
+        context.HttpContext.Response.ContentType = "application/json";
+        await context.HttpContext.Response.WriteAsJsonAsync(new { message = "Yêu cầu quá nhanh. Vui lòng thử lại sau 1 phút." }, cancellationToken: token);
+    };
+});
+
 // ── CORS ──────────────────────────────────────────────────────────────────────
 builder.Services.AddCors(options =>
 {
@@ -122,6 +141,7 @@ if (app.Environment.IsDevelopment())
 app.UseHttpsRedirection();
 app.UseRouting();
 app.UseCors("ReactPolicy");
+app.UseRateLimiter(); // 💡 ĐÃ THÊM: Chặn Spam API / Brute force
 app.UseAuthentication();
 app.UseAuthorization();
 app.MapControllers();

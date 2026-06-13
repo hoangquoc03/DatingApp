@@ -3,7 +3,7 @@
 "ServerUrl": "",
 "RedirectUrl": "",
 "LaunchCommand": "",
-"WorkingDirectory": "C:\\Users\\ADMIN\\source\\repos\\DatingApp",
+"WorkingDirectory": "C:\\Users\\ADMIN\\Source\\Repos\\DatingApp",
 "MaxTimeoutInSeconds": "120",
 "KeepRunning": "false"
 }

@@ -663,7 +663,10 @@ public partial class DashboardViewModel : ObservableObject
                 }
             }
         }
-        catch { }
+        catch (Exception ex)
+        {
+            System.Windows.MessageBox.Show($"Lỗi tải hồ sơ cá nhân: {ex.Message}", "Lỗi tải hồ sơ");
+        }
     }
 
     [RelayCommand]
@@ -690,10 +693,21 @@ public partial class DashboardViewModel : ObservableObject
                 Interests = !string.IsNullOrWhiteSpace(ProfileInterests) ? new List<string>(ProfileInterests.Split(new[] { ',' }, StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)) : new List<string>(),
                 Values = !string.IsNullOrWhiteSpace(ProfileValues) ? new List<string>(ProfileValues.Split(new[] { ',' }, StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)) : new List<string>()
             };
-            await _httpClient.PutAsJsonAsync("/api/User/profile", dto);
-            System.Windows.MessageBox.Show("Cập nhật hồ sơ thành công!", "Thành công");
+            var response = await _httpClient.PutAsJsonAsync("/api/User/profile", dto);
+            if (response.IsSuccessStatusCode)
+            {
+                System.Windows.MessageBox.Show("Cập nhật hồ sơ thành công!", "Thành công");
+            }
+            else
+            {
+                var error = await response.Content.ReadAsStringAsync();
+                System.Windows.MessageBox.Show($"Cập nhật hồ sơ thất bại: {error}", "Lỗi");
+            }
         }
-        catch { }
+        catch (Exception ex)
+        {
+            System.Windows.MessageBox.Show($"Lỗi kết nối khi cập nhật hồ sơ: {ex.Message}", "Lỗi");
+        }
     }
 
     [RelayCommand]
@@ -770,8 +784,16 @@ public partial class DashboardViewModel : ObservableObject
             {
                 ProfilePhotos.Remove(photo);
             }
+            else
+            {
+                var error = await response.Content.ReadAsStringAsync();
+                System.Windows.MessageBox.Show($"Lỗi xóa ảnh: {error}", "Lỗi");
+            }
         }
-        catch { }
+        catch (Exception ex)
+        {
+            System.Windows.MessageBox.Show($"Lỗi kết nối khi xóa ảnh: {ex.Message}", "Lỗi");
+        }
     }
 
     [RelayCommand]
@@ -789,8 +811,16 @@ public partial class DashboardViewModel : ObservableObject
                 ProfileAvatarUrl = photo.Url;
                 _authService.CurrentUser!.AvatarUrl = photo.Url;
             }
+            else
+            {
+                var error = await response.Content.ReadAsStringAsync();
+                System.Windows.MessageBox.Show($"Lỗi đặt ảnh đại diện: {error}", "Lỗi");
+            }
         }
-        catch { }
+        catch (Exception ex)
+        {
+            System.Windows.MessageBox.Show($"Lỗi kết nối khi đặt ảnh đại diện: {ex.Message}", "Lỗi");
+        }
     }
 
     // --- CHAT & MATCH LOGIC ---
@@ -987,8 +1017,16 @@ public partial class DashboardViewModel : ObservableObject
         try
         {
             await _hubConnection.StartAsync();
+            System.Diagnostics.Debug.WriteLine("[DashboardViewModel] SignalR connected successfully.");
         }
-        catch { }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"[DashboardViewModel] SignalR connection failed: {ex.Message}");
+            Application.Current.Dispatcher.Invoke(() =>
+            {
+                System.Windows.MessageBox.Show("Không thể kết nối đến máy chủ thời gian thực. Tin nhắn sẽ không được cập nhật tự động. Vui lòng kiểm tra lại mạng.", "Cảnh báo kết nối");
+            });
+        }
     }
 
     private async Task LoadMatchesAsync()
@@ -1453,9 +1491,20 @@ public partial class DashboardViewModel : ObservableObject
     }
 
     [RelayCommand]
-    private void Logout()
+    private async Task LogoutAsync()
     {
         var loggedOutEmail = _authService.CurrentUser?.Email;
+
+        if (_hubConnection != null)
+        {
+            try
+            {
+                await _hubConnection.StopAsync();
+                await _hubConnection.DisposeAsync();
+            }
+            catch {}
+            _hubConnection = null;
+        }
 
         _authService.Logout();
 

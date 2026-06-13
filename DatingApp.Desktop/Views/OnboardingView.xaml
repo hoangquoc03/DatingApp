@@ -78,6 +78,31 @@
         </Style>
 
         <BooleanToVisibilityConverter x:Key="BoolToVis"/>
+
+        <!-- Smooth slide-up and fade-in transition for wizard steps -->
+        <Style x:Key="FadeInPanelStyle" TargetType="FrameworkElement">
+            <Setter Property="RenderTransform">
+                <Setter.Value>
+                    <TranslateTransform Y="0"/>
+                </Setter.Value>
+            </Setter>
+            <Style.Triggers>
+                <Trigger Property="Visibility" Value="Visible">
+                    <Trigger.EnterActions>
+                        <BeginStoryboard>
+                            <Storyboard>
+                                <DoubleAnimation Storyboard.TargetProperty="Opacity" From="0" To="1" Duration="0:0:0.3"/>
+                                <DoubleAnimation Storyboard.TargetProperty="RenderTransform.(TranslateTransform.Y)" From="20" To="0" Duration="0:0:0.3">
+                                    <DoubleAnimation.EasingFunction>
+                                        <CubicEase EasingMode="EaseOut"/>
+                                    </DoubleAnimation.EasingFunction>
+                                </DoubleAnimation>
+                            </Storyboard>
+                        </BeginStoryboard>
+                    </Trigger.EnterActions>
+                </Trigger>
+            </Style.Triggers>
+        </Style>
     </UserControl.Resources>
 
     <Grid>
@@ -104,7 +129,7 @@
                         <!-- STEP 1: GENDER & PREFERENCE -->
                         <StackPanel>
                             <StackPanel.Style>
-                                <Style TargetType="StackPanel">
+                                <Style TargetType="StackPanel" BasedOn="{StaticResource FadeInPanelStyle}">
                                     <Setter Property="Visibility" Value="Collapsed"/>
                                     <Style.Triggers>
                                         <DataTrigger Binding="{Binding CurrentStep}" Value="1">
@@ -121,7 +146,11 @@
                             <ComboBox SelectedIndex="{Binding SelectedGenderIndex}" 
                                       materialDesign:HintAssist.Hint="Chọn giới tính"
                                       Style="{StaticResource PremiumComboBox}"
-                                      Margin="0,0,0,28" Height="50" FontSize="15"/>
+                                      Margin="0,0,0,28" Height="50" FontSize="15">
+                                <ComboBoxItem Content="Nam"/>
+                                <ComboBoxItem Content="Nữ"/>
+                                <ComboBoxItem Content="Khác"/>
+                            </ComboBox>
 
                             <TextBlock Text="Bạn muốn tìm kiếm?" Foreground="#1C1E21" FontSize="15" FontWeight="SemiBold" Margin="0,0,0,12"/>
                             <ComboBox SelectedIndex="{Binding SelectedInterestedInIndex}" 
@@ -139,7 +168,7 @@
                         <!-- STEP 2: DETAILS -->
                         <StackPanel>
                             <StackPanel.Style>
-                                <Style TargetType="StackPanel">
+                                <Style TargetType="StackPanel" BasedOn="{StaticResource FadeInPanelStyle}">
                                     <Setter Property="Visibility" Value="Collapsed"/>
                                     <Style.Triggers>
                                         <DataTrigger Binding="{Binding CurrentStep}" Value="2">
@@ -203,7 +232,7 @@
                         <!-- STEP 3: INTERESTS & BIO -->
                         <StackPanel>
                             <StackPanel.Style>
-                                <Style TargetType="StackPanel">
+                                <Style TargetType="StackPanel" BasedOn="{StaticResource FadeInPanelStyle}">
                                     <Setter Property="Visibility" Value="Collapsed"/>
                                     <Style.Triggers>
                                         <DataTrigger Binding="{Binding CurrentStep}" Value="3">
@@ -250,7 +279,7 @@
                         <!-- STEP 4: FINISH -->
                         <StackPanel>
                             <StackPanel.Style>
-                                <Style TargetType="StackPanel">
+                                <Style TargetType="StackPanel" BasedOn="{StaticResource FadeInPanelStyle}">
                                     <Setter Property="Visibility" Value="Collapsed"/>
                                     <Style.Triggers>
                                         <DataTrigger Binding="{Binding CurrentStep}" Value="4">

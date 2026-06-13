@@ -5,10 +5,10 @@ namespace DatingApp.Models
         public Guid Id { get; set; }
 
         public Guid FromUserId { get; set; }
-        public User FromUser { get; set; }
+        public User FromUser { get; set; } = null!;
 
         public Guid ToUserId { get; set; }
-        public User ToUser { get; set; }
+        public User ToUser { get; set; } = null!;
 
         public bool IsLike { get; set; }
 

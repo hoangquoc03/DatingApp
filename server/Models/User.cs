@@ -9,23 +9,23 @@ namespace DatingApp.Models
 
         [Required]
         [EmailAddress]
-        public string Email { get; set; }
+        public string Email { get; set; } = string.Empty;
 
         [Required]
-        public string PasswordHash { get; set; }
+        public string PasswordHash { get; set; } = string.Empty;
 
-        public string FullName { get; set; }
+        public string FullName { get; set; } = string.Empty;
 
         public Gender Gender { get; set; }
 
         public Gender? InterestedIn { get; set; }
         public DateTime? DateOfBirth { get; set; }
 
-        public string Bio { get; set; }
+        public string Bio { get; set; } = string.Empty;
 
-        public string AvatarUrl { get; set; }
+        public string AvatarUrl { get; set; } = string.Empty;
 
-        public string Location { get; set; }
+        public string Location { get; set; } = string.Empty;
 
         // Thông tin nâng cao
         public int? Height { get; set; }
@@ -73,7 +73,7 @@ namespace DatingApp.Models
 
         public ICollection<Photo> Photos { get; set; } = new List<Photo>();
 
-        public ICollection<Swipe> SwipesSent { get; set; }
-        public ICollection<Swipe> SwipesReceived { get; set; }
+        public ICollection<Swipe> SwipesSent { get; set; } = new List<Swipe>();
+        public ICollection<Swipe> SwipesReceived { get; set; } = new List<Swipe>();
     }
 }

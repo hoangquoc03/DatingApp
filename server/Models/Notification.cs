@@ -10,12 +10,12 @@ namespace DatingApp.Models
         public Guid UserId { get; set; }
 
         [ForeignKey("UserId")]
-        public User User { get; set; }
+        public User User { get; set; } = null!;
 
         [Required]
-        public string Content { get; set; }
+        public string Content { get; set; } = string.Empty;
 
-        public string Type { get; set; } // "NewLike", "NewMatch", "System"
+        public string Type { get; set; } = string.Empty; // "NewLike", "NewMatch", "System"
 
         public Guid? RelatedUserId { get; set; } // Người trigger thông báo này
 

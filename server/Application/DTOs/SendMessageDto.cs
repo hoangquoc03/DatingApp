@@ -4,6 +4,6 @@ namespace DatingApp.DTOs
     {
         public Guid ReceiverId { get; set; }
 
-        public string Content { get; set; }
+        public string Content { get; set; } = string.Empty;
     }
 }

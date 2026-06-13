@@ -13,6 +13,7 @@ public class AuthService
 {
     private readonly HttpClient _httpClient;
     public string? CurrentToken { get; private set; }
+    public string? CurrentRefreshToken { get; private set; }
     public UserProfile? CurrentUser { get; private set; }
 
     public AuthService(IHttpClientFactory httpClientFactory)
@@ -33,8 +34,12 @@ public class AuthService
             if (authResponse != null && !string.IsNullOrEmpty(authResponse.Token))
             {
                 CurrentToken = authResponse.Token;
+                CurrentRefreshToken = authResponse.RefreshToken;
                 CurrentUser = authResponse.User;
                 _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", CurrentToken);
+            
+                // Lưu session
+                await SaveSessionAsync(CurrentToken, CurrentUser, CurrentRefreshToken);
                 return true;
             }
         }
@@ -79,6 +84,7 @@ public class AuthService
     public void Logout()
     {
         CurrentToken = null;
+        CurrentRefreshToken = null;
         CurrentUser = null;
         _httpClient.DefaultRequestHeaders.Authorization = null;
         ClearSession();
@@ -94,12 +100,12 @@ public class AuthService
         return Path.Combine(folder, "session.json");
     }
 
-    public async Task SaveSessionAsync(string token, UserProfile user)
+    public async Task SaveSessionAsync(string token, UserProfile user, string? refreshToken = null)
     {
         try
         {
             var filePath = GetSessionFilePath();
-            var sessionData = new AuthResponse { Token = token, User = user };
+            var sessionData = new AuthResponse { Token = token, User = user, RefreshToken = refreshToken };
             var json = JsonSerializer.Serialize(sessionData);
             await File.WriteAllTextAsync(filePath, json);
         }
@@ -147,10 +153,11 @@ public class AuthService
                     sessionData.User.ProfileCompletionScore = userDto.ProfileCompletionScore;
 
                     // Lưu lại session đã cập nhật
-                    await SaveSessionAsync(sessionData.Token, sessionData.User);
+                    await SaveSessionAsync(sessionData.Token, sessionData.User, sessionData.RefreshToken);
                 }
 
                 CurrentToken = sessionData.Token;
+                CurrentRefreshToken = sessionData.RefreshToken;
                 CurrentUser = sessionData.User;
                 return true;
             }
@@ -160,6 +167,36 @@ public class AuthService
         // Reset if failed
         _httpClient.DefaultRequestHeaders.Authorization = null;
         ClearSession(); // Xoá session hỏng hoặc hết hạn
+        return false;
+    }
+
+    public async Task<bool> RefreshAccessTokenAsync()
+    {
+        if (string.IsNullOrEmpty(CurrentRefreshToken)) return false;
+
+        try
+        {
+            var request = new { RefreshToken = CurrentRefreshToken };
+            var response = await _httpClient.PostAsJsonAsync("/api/Auth/refresh", request);
+
+            if (response.IsSuccessStatusCode)
+            {
+                var authResponse = await response.Content.ReadFromJsonAsync<AuthResponse>();
+                if (authResponse != null && !string.IsNullOrEmpty(authResponse.Token))
+                {
+                    CurrentToken = authResponse.Token;
+                    CurrentRefreshToken = authResponse.RefreshToken ?? CurrentRefreshToken;
+                    _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", CurrentToken);
+                    
+                    if (CurrentUser != null)
+                    {
+                        await SaveSessionAsync(CurrentToken, CurrentUser, CurrentRefreshToken);
+                    }
+                    return true;
+                }
+            }
+        }
+        catch {}
         return false;
     }
 }

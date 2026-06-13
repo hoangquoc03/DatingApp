@@ -244,10 +244,10 @@ C:\Users\ADMIN\Source\Repos\DatingApp\obj\Debug\net8.0\refint\DatingApp.dll
 C:\Users\ADMIN\Source\Repos\DatingApp\obj\Debug\net8.0\DatingApp.pdb
 C:\Users\ADMIN\Source\Repos\DatingApp\obj\Debug\net8.0\DatingApp.genruntimeconfig.cache
 C:\Users\ADMIN\Source\Repos\DatingApp\obj\Debug\net8.0\ref\DatingApp.dll
-C:\Users\ADMIN\Source\Repos\DatingApp\bin\Debug\net8.0\server\package-lock.json
 C:\Users\ADMIN\Source\Repos\DatingApp\bin\Debug\net8.0\CloudinaryDotNet.dll
 C:\Users\ADMIN\Source\Repos\DatingApp\bin\Debug\net8.0\appsettings.Example.json
 C:\Users\ADMIN\source\repos\DatingApp\bin\Debug\net8.0\skills-lock.json
 C:\Users\ADMIN\Source\Repos\DatingApp\bin\Debug\net8.0\spa.proxy.json
 C:\Users\ADMIN\Source\Repos\DatingApp\bin\Debug\net8.0\Microsoft.AspNetCore.SpaProxy.dll
 C:\Users\ADMIN\Source\Repos\DatingApp\obj\Debug\net8.0\spa.proxy.json
+C:\Users\ADMIN\Source\Repos\DatingApp\obj\Debug\net8.0\staticwebassets.upToDateCheck.txt

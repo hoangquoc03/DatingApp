@@ -219,7 +219,7 @@ namespace DatingApp.Controllers
             var payload = new { messageId = message.Id };
             
             await _hub.Clients.Group(partnerId.ToString()).SendAsync("MessageDeleted", payload);
-            await _hub.Clients.Group(myId.ToString()).SendAsync("MessageDeleted", payload);
+            await _hub.Clients.Group(myId.Value.ToString()).SendAsync("MessageDeleted", payload);
 
             return Ok(payload);
         }
@@ -247,7 +247,7 @@ namespace DatingApp.Controllers
             var payload = new { messageId = message.Id, content = message.Content };
             
             await _hub.Clients.Group(partnerId.ToString()).SendAsync("MessageEdited", payload);
-            await _hub.Clients.Group(myId.ToString()).SendAsync("MessageEdited", payload);
+            await _hub.Clients.Group(myId.Value.ToString()).SendAsync("MessageEdited", payload);
 
             return Ok(payload);
         }
