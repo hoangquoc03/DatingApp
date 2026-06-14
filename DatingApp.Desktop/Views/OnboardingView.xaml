@@ -142,16 +142,6 @@
                             <TextBlock Text="Bạn là ai?" Style="{StaticResource HeadingStyle}"/>
                             <TextBlock Text="Hãy chia sẻ thêm về bản thân để có những gợi ý tốt nhất." Style="{StaticResource SubHeadingStyle}"/>
                             
-                            <TextBlock Text="Giới tính của bạn" Foreground="#1C1E21" FontSize="15" FontWeight="SemiBold" Margin="0,0,0,12"/>
-                            <ComboBox SelectedIndex="{Binding SelectedGenderIndex}" 
-                                      materialDesign:HintAssist.Hint="Chọn giới tính"
-                                      Style="{StaticResource PremiumComboBox}"
-                                      Margin="0,0,0,28" Height="50" FontSize="15">
-                                <ComboBoxItem Content="Nam"/>
-                                <ComboBoxItem Content="Nữ"/>
-                                <ComboBoxItem Content="Khác"/>
-                            </ComboBox>
-
                             <TextBlock Text="Bạn muốn tìm kiếm?" Foreground="#1C1E21" FontSize="15" FontWeight="SemiBold" Margin="0,0,0,12"/>
                             <ComboBox SelectedIndex="{Binding SelectedInterestedInIndex}" 
                                       materialDesign:HintAssist.Hint="Gu của bạn"
