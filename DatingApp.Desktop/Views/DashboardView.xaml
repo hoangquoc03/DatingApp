@@ -571,7 +571,7 @@
                                 <Border CornerRadius="10" Background="#33FFFFFF" Padding="8,4" Margin="0,0,8,6" 
                                         Visibility="{Binding CurrentUserZodiac, Converter={StaticResource NullOrEmptyToVisibilityConverter}}">
                                     <StackPanel Orientation="Horizontal">
-                                        <materialDesign:PackIcon Kind="CompassOutline" Width="12" Height="12" Foreground="White" VerticalAlignment="Center" Margin="0,0,4,0"/>
+                                        <materialDesign:PackIcon Kind="Compass" Width="12" Height="12" Foreground="White" VerticalAlignment="Center" Margin="0,0,4,0"/>
                                         <TextBlock Text="{Binding CurrentUserZodiac}" FontSize="11" Foreground="White" FontWeight="SemiBold"/>
                                     </StackPanel>
                                 </Border>
@@ -580,7 +580,7 @@
                                 <Border CornerRadius="10" Background="#33FFFFFF" Padding="8,4" Margin="0,0,8,6"
                                         Visibility="{Binding CurrentUserMbti, Converter={StaticResource NullOrEmptyToVisibilityConverter}}">
                                     <StackPanel Orientation="Horizontal">
-                                        <materialDesign:PackIcon Kind="Brain" Width="12" Height="12" Foreground="White" VerticalAlignment="Center" Margin="0,0,4,0"/>
+                                        <materialDesign:PackIcon Kind="Psychology" Width="12" Height="12" Foreground="White" VerticalAlignment="Center" Margin="0,0,4,0"/>
                                         <TextBlock Text="{Binding CurrentUserMbti}" FontSize="11" Foreground="White" FontWeight="SemiBold"/>
                                     </StackPanel>
                                 </Border>
@@ -590,19 +590,40 @@
                         <!-- Swipe Action Circular Buttons -->
                         <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" VerticalAlignment="Bottom" Margin="0,0,0,24">
                             <!-- PASS -->
-                            <Button x:Name="BtnPass" Command="{Binding PassCommand}" Style="{StaticResource PassRoundButtonStyle}">
-                                <materialDesign:PackIcon Kind="Close" Width="36" Height="36" Foreground="#1C1E21"/>
-                            </Button>
+                            <StackPanel Orientation="Vertical" HorizontalAlignment="Center" Margin="10,0">
+                                <Button x:Name="BtnPass" Command="{Binding PassCommand}" Style="{StaticResource PassRoundButtonStyle}">
+                                    <materialDesign:PackIcon Kind="Close" Width="36" Height="36" Foreground="#1C1E21"/>
+                                </Button>
+                                <TextBlock Text="Bỏ qua" Foreground="White" FontSize="11" FontWeight="Bold" Margin="0,6,0,0" HorizontalAlignment="Center">
+                                    <TextBlock.Effect>
+                                        <DropShadowEffect BlurRadius="4" ShadowDepth="1" Color="Black" Opacity="0.5"/>
+                                    </TextBlock.Effect>
+                                </TextBlock>
+                            </StackPanel>
 
                             <!-- SUPER LIKE -->
-                            <Button x:Name="BtnSuperLike" Command="{Binding SuperLikeCommand}" Style="{StaticResource SuperLikeRoundButtonStyle}" Margin="20,0">
-                                <materialDesign:PackIcon Kind="Star" Width="28" Height="28" Foreground="White"/>
-                            </Button>
+                            <StackPanel Orientation="Vertical" HorizontalAlignment="Center" Margin="10,0">
+                                <Button x:Name="BtnSuperLike" Command="{Binding SuperLikeCommand}" Style="{StaticResource SuperLikeRoundButtonStyle}">
+                                    <materialDesign:PackIcon Kind="Star" Width="28" Height="28" Foreground="White"/>
+                                </Button>
+                                <TextBlock Text="Siêu thích" Foreground="White" FontSize="11" FontWeight="Bold" Margin="0,6,0,0" HorizontalAlignment="Center">
+                                    <TextBlock.Effect>
+                                        <DropShadowEffect BlurRadius="4" ShadowDepth="1" Color="Black" Opacity="0.5"/>
+                                    </TextBlock.Effect>
+                                </TextBlock>
+                            </StackPanel>
 
                             <!-- LIKE -->
-                            <Button x:Name="BtnLike" Command="{Binding LikeCommand}" Style="{StaticResource LikeRoundButtonStyle}">
-                                <materialDesign:PackIcon Kind="Heart" Width="34" Height="34" Foreground="White"/>
-                            </Button>
+                            <StackPanel Orientation="Vertical" HorizontalAlignment="Center" Margin="10,0">
+                                <Button x:Name="BtnLike" Command="{Binding LikeCommand}" Style="{StaticResource LikeRoundButtonStyle}">
+                                    <materialDesign:PackIcon Kind="Heart" Width="34" Height="34" Foreground="White"/>
+                                </Button>
+                                <TextBlock Text="Thích" Foreground="White" FontSize="11" FontWeight="Bold" Margin="0,6,0,0" HorizontalAlignment="Center">
+                                    <TextBlock.Effect>
+                                        <DropShadowEffect BlurRadius="4" ShadowDepth="1" Color="Black" Opacity="0.5"/>
+                                    </TextBlock.Effect>
+                                </TextBlock>
+                            </StackPanel>
                         </StackPanel>
                     </Grid>
                 </Border>
@@ -711,14 +732,14 @@
                                         <!-- Zodiac -->
                                         <Border CornerRadius="8" Background="#F0F2F5" Padding="10,6" Margin="0,0,8,8" Visibility="{Binding CurrentUserZodiac, Converter={StaticResource NullOrEmptyToVisibilityConverter}}">
                                             <StackPanel Orientation="Horizontal">
-                                                <materialDesign:PackIcon Kind="CompassOutline" Width="14" Height="14" Foreground="#65676B" Margin="0,0,4,0" VerticalAlignment="Center"/>
+                                                <materialDesign:PackIcon Kind="Compass" Width="14" Height="14" Foreground="#65676B" Margin="0,0,4,0" VerticalAlignment="Center"/>
                                                 <TextBlock Text="{Binding CurrentUserZodiac}" FontSize="13" Foreground="#1C1E21" FontWeight="SemiBold"/>
                                             </StackPanel>
                                         </Border>
                                         <!-- MBTI -->
                                         <Border CornerRadius="8" Background="#F0F2F5" Padding="10,6" Margin="0,0,8,8" Visibility="{Binding CurrentUserMbti, Converter={StaticResource NullOrEmptyToVisibilityConverter}}">
                                             <StackPanel Orientation="Horizontal">
-                                                <materialDesign:PackIcon Kind="Brain" Width="14" Height="14" Foreground="#65676B" Margin="0,0,4,0" VerticalAlignment="Center"/>
+                                                <materialDesign:PackIcon Kind="Psychology" Width="14" Height="14" Foreground="#65676B" Margin="0,0,4,0" VerticalAlignment="Center"/>
                                                 <TextBlock Text="{Binding CurrentUserMbti}" FontSize="13" Foreground="#1C1E21" FontWeight="SemiBold"/>
                                             </StackPanel>
                                         </Border>
@@ -776,19 +797,28 @@
                         </Border.Effect>
                         <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
                             <!-- PASS -->
-                            <Button Command="{Binding PassCommand}" Style="{StaticResource PassRoundButtonStyle}">
-                                <materialDesign:PackIcon Kind="Close" Width="36" Height="36" Foreground="#1C1E21"/>
-                            </Button>
+                            <StackPanel Orientation="Vertical" HorizontalAlignment="Center" Margin="10,0">
+                                <Button Command="{Binding PassCommand}" Style="{StaticResource PassRoundButtonStyle}">
+                                    <materialDesign:PackIcon Kind="Close" Width="36" Height="36" Foreground="#1C1E21"/>
+                                </Button>
+                                <TextBlock Text="Bỏ qua" Foreground="#65676B" FontSize="11" FontWeight="Bold" Margin="0,6,0,0" HorizontalAlignment="Center"/>
+                            </StackPanel>
                             
                             <!-- SUPER LIKE -->
-                            <Button Command="{Binding SuperLikeCommand}" Style="{StaticResource SuperLikeRoundButtonStyle}" Margin="20,0">
-                                <materialDesign:PackIcon Kind="Star" Width="28" Height="28" Foreground="White"/>
-                            </Button>
+                            <StackPanel Orientation="Vertical" HorizontalAlignment="Center" Margin="10,0">
+                                <Button Command="{Binding SuperLikeCommand}" Style="{StaticResource SuperLikeRoundButtonStyle}">
+                                    <materialDesign:PackIcon Kind="Star" Width="28" Height="28" Foreground="White"/>
+                                </Button>
+                                <TextBlock Text="Siêu thích" Foreground="#65676B" FontSize="11" FontWeight="Bold" Margin="0,6,0,0" HorizontalAlignment="Center"/>
+                            </StackPanel>
                             
                             <!-- LIKE -->
-                            <Button Command="{Binding LikeCommand}" Style="{StaticResource LikeRoundButtonStyle}">
-                                <materialDesign:PackIcon Kind="Heart" Width="34" Height="34" Foreground="White"/>
-                            </Button>
+                            <StackPanel Orientation="Vertical" HorizontalAlignment="Center" Margin="10,0">
+                                <Button Command="{Binding LikeCommand}" Style="{StaticResource LikeRoundButtonStyle}">
+                                    <materialDesign:PackIcon Kind="Heart" Width="34" Height="34" Foreground="White"/>
+                                </Button>
+                                <TextBlock Text="Thích" Foreground="#65676B" FontSize="11" FontWeight="Bold" Margin="0,6,0,0" HorizontalAlignment="Center"/>
+                            </StackPanel>
                         </StackPanel>
                     </Border>
                 </Grid>

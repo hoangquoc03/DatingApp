@@ -29,8 +29,7 @@ public partial class OnboardingViewModel : ObservableObject
     [ObservableProperty]
     private string _errorMessage = "";
 
-    // Bước 1: Giới tính & Gu
-    [ObservableProperty] private int _selectedGenderIndex = 0; // 0: Men, 1: Women, 2: Other
+
     [ObservableProperty] private int _selectedInterestedInIndex = 1; // 0: Men, 1: Women, 2: Everyone
     [ObservableProperty] private int _distance = 50;
     
@@ -91,7 +90,7 @@ public partial class OnboardingViewModel : ObservableObject
             
             var dto = new
             {
-                Gender = SelectedGenderIndex,
+                Gender = (int?)null,
                 InterestedIn = SelectedInterestedInIndex == 2 ? (int?)null : SelectedInterestedInIndex,
                 Distance,
                 Height = int.TryParse(Height, out var h) ? h : (int?)null,
