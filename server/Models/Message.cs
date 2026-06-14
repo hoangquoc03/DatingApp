@@ -17,5 +17,7 @@ namespace DatingApp.Models
         public DateTime SentAt { get; set; } = DateTime.UtcNow;
 
         public bool IsRead { get; set; } = false;
+
+        public string? ReactionsJson { get; set; }
     }
 }

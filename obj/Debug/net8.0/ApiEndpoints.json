@@ -79,9 +79,9 @@
   },
   {
     "ContainingType": "DatingApp.Controllers.AdminController",
-    "Method": "UpdateUser",
-    "RelativePath": "api/Admin/users/{id}",
-    "HttpMethod": "PUT",
+    "Method": "ToggleUserActive",
+    "RelativePath": "api/Admin/users/{id}/toggle-active",
+    "HttpMethod": "POST",
     "IsController": true,
     "Order": 0,
     "Parameters": [
@@ -89,19 +89,14 @@
         "Name": "id",
         "Type": "System.Guid",
         "IsRequired": true
-      },
-      {
-        "Name": "dto",
-        "Type": "DatingApp.Controllers.UpdateUserDto",
-        "IsRequired": true
       }
     ],
     "ReturnTypes": []
   },
   {
     "ContainingType": "DatingApp.Controllers.AdminController",
-    "Method": "ToggleUserActive",
-    "RelativePath": "api/Admin/users/{id}/toggle-active",
+    "Method": "ToggleUserRole",
+    "RelativePath": "api/Admin/users/{id}/toggle-role",
     "HttpMethod": "POST",
     "IsController": true,
     "Order": 0,
@@ -395,6 +390,27 @@
       {
         "Name": "dto",
         "Type": "DatingApp.Controllers.EditMessageDto",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "DatingApp.Controllers.MessagesController",
+    "Method": "React",
+    "RelativePath": "api/Messages/{messageId}/react",
+    "HttpMethod": "POST",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "messageId",
+        "Type": "System.Guid",
+        "IsRequired": true
+      },
+      {
+        "Name": "dto",
+        "Type": "DatingApp.Controllers.ReactDto",
         "IsRequired": true
       }
     ],

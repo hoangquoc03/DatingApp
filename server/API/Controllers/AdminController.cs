@@ -221,35 +221,41 @@ namespace DatingApp.Controllers
             return Ok(new { message = "Đã xóa người dùng thành công." });
         }
 
-        [HttpPut("users/{id}")]
-        public async Task<IActionResult> UpdateUser(Guid id, [FromBody] UpdateUserDto dto)
+        [HttpPost("users/{id}/toggle-role")]
+        public async Task<IActionResult> ToggleUserRole(Guid id)
         {
             if (!IsAdmin()) return Forbid();
 
             var user = await _context.Users.FindAsync(id);
             if (user == null) return NotFound();
 
-            if (user.Role == Role.Admin && dto.Role != Role.Admin) return BadRequest("Không thể giáng cấp Admin.");
-
-            user.FullName = dto.FullName ?? user.FullName;
-            user.Role = dto.Role;
-            
-            // Cho phép Admin đổi mật khẩu nếu có nhập mật khẩu mới
-            if (!string.IsNullOrWhiteSpace(dto.Password))
+            // Lấy ID của Admin hiện tại để ngăn chặn tự hạ quyền chính mình
+            var currentAdminIdStr = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+            if (Guid.TryParse(currentAdminIdStr, out var currentAdminId))
             {
-                user.PasswordHash = BCrypt.Net.BCrypt.HashPassword(dto.Password);
+                if (user.Id == currentAdminId)
+                {
+                    return BadRequest("Bạn không thể tự hạ quyền Admin của chính mình.");
+                }
+            }
+
+            if (user.Role == Role.Admin)
+            {
+                // Đảm bảo không hạ quyền Admin duy nhất còn lại trong hệ thống
+                var otherAdminsExist = await _context.Users.AnyAsync(u => u.Role == Role.Admin && u.Id != user.Id);
+                if (!otherAdminsExist)
+                {
+                    return BadRequest("Không thể hạ quyền Admin duy nhất còn lại trong hệ thống.");
+                }
+                user.Role = Role.User;
+            }
+            else
+            {
+                user.Role = Role.Admin;
             }
 
             await _context.SaveChangesAsync();
-
-            return Ok(new { message = "Cập nhật thông tin thành công." });
+            return Ok(new { message = $"Đã thay đổi vai trò của {user.FullName} thành {(user.Role == Role.Admin ? "Admin" : "User")} thành công." });
         }
-    }
-
-    public class UpdateUserDto
-    {
-        public string? FullName { get; set; }
-        public Role Role { get; set; }
-        public string? Password { get; set; }
     }
 }

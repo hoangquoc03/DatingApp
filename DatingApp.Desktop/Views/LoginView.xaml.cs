@@ -2,7 +2,7 @@ using System.Windows.Controls;
 
 namespace DatingApp.Desktop.Views;
 
-public partial class LoginView : UserControl
+public partial class LoginView : System.Windows.Controls.UserControl
 {
     public LoginView()
     {

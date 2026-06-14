@@ -1826,11 +1826,11 @@
   "project": {
     "version": "1.0.0",
     "restore": {
-      "projectUniqueName": "c:\\Users\\ADMIN\\source\\repos\\DatingApp\\DatingApp.Desktop\\DatingApp.Desktop.csproj",
+      "projectUniqueName": "C:\\Users\\ADMIN\\Source\\Repos\\DatingApp\\DatingApp.Desktop\\DatingApp.Desktop.csproj",
       "projectName": "DatingApp.Desktop",
-      "projectPath": "c:\\Users\\ADMIN\\source\\repos\\DatingApp\\DatingApp.Desktop\\DatingApp.Desktop.csproj",
+      "projectPath": "C:\\Users\\ADMIN\\Source\\Repos\\DatingApp\\DatingApp.Desktop\\DatingApp.Desktop.csproj",
       "packagesPath": "C:\\Users\\ADMIN\\.nuget\\packages\\",
-      "outputPath": "c:\\Users\\ADMIN\\source\\repos\\DatingApp\\DatingApp.Desktop\\obj\\",
+      "outputPath": "C:\\Users\\ADMIN\\Source\\Repos\\DatingApp\\DatingApp.Desktop\\obj\\",
       "projectStyle": "PackageReference",
       "configFilePaths": [
         "C:\\Users\\ADMIN\\AppData\\Roaming\\NuGet\\NuGet.Config",
@@ -1901,7 +1901,7 @@
           "Microsoft.NETCore.App": {
             "privateAssets": "all"
           },
-          "Microsoft.WindowsDesktop.App.WPF": {
+          "Microsoft.WindowsDesktop.App": {
             "privateAssets": "none"
           }
         },

@@ -24,6 +24,8 @@
             <SolidColorBrush x:Key="FbTextSecondary" Color="#65676B"/>
             <SolidColorBrush x:Key="FbAccentBlue" Color="#1877F2"/>
             <SolidColorBrush x:Key="FbSuccessGreen" Color="#31A24C"/>
+            <SolidColorBrush x:Key="GlassOverlayBackground" Color="#50FFFFFF"/>
+            <SolidColorBrush x:Key="GlassOverlayBorder" Color="#1E000000"/>
 
             <!-- Premium TextBox Style -->
             <Style x:Key="PremiumTextBox" TargetType="TextBox" BasedOn="{StaticResource MaterialDesignOutlinedTextBox}">

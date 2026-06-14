@@ -2,6 +2,7 @@ using System;
 using System.Globalization;
 using System.Windows.Data;
 using System.Windows.Media;
+using Color = System.Windows.Media.Color;
 
 namespace DatingApp.Desktop.Converters;
 
