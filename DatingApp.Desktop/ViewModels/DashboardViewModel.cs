@@ -3,6 +3,8 @@ using CommunityToolkit.Mvvm.Input;
 using CommunityToolkit.Mvvm.Messaging;
 using DatingApp.Desktop.Models;
 using DatingApp.Desktop.Services;
+using Application = System.Windows.Application;
+using MessageBox = System.Windows.MessageBox;
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
@@ -854,6 +856,25 @@ public partial class DashboardViewModel : ObservableObject
                 IsMine = false
             };
 
+            // Gửi thông báo toast nếu ứng dụng thu nhỏ/không active
+            Application.Current.Dispatcher.Invoke(() =>
+            {
+                if (Application.Current.MainWindow is MainWindow mainWindow)
+                {
+                    if (!mainWindow.IsActive || mainWindow.WindowState == WindowState.Minimized)
+                    {
+                        var senderName = "Ai đó";
+                        var match = Matches.FirstOrDefault(m => m.Partner.Id == msgDto.SenderId);
+                        if (match != null)
+                        {
+                            senderName = match.Partner.FullName;
+                        }
+                        var previewContent = string.IsNullOrEmpty(msgDto.Content) ? "[Hình ảnh]" : msgDto.Content;
+                        mainWindow.ShowToastNotification(senderName, previewContent);
+                    }
+                }
+            });
+
             // Kiểm tra xem tin nhắn có thuộc về cuộc trò chuyện đang mở không
             if (SelectedMatch != null && msgDto.SenderId == SelectedMatch.Partner.Id)
             {
@@ -1014,6 +1035,62 @@ public partial class DashboardViewModel : ObservableObject
             }
         });
 
+        _hubConnection.On<System.Text.Json.JsonElement>("ReceiveMessageReaction", payload =>
+        {
+            try
+            {
+                var msgId = payload.GetProperty("messageId").GetGuid();
+                var reactions = payload.GetProperty("reactions").GetString() ?? "";
+                Application.Current.Dispatcher.Invoke(() =>
+                {
+                    var msg = CurrentMessages.FirstOrDefault(m => m.Id == msgId);
+                    if (msg != null)
+                    {
+                        msg.Reactions = reactions;
+                    }
+                });
+            }
+            catch {}
+        });
+
+        _hubConnection.On<System.Text.Json.JsonElement>("PartnerUnmatched", payload =>
+        {
+            try
+            {
+                var partnerId = payload.GetProperty("partnerId").GetGuid();
+                Application.Current.Dispatcher.Invoke(() =>
+                {
+                    if (SelectedMatch != null && SelectedMatch.Partner.Id == partnerId)
+                    {
+                        SelectedMatch = null;
+                        CurrentMessages.Clear();
+                        System.Windows.MessageBox.Show("Đối phương đã hủy tương hợp với bạn hoặc cuộc trò chuyện đã đóng.", "Thông báo", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Information);
+                    }
+                    _ = LoadMatchesAsync();
+                });
+            }
+            catch {}
+        });
+
+        _hubConnection.On<System.Text.Json.JsonElement>("PartnerBlocked", payload =>
+        {
+            try
+            {
+                var blockerId = payload.GetProperty("blockerId").GetGuid();
+                Application.Current.Dispatcher.Invoke(() =>
+                {
+                    if (SelectedMatch != null && SelectedMatch.Partner.Id == blockerId)
+                    {
+                        SelectedMatch = null;
+                        CurrentMessages.Clear();
+                        System.Windows.MessageBox.Show("Bạn đã bị chặn hoặc cuộc trò chuyện đã đóng.", "Thông báo", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Warning);
+                    }
+                    _ = LoadMatchesAsync();
+                });
+            }
+            catch {}
+        });
+
         try
         {
             await _hubConnection.StartAsync();
@@ -1161,7 +1238,17 @@ public partial class DashboardViewModel : ObservableObject
                 }
                 else
                 {
-                    MessageDraft = draft; // Revert
+                    if (response.StatusCode == System.Net.HttpStatusCode.BadRequest)
+                    {
+                        System.Windows.MessageBox.Show("Không thể gửi tin nhắn. Người dùng này đã hủy tương hợp hoặc chặn tài khoản.", "Lỗi", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Error);
+                        SelectedMatch = null;
+                        CurrentMessages.Clear();
+                        _ = LoadMatchesAsync();
+                    }
+                    else
+                    {
+                        MessageDraft = draft; // Revert
+                    }
                 }
             }
             catch
@@ -1218,7 +1305,17 @@ public partial class DashboardViewModel : ObservableObject
                 }
                 else
                 {
-                    System.Windows.MessageBox.Show("Lỗi khi gửi ảnh.", "Lỗi");
+                    if (response.StatusCode == System.Net.HttpStatusCode.BadRequest)
+                    {
+                        System.Windows.MessageBox.Show("Không thể gửi ảnh. Người dùng này đã hủy tương hợp hoặc chặn tài khoản.", "Lỗi", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Error);
+                        SelectedMatch = null;
+                        CurrentMessages.Clear();
+                        _ = LoadMatchesAsync();
+                    }
+                    else
+                    {
+                        System.Windows.MessageBox.Show("Lỗi khi gửi ảnh.", "Lỗi");
+                    }
                 }
             }
             catch (Exception ex)
@@ -1297,6 +1394,41 @@ public partial class DashboardViewModel : ObservableObject
         if (msg == null) return;
         EditingMessage = msg;
         MessageDraft = msg.Content;
+    }
+
+    [RelayCommand]
+    private async Task ReactLikeAsync(MessageDto msg) => await ReactToMessageAsync(msg, "👍");
+
+    [RelayCommand]
+    private async Task ReactLoveAsync(MessageDto msg) => await ReactToMessageAsync(msg, "❤️");
+
+    [RelayCommand]
+    private async Task ReactLaughAsync(MessageDto msg) => await ReactToMessageAsync(msg, "😂");
+
+    [RelayCommand]
+    private async Task ReactSadAsync(MessageDto msg) => await ReactToMessageAsync(msg, "😢");
+
+    [RelayCommand]
+    private async Task ReactAngryAsync(MessageDto msg) => await ReactToMessageAsync(msg, "😠");
+
+    private async Task ReactToMessageAsync(MessageDto msg, string emoji)
+    {
+        if (msg == null) return;
+        try
+        {
+            var dto = new { Reaction = emoji };
+            var response = await _httpClient.PostAsJsonAsync($"/api/Messages/{msg.Id}/react", dto);
+            if (response.IsSuccessStatusCode)
+            {
+                var result = await response.Content.ReadFromJsonAsync<System.Text.Json.JsonElement>();
+                var reactions = result.GetProperty("reactions").GetString() ?? "";
+                Application.Current.Dispatcher.Invoke(() =>
+                {
+                    msg.Reactions = reactions;
+                });
+            }
+        }
+        catch {}
     }
 
     [RelayCommand]
@@ -1523,5 +1655,6 @@ public partial class DashboardViewModel : ObservableObject
             );
         }
     }
+
 }
 

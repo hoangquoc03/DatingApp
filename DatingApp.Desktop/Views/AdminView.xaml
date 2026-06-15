@@ -207,10 +207,33 @@
                                     </materialDesign:PackIcon>
                                 </Button>
                                 
-                                <Button Command="{Binding DataContext.EditUserCommand, RelativeSource={RelativeSource AncestorType=DataGrid}}"
+                                <Button Command="{Binding DataContext.ToggleUserRoleCommand, RelativeSource={RelativeSource AncestorType=DataGrid}}"
                                         CommandParameter="{Binding}"
-                                        Style="{StaticResource MaterialDesignIconButton}" ToolTip="Sửa" Width="28" Height="28" Margin="0,0,5,0">
-                                    <materialDesign:PackIcon Kind="Pencil" Foreground="#3B82F6"/>
+                                        Width="28" Height="28" Margin="0,0,5,0">
+                                    <Button.Style>
+                                        <Style TargetType="Button" BasedOn="{StaticResource MaterialDesignIconButton}">
+                                            <Setter Property="ToolTip" Value="Thăng chức Admin"/>
+                                            <Style.Triggers>
+                                                <DataTrigger Binding="{Binding Role}" Value="1">
+                                                    <Setter Property="ToolTip" Value="Hạ chức xuống User"/>
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </Button.Style>
+                                    <materialDesign:PackIcon Width="18" Height="18">
+                                        <materialDesign:PackIcon.Style>
+                                            <Style TargetType="materialDesign:PackIcon">
+                                                <Setter Property="Kind" Value="ShieldKeyOutline"/>
+                                                <Setter Property="Foreground" Value="Gray"/>
+                                                <Style.Triggers>
+                                                    <DataTrigger Binding="{Binding Role}" Value="1">
+                                                        <Setter Property="Kind" Value="ShieldKey"/>
+                                                        <Setter Property="Foreground" Value="#E6005C"/>
+                                                    </DataTrigger>
+                                                </Style.Triggers>
+                                            </Style>
+                                        </materialDesign:PackIcon.Style>
+                                    </materialDesign:PackIcon>
                                 </Button>
 
                                 <Button Command="{Binding DataContext.DeleteUserCommand, RelativeSource={RelativeSource AncestorType=DataGrid}}"
@@ -326,33 +349,5 @@
             </DataGrid.Columns>
         </DataGrid>
 
-        <!-- Edit Panel Overlay -->
-        <Grid Grid.Row="0" Grid.RowSpan="3" Background="#80000000" Visibility="{Binding IsEditing, Converter={StaticResource BooleanToVisibilityConverter}}">
-            <Border Background="White" Width="400" Padding="24" CornerRadius="12" HorizontalAlignment="Center" VerticalAlignment="Center">
-                <StackPanel>
-                    <TextBlock Text="Chỉnh sửa Người dùng" FontSize="20" FontWeight="Bold" Foreground="#1F2937" Margin="0,0,0,20"/>
-
-                    <TextBox Text="{Binding EditingUser.FullName, UpdateSourceTrigger=PropertyChanged}" 
-                             materialDesign:HintAssist.Hint="Họ và tên" 
-                             Style="{StaticResource MaterialDesignFloatingHintTextBox}" Margin="0,0,0,16"/>
-
-                    <ComboBox SelectedIndex="{Binding EditingUser.Role}" 
-                              materialDesign:HintAssist.Hint="Vai trò" 
-                              Style="{StaticResource MaterialDesignFloatingHintComboBox}" Margin="0,0,0,16">
-                        <ComboBoxItem Content="Người dùng thường"/>
-                        <ComboBoxItem Content="Quản trị viên"/>
-                    </ComboBox>
-
-                    <TextBox Text="{Binding EditPassword, UpdateSourceTrigger=PropertyChanged}" 
-                             materialDesign:HintAssist.Hint="Mật khẩu mới (Bỏ trống nếu không đổi)" 
-                             Style="{StaticResource MaterialDesignFloatingHintTextBox}" Margin="0,0,0,24"/>
-
-                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
-                        <Button Command="{Binding CancelEditCommand}" Content="Hủy" Style="{StaticResource MaterialDesignFlatButton}" Foreground="Gray" Margin="0,0,10,0"/>
-                        <Button Command="{Binding SaveEditCommand}" Content="Lưu" Style="{StaticResource MaterialDesignFlatMidBgButton}" Background="#E6005C" Foreground="White" BorderBrush="Transparent"/>
-                    </StackPanel>
-                </StackPanel>
-            </Border>
-        </Grid>
     </Grid>
 </UserControl>

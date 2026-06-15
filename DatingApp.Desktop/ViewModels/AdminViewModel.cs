@@ -3,6 +3,7 @@ using CommunityToolkit.Mvvm.Input;
 using CommunityToolkit.Mvvm.Messaging;
 using DatingApp.Desktop.Models;
 using DatingApp.Desktop.Services;
+using MessageBox = System.Windows.MessageBox;
 using System.Collections.ObjectModel;
 using System.Net.Http;
 using System.Net.Http.Headers;
@@ -148,65 +149,36 @@ public partial class AdminViewModel : ObservableObject
         }
     }
 
-    [ObservableProperty]
-    private UserDto? _editingUser;
-
-    [ObservableProperty]
-    private string? _editPassword;
-
-    [ObservableProperty]
-    private bool _isEditing;
-
     [RelayCommand]
-    private void EditUser(UserDto user)
+    private async Task ToggleUserRoleAsync(UserDto user)
     {
         if (user == null) return;
-        EditingUser = new UserDto
+
+        var confirmMsg = user.Role == 1 
+            ? $"Bạn có chắc chắn muốn hạ quyền quản trị (Admin) của {user.FullName} xuống thành Người dùng thường?" 
+            : $"Bạn có chắc chắn muốn thăng chức cho {user.FullName} làm Quản trị viên (Admin)?";
+
+        var result = MessageBox.Show(confirmMsg, "Xác nhận vai trò", MessageBoxButton.YesNo, MessageBoxImage.Question);
+        if (result == MessageBoxResult.Yes)
         {
-            Id = user.Id,
-            Email = user.Email,
-            FullName = user.FullName,
-            Role = user.Role,
-            IsActive = user.IsActive,
-            CreatedAt = user.CreatedAt
-        };
-        EditPassword = string.Empty;
-        IsEditing = true;
-    }
-
-    [RelayCommand]
-    private void CancelEdit()
-    {
-        IsEditing = false;
-        EditingUser = null;
-        EditPassword = string.Empty;
-    }
-
-    [RelayCommand]
-    private async Task SaveEditAsync()
-    {
-        if (EditingUser == null) return;
-
-        try
-        {
-            var dto = new { FullName = EditingUser.FullName, Role = EditingUser.Role, Password = EditPassword };
-            var response = await _httpClient.PutAsJsonAsync($"/api/Admin/users/{EditingUser.Id}", dto);
-
-            if (response.IsSuccessStatusCode)
+            try
             {
-                MessageBox.Show("Cập nhật thành công!", "Thông báo", MessageBoxButton.OK, MessageBoxImage.Information);
-                IsEditing = false;
-                await LoadUsersAsync();
+                var response = await _httpClient.PostAsync($"/api/Admin/users/{user.Id}/toggle-role", null);
+                if (response.IsSuccessStatusCode)
+                {
+                    MessageBox.Show("Cập nhật vai trò thành công!", "Thông báo", MessageBoxButton.OK, MessageBoxImage.Information);
+                    await LoadUsersAsync();
+                }
+                else
+                {
+                    var error = await response.Content.ReadAsStringAsync();
+                    MessageBox.Show("Lỗi: " + error, "Lỗi", MessageBoxButton.OK, MessageBoxImage.Error);
+                }
             }
-            else
+            catch (System.Exception ex)
             {
-                var error = await response.Content.ReadAsStringAsync();
-                MessageBox.Show("Lỗi: " + error, "Lỗi", MessageBoxButton.OK, MessageBoxImage.Error);
+                MessageBox.Show("Lỗi kết nối: " + ex.Message, "Lỗi", MessageBoxButton.OK, MessageBoxImage.Error);
             }
-        }
-        catch (System.Exception ex)
-        {
-            MessageBox.Show("Lỗi kết nối: " + ex.Message, "Lỗi", MessageBoxButton.OK, MessageBoxImage.Error);
         }
     }
 

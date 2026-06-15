@@ -170,6 +170,8 @@ public class AuthService
         return false;
     }
 
+    public string? LastErrorMessage { get; private set; }
+
     public async Task<bool> RefreshAccessTokenAsync()
     {
         if (string.IsNullOrEmpty(CurrentRefreshToken)) return false;
@@ -192,11 +194,27 @@ public class AuthService
                     {
                         await SaveSessionAsync(CurrentToken, CurrentUser, CurrentRefreshToken);
                     }
+                    LastErrorMessage = null;
                     return true;
                 }
             }
+            else
+            {
+                var content = await response.Content.ReadAsStringAsync();
+                if (content.Contains("khóa") || content.Contains("Banned"))
+                {
+                    LastErrorMessage = "Tài khoản của bạn đã bị khóa bởi quản trị viên.";
+                }
+                else
+                {
+                    LastErrorMessage = "Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.";
+                }
+            }
         }
-        catch {}
+        catch 
+        {
+            LastErrorMessage = "Không thể kết nối đến máy chủ.";
+        }
         return false;
     }
 }

@@ -152,8 +152,10 @@
             "description": "Success"
           }
         }
-      },
-      "put": {
+      }
+    },
+    "/api/Admin/users/{id}/toggle-role": {
+      "post": {
         "tags": [
           "Admin"
         ],
@@ -168,25 +170,6 @@
             }
           }
         ],
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/UpdateUserDto"
-              }
-            },
-            "text/json": {
-              "schema": {
-                "$ref": "#/components/schemas/UpdateUserDto"
-              }
-            },
-            "application/*+json": {
-              "schema": {
-                "$ref": "#/components/schemas/UpdateUserDto"
-              }
-            }
-          }
-        },
         "responses": {
           "200": {
             "description": "Success"
@@ -754,6 +737,48 @@
         }
       }
     },
+    "/api/Messages/{messageId}/react": {
+      "post": {
+        "tags": [
+          "Messages"
+        ],
+        "parameters": [
+          {
+            "name": "messageId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ReactDto"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ReactDto"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/ReactDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Success"
+          }
+        }
+      }
+    },
     "/api/Notification": {
       "get": {
         "tags": [
@@ -1308,6 +1333,16 @@
         },
         "additionalProperties": false
       },
+      "ReactDto": {
+        "type": "object",
+        "properties": {
+          "reaction": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
       "RefreshTokenDto": {
         "type": "object",
         "properties": {
@@ -1375,14 +1410,6 @@
           }
         },
         "additionalProperties": false
-      },
-      "Role": {
-        "enum": [
-          0,
-          1
-        ],
-        "type": "integer",
-        "format": "int32"
       },
       "SendMessageDto": {
         "type": "object",
@@ -1510,23 +1537,6 @@
           "vibe": {
             "maxLength": 50,
             "minLength": 0,
-            "type": "string",
-            "nullable": true
-          }
-        },
-        "additionalProperties": false
-      },
-      "UpdateUserDto": {
-        "type": "object",
-        "properties": {
-          "fullName": {
-            "type": "string",
-            "nullable": true
-          },
-          "role": {
-            "$ref": "#/components/schemas/Role"
-          },
-          "password": {
             "type": "string",
             "nullable": true
           }

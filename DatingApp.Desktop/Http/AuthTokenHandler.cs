@@ -59,7 +59,7 @@ public class AuthTokenHandler : DelegatingHandler
                     var app = (App)System.Windows.Application.Current;
                     if (app.Services.GetService(typeof(LoginViewModel)) is LoginViewModel loginVm)
                     {
-                        loginVm.ErrorMessage = "Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.";
+                        loginVm.ErrorMessage = _authService.LastErrorMessage ?? "Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.";
                         CommunityToolkit.Mvvm.Messaging.WeakReferenceMessenger.Default.Send(
                             new DatingApp.Desktop.Messages.NavigationMessage(loginVm)
                         );

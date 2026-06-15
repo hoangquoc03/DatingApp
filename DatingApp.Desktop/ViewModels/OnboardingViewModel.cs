@@ -9,6 +9,7 @@ using CommunityToolkit.Mvvm.Messaging;
 using DatingApp.Desktop.Models;
 using DatingApp.Desktop.Services;
 using System.Windows;
+using Application = System.Windows.Application;
 using System.Linq;
 
 namespace DatingApp.Desktop.ViewModels;

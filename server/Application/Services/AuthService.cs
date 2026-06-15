@@ -198,6 +198,9 @@ namespace DatingApp.Services
             if (user == null)
                 return ServiceResult.Unauthorized("Invalid or expired refresh token.");
 
+            if (!user.IsActive)
+                return ServiceResult.Unauthorized("Tài khoản của bạn đã bị khóa.");
+
             var accessToken = _jwt.GenerateToken(user.Id, user.Email, user.Role);
             var nextRefreshToken = GenerateRefreshToken();
             SaveRefreshToken(user, nextRefreshToken);

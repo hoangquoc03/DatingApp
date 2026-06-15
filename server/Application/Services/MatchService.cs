@@ -109,6 +109,13 @@ namespace DatingApp.Services
                 .ToListAsync();
             _context.Notifications.RemoveRange(notifications);
 
+            try
+            {
+                await _hubContext.Clients.Group(partnerId.ToString()).SendAsync("PartnerUnmatched", new { partnerId = userId });
+                await _hubContext.Clients.Group(userId.ToString()).SendAsync("PartnerUnmatched", new { partnerId = partnerId });
+            }
+            catch {}
+
             await _context.SaveChangesAsync();
 
             return ServiceResult.Ok("Đã huỷ tương hợp");
@@ -151,6 +158,13 @@ namespace DatingApp.Services
                     .ToListAsync();
                 _context.Messages.RemoveRange(messages);
             }
+
+            try
+            {
+                await _hubContext.Clients.Group(targetUserId.ToString()).SendAsync("PartnerBlocked", new { blockerId = userId });
+                await _hubContext.Clients.Group(userId.ToString()).SendAsync("PartnerBlocked", new { blockerId = userId });
+            }
+            catch {}
 
             await _context.SaveChangesAsync();
 

@@ -23,6 +23,9 @@ public partial class MessageDto : ObservableObject
     public DateTime? SeenAt { get; set; }
     public DateTime SentAt { get; set; }
     
+    [ObservableProperty]
+    private string? _reactions;
+
     // UI Helpers
     public bool IsMine { get; set; }
     public bool HasImage => !string.IsNullOrEmpty(ImageUrl);

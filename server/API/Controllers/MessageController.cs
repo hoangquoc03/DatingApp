@@ -144,20 +144,22 @@ namespace DatingApp.Controllers
                     (x.SenderId == myId && x.ReceiverId == userId) ||
                     (x.SenderId == userId && x.ReceiverId == myId))
                 .OrderBy(x => x.SentAt)
-                .Select(x => new
-                {
-                    x.Id,
-                    x.SenderId,
-                    x.ReceiverId,
-                    x.Content,
-                    x.ImageUrl,
-                    x.IsSeen,
-                    x.SeenAt,
-                    x.SentAt
-                })
                 .ToListAsync();
 
-            return Ok(messages);
+            var messagesDto = messages.Select(x => new
+            {
+                x.Id,
+                x.SenderId,
+                x.ReceiverId,
+                x.Content,
+                x.ImageUrl,
+                x.IsSeen,
+                x.SeenAt,
+                x.SentAt,
+                Reactions = FormatReactions(x.ReactionsJson)
+            }).ToList();
+
+            return Ok(messagesDto);
         }
 
         // ── Đánh dấu đã đọc + Broadcast realtime ─────────────────────────────
@@ -278,10 +280,90 @@ namespace DatingApp.Controllers
             msg.SeenAt,
             msg.SentAt
         };
+
+        // ── Thả cảm xúc tin nhắn ─────────────────────────────────────────────
+        [HttpPost("{messageId}/react")]
+        public async Task<IActionResult> React(Guid messageId, [FromBody] ReactDto dto)
+        {
+            var myId = GetUserId();
+            if (myId == null) return Unauthorized();
+
+            var message = await _context.Messages.FirstOrDefaultAsync(m => m.Id == messageId);
+            if (message == null) return NotFound(new { message = "Tin nhắn không tồn tại" });
+
+            var partnerId = message.SenderId == myId ? message.ReceiverId : message.SenderId;
+            var isMatched = await CheckMatch(myId.Value, partnerId);
+            if (!isMatched)
+                return BadRequest(new { message = "Bạn không có quyền tương tác tin nhắn này." });
+
+            var reactions = new List<UserReaction>();
+            if (!string.IsNullOrEmpty(message.ReactionsJson))
+            {
+                try
+                {
+                    reactions = System.Text.Json.JsonSerializer.Deserialize<List<UserReaction>>(message.ReactionsJson) ?? new();
+                }
+                catch {}
+            }
+
+            var existingReaction = reactions.FirstOrDefault(r => r.UserId == myId);
+            if (existingReaction != null)
+            {
+                if (existingReaction.Reaction == dto.Reaction)
+                {
+                    reactions.Remove(existingReaction);
+                }
+                else
+                {
+                    existingReaction.Reaction = dto.Reaction;
+                }
+            }
+            else
+            {
+                reactions.Add(new UserReaction { UserId = myId.Value, Reaction = dto.Reaction });
+            }
+
+            message.ReactionsJson = System.Text.Json.JsonSerializer.Serialize(reactions);
+            await _context.SaveChangesAsync();
+
+            var reactionsDisplay = string.Join(" ", reactions.Select(r => r.Reaction).Distinct());
+
+            var payload = new { messageId = message.Id, reactions = reactionsDisplay };
+            await _hub.Clients.Group(partnerId.ToString()).SendAsync("ReceiveMessageReaction", payload);
+            await _hub.Clients.Group(myId.Value.ToString()).SendAsync("ReceiveMessageReaction", payload);
+
+            return Ok(payload);
+        }
+
+        private static string FormatReactions(string? reactionsJson)
+        {
+            if (string.IsNullOrEmpty(reactionsJson)) return string.Empty;
+            try
+            {
+                var list = System.Text.Json.JsonSerializer.Deserialize<List<UserReaction>>(reactionsJson);
+                if (list != null && list.Count > 0)
+                {
+                    return string.Join(" ", list.Select(r => r.Reaction).Distinct());
+                }
+            }
+            catch {}
+            return string.Empty;
+        }
     }
 
     public class EditMessageDto
     {
         public string Content { get; set; } = string.Empty;
+    }
+
+    public class ReactDto
+    {
+        public string Reaction { get; set; } = string.Empty;
+    }
+
+    public class UserReaction
+    {
+        public Guid UserId { get; set; }
+        public string Reaction { get; set; } = string.Empty;
     }
 }
