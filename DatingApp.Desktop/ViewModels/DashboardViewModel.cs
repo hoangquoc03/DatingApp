@@ -85,6 +85,12 @@ public partial class DashboardViewModel : ObservableObject
     [ObservableProperty]
     private string _currentUserDrinking = "";
 
+    [ObservableProperty]
+    private double? _currentUserDistance;
+
+    [ObservableProperty]
+    private bool _isDistanceVisible;
+
     // --- Tabs ---
     [ObservableProperty]
     private bool _isDiscoverVisible = true;
@@ -393,30 +399,6 @@ public partial class DashboardViewModel : ObservableObject
     }
 
     [RelayCommand]
-    public async Task SuperLikeAsync()
-    {
-        if (_currentUserDto == null) return;
-
-        try
-        {
-            var dto = new { ToUserId = _currentUserDto.Id, IsLike = true, IsSuperLike = true };
-            var response = await _httpClient.PostAsJsonAsync("/api/Swipe", dto);
-            if (response.IsSuccessStatusCode)
-            {
-                var result = await response.Content.ReadFromJsonAsync<System.Text.Json.JsonElement>();
-                if (result.TryGetProperty("isMatch", out var isMatchProp) && isMatchProp.GetBoolean())
-                {
-                    IsMatchPopupVisible = true;
-                    _ = LoadMatchesAsync();
-                }
-            }
-        }
-        catch {}
-
-        NextProfile();
-    }
-
-    [RelayCommand]
     public async Task PassAsync()
     {
         if (_currentUserDto == null) return;
@@ -430,6 +412,8 @@ public partial class DashboardViewModel : ObservableObject
 
         NextProfile();
     }
+
+
 
     [RelayCommand]
     private void OpenAdmin()
@@ -464,6 +448,8 @@ public partial class DashboardViewModel : ObservableObject
             CurrentUserEducation = _currentUserDto.Education ?? string.Empty;
             CurrentUserSmoking = _currentUserDto.Smoking ?? string.Empty;
             CurrentUserDrinking = _currentUserDto.Drinking ?? string.Empty;
+            CurrentUserDistance = _currentUserDto.Distance;
+            IsDistanceVisible = _currentUserDto.Distance.HasValue;
             IsDiscoverQueueEmpty = false;
             IsUserDetailVisible = false; // Reset view when next profile loads
 
@@ -508,6 +494,8 @@ public partial class DashboardViewModel : ObservableObject
             CurrentUserEducation = string.Empty;
             CurrentUserSmoking = string.Empty;
             CurrentUserDrinking = string.Empty;
+            CurrentUserDistance = null;
+            IsDistanceVisible = false;
             CurrentUserInterests.Clear();
             CurrentUserPhotos.Clear();
             IsDiscoverQueueEmpty = true;
@@ -1064,7 +1052,7 @@ public partial class DashboardViewModel : ObservableObject
                     {
                         SelectedMatch = null;
                         CurrentMessages.Clear();
-                        System.Windows.MessageBox.Show("Đối phương đã hủy tương hợp với bạn hoặc cuộc trò chuyện đã đóng.", "Thông báo", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Information);
+                        System.Windows.MessageBox.Show("Đối phương đã hủy ghép đôi với bạn hoặc cuộc trò chuyện đã đóng.", "Thông báo", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Information);
                     }
                     _ = LoadMatchesAsync();
                 });
@@ -1089,6 +1077,15 @@ public partial class DashboardViewModel : ObservableObject
                 });
             }
             catch {}
+        });
+
+        _hubConnection.On("OnUserBanned", () =>
+        {
+            Application.Current.Dispatcher.Invoke(async () =>
+            {
+                System.Windows.MessageBox.Show("Tài khoản của bạn đã bị khóa bởi Quản trị viên.", "Tài khoản bị khóa", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Error);
+                await LogoutAsync();
+            });
         });
 
         try
@@ -1240,7 +1237,7 @@ public partial class DashboardViewModel : ObservableObject
                 {
                     if (response.StatusCode == System.Net.HttpStatusCode.BadRequest)
                     {
-                        System.Windows.MessageBox.Show("Không thể gửi tin nhắn. Người dùng này đã hủy tương hợp hoặc chặn tài khoản.", "Lỗi", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Error);
+                        System.Windows.MessageBox.Show("Không thể gửi tin nhắn. Người dùng này đã hủy ghép đôi hoặc chặn tài khoản.", "Lỗi", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Error);
                         SelectedMatch = null;
                         CurrentMessages.Clear();
                         _ = LoadMatchesAsync();
@@ -1307,7 +1304,7 @@ public partial class DashboardViewModel : ObservableObject
                 {
                     if (response.StatusCode == System.Net.HttpStatusCode.BadRequest)
                     {
-                        System.Windows.MessageBox.Show("Không thể gửi ảnh. Người dùng này đã hủy tương hợp hoặc chặn tài khoản.", "Lỗi", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Error);
+                        System.Windows.MessageBox.Show("Không thể gửi ảnh. Người dùng này đã hủy ghép đôi hoặc chặn tài khoản.", "Lỗi", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Error);
                         SelectedMatch = null;
                         CurrentMessages.Clear();
                         _ = LoadMatchesAsync();
@@ -1330,7 +1327,7 @@ public partial class DashboardViewModel : ObservableObject
     {
         if (SelectedMatch == null) return;
         
-        var confirm = System.Windows.MessageBox.Show($"Bạn có chắc chắn muốn huỷ tương hợp với {SelectedMatch.Partner.FullName} không?", "Xác nhận", System.Windows.MessageBoxButton.YesNo);
+        var confirm = System.Windows.MessageBox.Show($"Bạn có chắc chắn muốn huỷ ghép đôi với {SelectedMatch.Partner.FullName} không?", "Xác nhận", System.Windows.MessageBoxButton.YesNo);
         if (confirm != System.Windows.MessageBoxResult.Yes) return;
 
         try

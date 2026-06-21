@@ -31,15 +31,29 @@ build/
 .env.test.local
 .env.production.local
 
-# Logs
-npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
-
 # OS files
 .DS_Store
 Thumbs.db
 desktop.ini
+
+# IDEs and Editors
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# Databases & Backups
+*.db
+*.sql
+*.bak
+*.tar
+
+# Logs
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
 
 # Gemini agent
 skills-lock.json

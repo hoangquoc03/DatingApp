@@ -236,9 +236,3 @@ Sau đó chạy lại `dotnet ef database update`.
 error MSB3027: Could not copy ... The file is locked by ...
 ```
 **Giải pháp**: Tắt hoàn toàn ứng dụng (cả Server và Desktop) trước khi build lại.
-
----
-
-## 📜 Giấy Phép
-
-*Developed with ❤️ by Hoàng Quốc*

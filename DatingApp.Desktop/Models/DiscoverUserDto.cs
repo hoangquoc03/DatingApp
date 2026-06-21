@@ -20,6 +20,7 @@ public class DiscoverUserDto
     public string Education { get; set; } = string.Empty;
     public string Smoking { get; set; } = string.Empty;
     public string Drinking { get; set; } = string.Empty;
+    public double? Distance { get; set; }
 }
 
 public class DiscoverResponse

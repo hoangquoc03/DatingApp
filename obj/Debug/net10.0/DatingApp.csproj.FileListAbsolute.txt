@@ -1,8 +1,0 @@
-C:\Users\Laptop\Music\DatingApp\DatingApp\obj\Debug\net10.0\DatingApp.csproj.AssemblyReference.cache
-C:\Users\Laptop\Music\DatingApp\DatingApp\obj\Debug\net10.0\rpswa.dswa.cache.json
-C:\Users\Laptop\Music\DatingApp\DatingApp\obj\Debug\net10.0\DatingApp.GeneratedMSBuildEditorConfig.editorconfig
-C:\Users\Laptop\Music\DatingApp\DatingApp\obj\Debug\net10.0\DatingApp.AssemblyInfoInputs.cache
-C:\Users\Laptop\Music\DatingApp\DatingApp\obj\Debug\net10.0\DatingApp.AssemblyInfo.cs
-C:\Users\Laptop\Music\DatingApp\DatingApp\obj\Debug\net10.0\DatingApp.csproj.CoreCompileInputs.cache
-C:\Users\Laptop\Music\DatingApp\DatingApp\obj\Debug\net10.0\DatingApp.MvcApplicationPartsAssemblyInfo.cs
-C:\Users\Laptop\Music\DatingApp\DatingApp\obj\Debug\net10.0\DatingApp.MvcApplicationPartsAssemblyInfo.cache

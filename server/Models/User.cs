@@ -47,6 +47,8 @@ namespace DatingApp.Models
         public List<string>? Values { get; set; } = new List<string>();
         public int? MaxDistance { get; set; }
         public string? Vibe { get; set; }
+        public double? Latitude { get; set; }
+        public double? Longitude { get; set; }
         public bool IsOnboarded { get; set; } = false;
 
         public bool IsVerified { get; set; } = false;
