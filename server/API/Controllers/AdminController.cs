@@ -1,9 +1,11 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.AspNetCore.SignalR;
 using DatingApp.Data;
 using DatingApp.Models;
 using DatingApp.Enums;
+using DatingApp.Hubs;
 
 namespace DatingApp.Controllers
 {
@@ -13,10 +15,12 @@ namespace DatingApp.Controllers
     public class AdminController : ControllerBase
     {
         private readonly AppDbContext _context;
+        private readonly IHubContext<ChatHub> _hubContext;
 
-        public AdminController(AppDbContext context)
+        public AdminController(AppDbContext context, IHubContext<ChatHub> hubContext)
         {
             _context = context;
+            _hubContext = hubContext;
         }
 
         // --- Bí mật để tự thăng cấp thành Admin ---
@@ -120,6 +124,12 @@ namespace DatingApp.Controllers
 
             user.IsActive = !user.IsActive;
             await _context.SaveChangesAsync();
+
+            if (!user.IsActive)
+            {
+                // Gửi thông báo real-time yêu cầu logout cưỡng bức khi bị ban
+                await _hubContext.Clients.Group(id.ToString()).SendAsync("OnUserBanned");
+            }
 
             return Ok(new { message = $"Đã {(user.IsActive ? "mở khóa" : "khóa")} tài khoản thành công." });
         }

@@ -258,14 +258,7 @@ namespace DatingApp.Services
                 query = query.Where(x => onlineUserIds.Contains(x.Id));
             }
 
-            query = query.OrderByDescending(x => x.ProfileCompletionScore)
-                .ThenBy(x => x.CreatedAt);
-
-            var total = await query.CountAsync();
-
             var usersList = await query
-                .Skip((page - 1) * pageSize)
-                .Take(pageSize)
                 .Select(x => new
                 {
                     x.Id,
@@ -284,39 +277,73 @@ namespace DatingApp.Services
                     x.Education,
                     x.Smoking,
                     x.Drinking,
+                    x.Latitude,
+                    x.Longitude,
+                    x.ProfileCompletionScore,
+                    x.CreatedAt,
                     Age = x.DateOfBirth.HasValue
                         ? (int)((DateTime.UtcNow - x.DateOfBirth.Value).TotalDays / 365.25)
                         : (int?)null,
-                    IsSuperLikedBy = _context.Swipes.Any(s => s.FromUserId == x.Id && s.ToUserId == userId && s.IsSuperLike)
+                    IsSuperLikedBy = false
                 })
                 .ToListAsync();
 
-            var usersWithCompatibility = usersList.Select(x => new
+            var listWithDistance = usersList.Select(x =>
             {
-                x.Id,
-                x.FullName,
-                x.Bio,
-                x.AvatarUrl,
-                x.Photos,
-                x.Location,
-                x.Gender,
-                x.IsVerified,
-                x.Zodiac,
-                x.Mbti,
-                x.Interests,
-                x.Age,
-                x.IsSuperLikedBy,
-                x.Height,
-                x.Occupation,
-                x.Education,
-                x.Smoking,
-                x.Drinking,
-                CompatibilityScore = CalculateCompatibility(currentUser, x.Interests, x.Zodiac, x.Mbti, x.Age)
-            }).ToList();
+                double? distance = null;
+                if (currentUser.Latitude.HasValue && currentUser.Longitude.HasValue && x.Latitude.HasValue && x.Longitude.HasValue)
+                {
+                    distance = CalculateDistance(currentUser.Latitude.Value, currentUser.Longitude.Value, x.Latitude.Value, x.Longitude.Value);
+                }
+                return new { Item = x, Distance = distance };
+            });
+
+            if (maxDistance.HasValue && maxDistance.Value > 0)
+            {
+                listWithDistance = listWithDistance.Where(d => d.Distance == null || d.Distance.Value <= maxDistance.Value);
+            }
+
+            var sortedList = listWithDistance
+                .Select(x => new
+                {
+                    x.Item.Id,
+                    x.Item.FullName,
+                    x.Item.Bio,
+                    x.Item.AvatarUrl,
+                    x.Item.Photos,
+                    x.Item.Location,
+                    x.Item.Gender,
+                    x.Item.IsVerified,
+                    x.Item.Zodiac,
+                    x.Item.Mbti,
+                    x.Item.Interests,
+                    x.Item.Age,
+                    IsSuperLikedBy = false,
+                    x.Item.Height,
+                    x.Item.Occupation,
+                    x.Item.Education,
+                    x.Item.Smoking,
+                    x.Item.Drinking,
+                    x.Item.ProfileCompletionScore,
+                    x.Item.CreatedAt,
+                    Distance = x.Distance.HasValue ? Math.Round(x.Distance.Value, 1) : (double?)null,
+                    CompatibilityScore = CalculateCompatibility(currentUser, x.Item.Interests, x.Item.Zodiac, x.Item.Mbti, x.Item.Age)
+                })
+                .OrderByDescending(x => x.CompatibilityScore)
+                .ThenBy(x => x.Distance ?? double.MaxValue)
+                .ThenByDescending(x => x.ProfileCompletionScore)
+                .ThenBy(x => x.CreatedAt)
+                .ToList();
+
+            var total = sortedList.Count;
+            var pagedList = sortedList
+                .Skip((page - 1) * pageSize)
+                .Take(pageSize)
+                .ToList();
 
             return ServiceResult.Ok(new
             {
-                data = usersWithCompatibility,
+                data = pagedList,
                 pagination = new
                 {
                     page,
@@ -329,6 +356,7 @@ namespace DatingApp.Services
                 filters = new { ageMin, ageMax, gender, maxDistance }
             });
         }
+
         // ─── PHOTO GALLERY ────────────────────────────────────────────────────────
 
         public async Task<ServiceResult> AddPhotoAsync(Guid userId, IFormFile file)
@@ -623,5 +651,23 @@ namespace DatingApp.Services
             if (e1 == "Water" && e2 == "Earth") return true;
             return false;
         }
+
+        public static double CalculateDistance(double lat1, double lon1, double lat2, double lon2)
+        {
+            var r = 6371; // Bán kính Trái Đất (km)
+            var dLat = ToRadians(lat2 - lat1);
+            var dLon = ToRadians(lon2 - lon1);
+            var a = Math.Sin(dLat / 2) * Math.Sin(dLat / 2) +
+                    Math.Cos(ToRadians(lat1)) * Math.Cos(ToRadians(lat2)) *
+                    Math.Sin(dLon / 2) * Math.Sin(dLon / 2);
+            var c = 2 * Math.Asin(Math.Sqrt(a));
+            return r * c;
+        }
+
+        private static double ToRadians(double angle)
+        {
+            return Math.PI * angle / 180.0;
+        }
     }
 }
+

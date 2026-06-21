@@ -33,18 +33,13 @@ namespace DatingApp.Services
             if (alreadySwiped)
                 return ServiceResult.Error("Bạn đã swipe người này rồi", 409); // 409 Conflict
 
-            if (dto.IsSuperLike)
-            {
-                dto.IsLike = true;
-            }
-
             var swipe = new Swipe
             {
                 Id = Guid.NewGuid(),
                 FromUserId = myId,
                 ToUserId = dto.ToUserId,
                 IsLike = dto.IsLike,
-                IsSuperLike = dto.IsSuperLike,
+                IsSuperLike = false,
                 CreatedAt = DateTime.UtcNow
             };
             _context.Swipes.Add(swipe);
@@ -110,10 +105,8 @@ namespace DatingApp.Services
                 }
                 else
                 {
-                    // Tạo thông báo NewLike / NewSuperLike
-                    var notifContent = dto.IsSuperLike 
-                        ? $"{user1?.FullName ?? "Ai đó"} đã Super Like bạn! ⭐" 
-                        : $"{user1?.FullName ?? "Ai đó"} đã thích bạn! 😍";
+                    // Tạo thông báo NewLike
+                    var notifContent = $"{user1?.FullName ?? "Ai đó"} đã thích bạn! 😍";
 
                     var notif = new Notification 
                     { 
@@ -204,7 +197,10 @@ namespace DatingApp.Services
             return ServiceResult.Ok(result);
         }
 
+
+
         public async Task<ServiceResult> ResetSwipesAsync(Guid myId)
+
         {
             // Xóa swipes từ mình
             var swipes = await _context.Swipes

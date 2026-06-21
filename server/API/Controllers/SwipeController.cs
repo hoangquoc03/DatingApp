@@ -48,6 +48,9 @@ namespace DatingApp.Controllers
             return result.Success ? Ok(result.Data) : StatusCode(result.StatusCode, new { message = result.Message });
         }
 
+
+
+
         private Guid? GetUserId()
         {
             var value = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;

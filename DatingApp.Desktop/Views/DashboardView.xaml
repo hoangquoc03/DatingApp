@@ -75,24 +75,7 @@
             </Setter>
         </Style>
 
-        <!-- Round Super Like Button Style -->
-        <Style x:Key="SuperLikeRoundButtonStyle" TargetType="Button" BasedOn="{StaticResource RoundActionButtonStyle}">
-            <Setter Property="Width" Value="58"/>
-            <Setter Property="Height" Value="58"/>
-            <Setter Property="Foreground" Value="White"/>
-            <Setter Property="Background" Value="#FFB300"/>
-            <Setter Property="BorderThickness" Value="0"/>
-            <Setter Property="Effect">
-                <Setter.Value>
-                    <DropShadowEffect BlurRadius="18" ShadowDepth="4" Color="#FFB300" Opacity="0.3"/>
-                </Setter.Value>
-            </Setter>
-            <Style.Triggers>
-                <Trigger Property="IsMouseOver" Value="True">
-                    <Setter Property="Opacity" Value="0.9"/>
-                </Trigger>
-            </Style.Triggers>
-        </Style>
+
 
         <!-- Round Like Button Style -->
         <Style x:Key="LikeRoundButtonStyle" TargetType="Button" BasedOn="{StaticResource RoundActionButtonStyle}">
@@ -110,6 +93,8 @@
                 </Trigger>
             </Style.Triggers>
         </Style>
+
+
     </UserControl.Resources>
 
     <Grid Background="{DynamicResource FbBackground}">
@@ -502,10 +487,6 @@
                         <DropShadowEffect BlurRadius="45" ShadowDepth="10" Opacity="0.08" Color="Black"/>
                     </Border.Effect>
                     <Grid>
-                        <!-- Super Like Highlight Border -->
-                        <Border BorderBrush="#FFB300" BorderThickness="4" CornerRadius="24" IsHitTestVisible="False" Panel.ZIndex="5"
-                                Visibility="{Binding IsSuperLikedBy, Converter={StaticResource BoolToVis}}"/>
-
                         <!-- Background Image -->
                         <Border CornerRadius="24" ClipToBounds="True">
                             <Image Source="{Binding CurrentUserImage, TargetNullValue={x:Null}}" Stretch="UniformToFill"/>
@@ -537,17 +518,7 @@
                             </StackPanel>
                         </Border>
 
-                        <!-- Super Like Received Badge -->
-                        <Border VerticalAlignment="Top" HorizontalAlignment="Left" Margin="20" CornerRadius="14" Padding="12,6" Background="#FFB300" Panel.ZIndex="6"
-                                Visibility="{Binding IsSuperLikedBy, Converter={StaticResource BoolToVis}}">
-                            <Border.Effect>
-                                <DropShadowEffect BlurRadius="12" ShadowDepth="3" Opacity="0.3" Color="#FFB300"/>
-                            </Border.Effect>
-                            <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-                                <materialDesign:PackIcon Kind="Star" Foreground="White" Width="16" Height="16" Margin="0,0,6,0" VerticalAlignment="Center"/>
-                                <TextBlock Text="Đã Super Like bạn! ⭐" Foreground="White" FontWeight="Bold" FontSize="12" VerticalAlignment="Center"/>
-                            </StackPanel>
-                        </Border>
+
 
                         <!-- Profile Info on Card -->
                         <StackPanel VerticalAlignment="Bottom" Margin="24,0,24,120">
@@ -559,10 +530,12 @@
                                 <materialDesign:PackIcon Kind="InformationOutline" Foreground="White" Width="22" Height="22" Margin="10,0,0,0" VerticalAlignment="Center" Opacity="0.75"/>
                             </StackPanel>
 
-                            <!-- Location -->
+                            <!-- Location & Distance -->
                             <StackPanel Orientation="Horizontal" Margin="0,0,0,8" Visibility="{Binding CurrentUserLocation, Converter={StaticResource NullOrEmptyToVisibilityConverter}}">
                                 <materialDesign:PackIcon Kind="MapMarkerOutline" Width="16" Height="16" Foreground="#E5E7EB" VerticalAlignment="Center" Margin="0,0,4,0"/>
                                 <TextBlock Text="{Binding CurrentUserLocation}" FontSize="13.5" Foreground="#E5E7EB" FontWeight="Medium" VerticalAlignment="Center"/>
+                                <TextBlock Text=" • " FontSize="13.5" Foreground="#E5E7EB" FontWeight="Medium" VerticalAlignment="Center" Visibility="{Binding IsDistanceVisible, Converter={StaticResource BoolToVis}}"/>
+                                <TextBlock Text="{Binding CurrentUserDistance, StringFormat={}{0} km}" FontSize="13.5" Foreground="#E5E7EB" FontWeight="Medium" VerticalAlignment="Center" Visibility="{Binding IsDistanceVisible, Converter={StaticResource BoolToVis}}"/>
                             </StackPanel>
 
                             <!-- Bio snippet -->
@@ -591,9 +564,9 @@
                         </StackPanel>
 
                         <!-- Swipe Action Circular Buttons -->
-                        <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" VerticalAlignment="Bottom" Margin="0,0,0,24">
+                        <Grid VerticalAlignment="Bottom" HorizontalAlignment="Stretch" Margin="24,0,24,24">
                             <!-- PASS -->
-                            <StackPanel Orientation="Vertical" HorizontalAlignment="Center" Margin="10,0">
+                            <StackPanel Orientation="Vertical" HorizontalAlignment="Left">
                                 <Button x:Name="BtnPass" Command="{Binding PassCommand}" Style="{StaticResource PassRoundButtonStyle}">
                                     <materialDesign:PackIcon Kind="Close" Width="36" Height="36" Foreground="{DynamicResource FbTextPrimary}"/>
                                 </Button>
@@ -604,20 +577,8 @@
                                 </TextBlock>
                             </StackPanel>
 
-                            <!-- SUPER LIKE -->
-                            <StackPanel Orientation="Vertical" HorizontalAlignment="Center" Margin="10,0">
-                                <Button x:Name="BtnSuperLike" Command="{Binding SuperLikeCommand}" Style="{StaticResource SuperLikeRoundButtonStyle}">
-                                    <materialDesign:PackIcon Kind="Star" Width="28" Height="28" Foreground="White"/>
-                                </Button>
-                                <TextBlock Text="Siêu thích" Foreground="White" FontSize="11" FontWeight="Bold" Margin="0,6,0,0" HorizontalAlignment="Center">
-                                    <TextBlock.Effect>
-                                        <DropShadowEffect BlurRadius="4" ShadowDepth="1" Color="Black" Opacity="0.5"/>
-                                    </TextBlock.Effect>
-                                </TextBlock>
-                            </StackPanel>
-
                             <!-- LIKE -->
-                            <StackPanel Orientation="Vertical" HorizontalAlignment="Center" Margin="10,0">
+                            <StackPanel Orientation="Vertical" HorizontalAlignment="Right">
                                 <Button x:Name="BtnLike" Command="{Binding LikeCommand}" Style="{StaticResource LikeRoundButtonStyle}">
                                     <materialDesign:PackIcon Kind="Heart" Width="34" Height="34" Foreground="White"/>
                                 </Button>
@@ -627,7 +588,7 @@
                                     </TextBlock.Effect>
                                 </TextBlock>
                             </StackPanel>
-                        </StackPanel>
+                        </Grid>
                     </Grid>
                 </Border>
             </Grid>
@@ -646,16 +607,37 @@
                 </StackPanel>
             </Border>
 
-            <!-- Chi tiết Hồ sơ (User Detail Profile Overlay) -->
-            <Border x:Name="UserDetailPopup" Visibility="{Binding IsUserDetailVisible, Converter={StaticResource BoolToVis}}" Background="{DynamicResource FbCardBackground}" CornerRadius="24" Width="450" Height="720" HorizontalAlignment="Center" VerticalAlignment="Center" Panel.ZIndex="90">
-                <Border.Effect>
-                    <DropShadowEffect BlurRadius="45" ShadowDepth="10" Opacity="0.12" Color="Black"/>
-                </Border.Effect>
+            <!-- Chi tiết Hồ sơ (User Detail Profile - Full Page View) -->
+            <Border x:Name="UserDetailPopup" Grid.Row="0" Grid.RowSpan="2" Panel.ZIndex="120"
+                    Visibility="{Binding IsUserDetailVisible, Converter={StaticResource BoolToVis}}" 
+                    Background="{DynamicResource FbCardBackground}" 
+                    CornerRadius="0" 
+                    HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
                 <Grid>
-                    <ScrollViewer VerticalScrollBarVisibility="Hidden" Margin="0,0,0,96">
-                        <StackPanel Margin="20">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="*"/>
+                        <RowDefinition Height="Auto"/>
+                    </Grid.RowDefinitions>
+
+                    <!-- Header/Navigation Bar -->
+                    <Border Grid.Row="0" Background="{DynamicResource FbCardBackground}" BorderBrush="{DynamicResource FbBorder}" BorderThickness="0,0,0,1" Padding="20,12">
+                        <Grid>
+                            <Button Command="{Binding CloseUserDetailCommand}" Style="{StaticResource MaterialDesignFlatButton}" HorizontalAlignment="Left" Padding="8,4" Height="36">
+                                <StackPanel Orientation="Horizontal">
+                                    <materialDesign:PackIcon Kind="ArrowLeft" Width="20" Height="20" Margin="0,0,6,0" VerticalAlignment="Center" Foreground="{DynamicResource FbTextPrimary}"/>
+                                    <TextBlock Text="Quay lại" FontSize="15" FontWeight="Bold" VerticalAlignment="Center" Foreground="{DynamicResource FbTextPrimary}"/>
+                                </StackPanel>
+                            </Button>
+                            <TextBlock Text="Hồ sơ chi tiết" FontSize="16" FontWeight="Black" Foreground="{DynamicResource FbTextPrimary}" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Grid>
+                    </Border>
+
+                    <!-- Scrollable content -->
+                    <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto">
+                        <StackPanel Margin="24,20,24,20" MaxWidth="550" HorizontalAlignment="Center">
                             <!-- Main user details (Name, MBTI compatibility) -->
-                            <StackPanel Margin="0,10,0,16">
+                            <StackPanel Margin="0,10,0,16" Width="550" HorizontalAlignment="Center">
                                 <StackPanel Orientation="Horizontal" Margin="0,0,0,6">
                                     <TextBlock Text="{Binding CurrentUserName}" FontSize="28" FontWeight="Black" Foreground="{DynamicResource FbTextPrimary}" VerticalAlignment="Center"/>
                                     <materialDesign:PackIcon Kind="CheckDecagram" Foreground="#1877F2" Width="24" Height="24" Margin="8,0,0,0" VerticalAlignment="Center" Visibility="{Binding IsCurrentUserVerified, Converter={StaticResource BoolToVis}}"/>
@@ -664,6 +646,8 @@
                                 <StackPanel Orientation="Horizontal" Margin="0,0,0,12" Visibility="{Binding CurrentUserLocation, Converter={StaticResource NullOrEmptyToVisibilityConverter}}">
                                     <materialDesign:PackIcon Kind="MapMarkerOutline" Width="16" Height="16" Foreground="{DynamicResource FbTextSecondary}" VerticalAlignment="Center" Margin="0,0,4,0"/>
                                     <TextBlock Text="{Binding CurrentUserLocation}" FontSize="14" Foreground="{DynamicResource FbTextSecondary}" FontWeight="SemiBold" VerticalAlignment="Center"/>
+                                    <TextBlock Text=" • " FontSize="14" Foreground="{DynamicResource FbTextSecondary}" FontWeight="SemiBold" VerticalAlignment="Center" Visibility="{Binding IsDistanceVisible, Converter={StaticResource BoolToVis}}"/>
+                                    <TextBlock Text="{Binding CurrentUserDistance, StringFormat={}{0} km}" FontSize="14" Foreground="{DynamicResource FbTextSecondary}" FontWeight="SemiBold" VerticalAlignment="Center" Visibility="{Binding IsDistanceVisible, Converter={StaticResource BoolToVis}}"/>
                                 </StackPanel>
 
                                 <!-- Compatibility score bento badge -->
@@ -676,7 +660,7 @@
                             </StackPanel>
 
                             <!-- Bento module 1: Bio -->
-                            <Border CornerRadius="16" Background="{DynamicResource FbBackground}" Padding="16" Margin="0,0,0,16">
+                            <Border CornerRadius="16" Background="{DynamicResource FbBackground}" Padding="16" Margin="0,0,0,16" Width="550" HorizontalAlignment="Center">
                                 <StackPanel>
                                     <TextBlock Text="Giới thiệu" FontSize="13" FontWeight="Bold" Foreground="{DynamicResource FbTextSecondary}" Margin="0,0,0,8"/>
                                     <TextBlock Text="{Binding CurrentUserBio}" FontSize="15" Foreground="{DynamicResource FbTextPrimary}" TextWrapping="Wrap" LineHeight="22"/>
@@ -684,7 +668,7 @@
                             </Border>
 
                             <!-- Bento module 2: Basic Info -->
-                            <Border CornerRadius="16" BorderBrush="{DynamicResource FbBorder}" BorderThickness="1" Padding="16" Margin="0,0,0,16">
+                            <Border CornerRadius="16" BorderBrush="{DynamicResource FbBorder}" BorderThickness="1" Padding="16" Margin="0,0,0,16" Width="550" HorizontalAlignment="Center">
                                 <StackPanel>
                                     <TextBlock Text="Thông tin cơ bản" FontSize="13" FontWeight="Bold" Foreground="{DynamicResource FbTextSecondary}" Margin="0,0,0,12"/>
                                     <WrapPanel Orientation="Horizontal">
@@ -714,7 +698,7 @@
                             </Border>
 
                             <!-- Bento module 3: Lifestyle -->
-                            <Border CornerRadius="16" BorderBrush="{DynamicResource FbBorder}" BorderThickness="1" Padding="16" Margin="0,0,0,16">
+                            <Border CornerRadius="16" BorderBrush="{DynamicResource FbBorder}" BorderThickness="1" Padding="16" Margin="0,0,0,16" Width="550" HorizontalAlignment="Center">
                                 <StackPanel>
                                     <TextBlock Text="Lối sống &amp; Tính cách" FontSize="13" FontWeight="Bold" Foreground="{DynamicResource FbTextSecondary}" Margin="0,0,0,12"/>
                                     <WrapPanel Orientation="Horizontal">
@@ -751,7 +735,7 @@
                             </Border>
 
                             <!-- Bento module 4: Interests -->
-                            <Border CornerRadius="16" BorderBrush="{DynamicResource FbBorder}" BorderThickness="1" Padding="16" Margin="0,0,0,20">
+                            <Border CornerRadius="16" BorderBrush="{DynamicResource FbBorder}" BorderThickness="1" Padding="16" Margin="0,0,0,20" Width="550" HorizontalAlignment="Center">
                                 <StackPanel>
                                     <TextBlock Text="Sở thích" FontSize="13" FontWeight="Bold" Foreground="{DynamicResource FbTextSecondary}" Margin="0,0,0,12"/>
                                     <ItemsControl ItemsSource="{Binding CurrentUserInterests}">
@@ -772,11 +756,11 @@
                             </Border>
 
                             <!-- Gallery of Additional Photos -->
-                            <TextBlock Text="Hình ảnh khác" FontSize="14" FontWeight="Bold" Foreground="{DynamicResource FbTextPrimary}" Margin="0,0,0,12"/>
+                            <TextBlock Text="Hình ảnh khác" FontSize="14" FontWeight="Bold" Foreground="{DynamicResource FbTextPrimary}" Margin="0,0,0,12" Width="550" HorizontalAlignment="Center"/>
                             <ItemsControl ItemsSource="{Binding CurrentUserPhotos}">
                                 <ItemsControl.ItemTemplate>
                                     <DataTemplate>
-                                        <Border CornerRadius="20" Margin="0,0,0,16" ClipToBounds="True" Background="{DynamicResource FbBackground}">
+                                        <Border CornerRadius="20" Margin="0,0,0,16" ClipToBounds="True" Background="{DynamicResource FbBackground}" Width="550" HorizontalAlignment="Center">
                                             <Border.Effect>
                                                 <DropShadowEffect BlurRadius="20" ShadowDepth="4" Opacity="0.05" Color="Black"/>
                                             </Border.Effect>
@@ -787,36 +771,23 @@
                             </ItemsControl>
                         </StackPanel>
                     </ScrollViewer>
-                    
-                    <!-- Close button floating on top -->
-                    <Button Command="{Binding CloseUserDetailCommand}" Style="{StaticResource MaterialDesignFloatingActionMiniLightButton}" Background="{DynamicResource FbCardBackground}" BorderBrush="{DynamicResource FbBorder}" Width="40" Height="40" VerticalAlignment="Top" HorizontalAlignment="Right" Margin="20">
-                        <materialDesign:PackIcon Kind="ArrowDown" Width="24" Height="24" Foreground="{DynamicResource FbTextPrimary}"/>
-                    </Button>
 
                     <!-- Sticky Action Buttons at bottom -->
-                    <Border VerticalAlignment="Bottom" Background="{DynamicResource FbCardBackground}" Padding="0,14" CornerRadius="0,0,24,24" BorderBrush="{DynamicResource FbBorder}" BorderThickness="0,1,0,0">
+                    <Border Grid.Row="2" Background="{DynamicResource FbCardBackground}" Padding="0,14" BorderBrush="{DynamicResource FbBorder}" BorderThickness="0,1,0,0">
                         <Border.Effect>
                             <DropShadowEffect BlurRadius="20" ShadowDepth="-4" Opacity="0.04" Color="Black"/>
                         </Border.Effect>
                         <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
                             <!-- PASS -->
-                            <StackPanel Orientation="Vertical" HorizontalAlignment="Center" Margin="10,0">
+                            <StackPanel Orientation="Vertical" HorizontalAlignment="Center" Margin="20,0">
                                 <Button Command="{Binding PassCommand}" Style="{StaticResource PassRoundButtonStyle}">
                                     <materialDesign:PackIcon Kind="Close" Width="36" Height="36" Foreground="{DynamicResource FbTextPrimary}"/>
                                 </Button>
                                 <TextBlock Text="Bỏ qua" Foreground="{DynamicResource FbTextSecondary}" FontSize="11" FontWeight="Bold" Margin="0,6,0,0" HorizontalAlignment="Center"/>
                             </StackPanel>
                             
-                            <!-- SUPER LIKE -->
-                            <StackPanel Orientation="Vertical" HorizontalAlignment="Center" Margin="10,0">
-                                <Button Command="{Binding SuperLikeCommand}" Style="{StaticResource SuperLikeRoundButtonStyle}">
-                                    <materialDesign:PackIcon Kind="Star" Width="28" Height="28" Foreground="White"/>
-                                </Button>
-                                <TextBlock Text="Siêu thích" Foreground="{DynamicResource FbTextSecondary}" FontSize="11" FontWeight="Bold" Margin="0,6,0,0" HorizontalAlignment="Center"/>
-                            </StackPanel>
-                            
                             <!-- LIKE -->
-                            <StackPanel Orientation="Vertical" HorizontalAlignment="Center" Margin="10,0">
+                            <StackPanel Orientation="Vertical" HorizontalAlignment="Center" Margin="20,0">
                                 <Button Command="{Binding LikeCommand}" Style="{StaticResource LikeRoundButtonStyle}">
                                     <materialDesign:PackIcon Kind="Heart" Width="34" Height="34" Foreground="White"/>
                                 </Button>
@@ -1213,7 +1184,7 @@
                         <RowDefinition Height="*"/>
                     </Grid.RowDefinitions>
 
-                    <TextBlock Grid.Row="0" Text="Tương hợp mới" FontSize="16" FontWeight="Black" Foreground="#E6005C" Margin="16,16,16,10"/>
+                    <TextBlock Grid.Row="0" Text="Gợi ý ghép đôi" FontSize="16" FontWeight="Black" Foreground="#E6005C" Margin="16,16,16,10"/>
                     
                     <!-- Horizontal Matches (Tinder Style) -->
                     <ScrollViewer Grid.Row="1" HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Disabled" Margin="16,0,0,10">
@@ -1347,7 +1318,7 @@
                             <Button Command="{Binding UnmatchCommand}" Style="{StaticResource PremiumOutlineButton}" BorderBrush="#EF4444" Foreground="#EF4444" Height="36" FontSize="13" Margin="0,0,10,0" Padding="12,0">
                                 <StackPanel Orientation="Horizontal">
                                     <materialDesign:PackIcon Kind="AccountCancel" Margin="0,0,5,0" Width="14" Height="14" VerticalAlignment="Center"/>
-                                    <TextBlock Text="Hủy Tương hợp" VerticalAlignment="Center"/>
+                                    <TextBlock Text="Hủy Ghép đôi" VerticalAlignment="Center"/>
                                 </StackPanel>
                             </Button>
                             <Button Command="{Binding BlockCommand}" Style="{StaticResource PremiumButton}" Background="#EF4444" Height="36" FontSize="13" Padding="12,0">
@@ -1655,7 +1626,7 @@
                     </Style>
                 </StackPanel.Style>
                 <materialDesign:PackIcon Kind="MessageOutline" Width="80" Height="80" Foreground="#B0B3B8" HorizontalAlignment="Center"/>
-                <TextBlock Text="Chọn một tương hợp để bắt đầu trò chuyện" FontSize="16.5" Foreground="{DynamicResource FbTextSecondary}" FontWeight="Bold" Margin="0,16,0,0"/>
+                <TextBlock Text="Chọn một người để bắt đầu trò chuyện" FontSize="16.5" Foreground="{DynamicResource FbTextSecondary}" FontWeight="Bold" Margin="0,16,0,0"/>
             </StackPanel>
         </Grid>
 
